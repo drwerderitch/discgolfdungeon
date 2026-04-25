@@ -1,0 +1,1623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="D&amp;Disc Golf"/>
+  <title>D&amp;Disc Golf</title>
+
+  <style>
+    html, body { margin: 0; padding: 0; background: #2a1a0e; height: 100%; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script>
+(function(w){"use strict";
+// ── Mini-React: implements exactly what D&Disc Golf needs ────────────────────
+
+var _hooks = [];
+var _cursor = 0;
+var _renderFn = null;
+var _rootEl = null;
+var _dirty = false;
+
+function useState(init) {
+  var i = _cursor++;
+  if (_hooks[i] === undefined) _hooks[i] = typeof init === 'function' ? init() : init;
+  var idx = i; // capture
+  function setState(v) {
+    var next = typeof v === 'function' ? v(_hooks[idx]) : v;
+    if (next !== _hooks[idx]) { _hooks[idx] = next; _scheduleUpdate(); }
+  }
+  return [_hooks[i], setState];
+}
+
+function _scheduleUpdate() {
+  if (_dirty) return;
+  _dirty = true;
+  Promise.resolve().then(function() { _dirty = false; _rerender(); });
+}
+
+function _rerender() {
+  if (!_renderFn || !_rootEl) return;
+  _cursor = 0;
+  var vdom = _renderFn();
+  _rootEl.innerHTML = '';
+  var node = _render(vdom);
+  if (node) _rootEl.appendChild(node);
+}
+
+function createElement(type, props) {
+  var children = [];
+  for (var i = 2; i < arguments.length; i++) {
+    var c = arguments[i];
+    if (Array.isArray(c)) for (var j=0;j<c.length;j++) children.push(c[j]);
+    else children.push(c);
+  }
+  props = props || {};
+  if (children.length) props = Object.assign({}, props, {children: children.length===1?children[0]:children});
+  return {type:type, props:props};
+}
+
+function _render(v) {
+  if (v === null || v === undefined || v === false || v === true) return null;
+  if (typeof v === 'string' || typeof v === 'number') return document.createTextNode(String(v));
+  if (Array.isArray(v)) {
+    var f = document.createDocumentFragment();
+    for (var i=0;i<v.length;i++) { var n=_render(v[i]); if(n) f.appendChild(n); }
+    return f;
+  }
+  if (typeof v.type === 'function') {
+    // For components, we don't reset cursor — each component shares the global hook array
+    // This works because our app has one root component with all state at the top
+    var result = v.type(v.props);
+    return _render(result);
+  }
+  if (v.type === '__fragment__') {
+    var f2 = document.createDocumentFragment();
+    var kids = v.props && v.props.children;
+    if (kids !== undefined) {
+      var arr = Array.isArray(kids) ? kids : [kids];
+      for (var i=0;i<arr.length;i++) { var n=_render(arr[i]); if(n) f2.appendChild(n); }
+    }
+    return f2;
+  }
+  var el = document.createElement(v.type);
+  var props = v.props || {};
+  for (var k in props) {
+    if (k === 'children' || k === 'key') continue;
+    var val = props[k];
+    if (k === 'style' && val && typeof val === 'object') { Object.assign(el.style, val); }
+    else if (k === 'className') { el.className = val||''; }
+    else if (k === 'htmlFor') { el.htmlFor = val; }
+    else if (k === 'dangerouslySetInnerHTML') { el.innerHTML = val.__html; }
+    else if (k.startsWith('on') && typeof val === 'function') { el.addEventListener(k.slice(2).toLowerCase(), val); }
+    else if (k === 'checked' || k === 'disabled' || k === 'selected') { if(val) el.setAttribute(k,''); }
+    else if (k === 'value') { el.value = val; }
+    else if (val !== null && val !== undefined && val !== false) { try{el.setAttribute(k, val);}catch(e){} }
+  }
+  var ch = props.children;
+  if (ch !== undefined) {
+    var arr2 = Array.isArray(ch) ? ch : [ch];
+    for (var i=0;i<arr2.length;i++) { var n2=_render(arr2[i]); if(n2) el.appendChild(n2); }
+  }
+  return el;
+}
+
+w.React = {
+  createElement: createElement,
+  Fragment: '__fragment__',
+  useState: useState
+};
+w.useState = useState;
+w.ReactDOM = {
+  createRoot: function(container) {
+    _rootEl = container;
+    return {
+      render: function(el) {
+        _renderFn = function() { return el.type(el.props); };
+        _cursor = 0;
+        _rerender();
+      }
+    };
+  }
+};
+
+})(window);
+
+</script>
+  
+
+  <div id="error" style="color:#f83800;background:#0a0a1a;padding:20px;font-family:monospace;font-size:12px;display:none;white-space:pre-wrap;position:fixed;top:0;left:0;right:0;bottom:0;overflow:auto;z-index:9999"></div>
+  <script>
+    window.onerror = function(msg,url,line,col,err) {
+      var d=document.getElementById('error');
+      d.style.display='block';
+      d.textContent='ERROR\n'+msg+'\nline:'+line+' col:'+col+'\n'+(err&&err.stack?err.stack:'')+('\nurl:'+url);
+      return true;
+    };
+    window.addEventListener('unhandledrejection', function(e) {
+      var d=document.getElementById('error');
+      d.style.display='block';
+      d.textContent+='\nUNHANDLED: '+(e.reason&&e.reason.stack?e.reason.stack:e.reason);
+    });
+    // Wrap React render in try/catch
+    var _origConsoleError = console.error;
+    console.error = function() {
+      var d=document.getElementById('error');
+      d.style.display='block';
+      d.textContent += '\nCONSOLE.ERROR: '+Array.from(arguments).map(function(a){return typeof a==='object'?JSON.stringify(a):String(a);}).join(' ')+'\n';
+      _origConsoleError.apply(console, arguments);
+    };
+  </script>
+  <script>
+    const { useState } = React;
+    var _react = React;
+    var _jsxFileName = "";
+
+
+
+const C={
+  bg:"#2a1a0e",
+  bgCard:"#0a0a1a",
+  bgCardAlt:"#0f0f28",
+  bgDark:"#050510",
+  bgBrown:"#3a2410",
+  border:"#6a5a3a",
+  borderBright:"#c8b060",
+  gold:"#f8d030",
+  goldDim:"#b89020",
+  red:"#f83800",
+  green:"#00c050",
+  blue:"#48a0f8",
+  cyan:"#00e8d8",
+  white:"#f8f8f8",
+  whiteDim:"#b8b8b8",
+  grey:"#888888",
+  greyDim:"#505050",
+  purple:"#c060e8",
+  parchment:"#d8c080",
+  teal:"#00c8b0",
+};
+
+const bevel=(color="#6a5a3a")=>`inset 2px 2px 0 ${color}cc, inset -2px -2px 0 #00000088`;
+const bevelBtn=(color="#c8b060")=>`inset 2px 2px 0 ${color}, inset -2px -2px 0 #00000099, inset -1px -1px 0 #00000055`;
+
+const OL="1px 1px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,0 2px 0 #000,0 -1px 0 #000";
+const OLH="2px 2px 0 #000,-1px -1px 0 #000,2px -1px 0 #000,-1px 2px 0 #000";
+
+const BF=`'Courier New',Courier,monospace`;
+const TEE={red:C.red,white:C.whiteDim,blue:C.blue};
+
+const CLASSES=[
+  {name:"Fighter",icon:"\u2694\ufe0f",passive:"Your chosen weapon cannot be taken away by disc restriction conditions. On favored holes or by spending a token, if your next throw is your chosen weapon improve your current lie up to 3 steps outside circle 2.",ptype:"behavioral",skills:["Combat","Physical","Stealth"],flavor:"You've thrown this disc ten thousand times. You know exactly what it does.",gear:"Putter + chosen weapon + 1 additional disc (3 total)",color:C.red},
+  {name:"Ranger",icon:"\ud83c\udff9",passive:"Once per hole may choose any tee box regardless of earned position.",ptype:"triggered",skills:["Nature","Combat","Physical"],flavor:"You know this terrain. You know which disc to reach for.",gear:"Putter + 1 disc",color:C.green},
+  {name:"Defender",icon:"\ud83d\udee1\ufe0f",passive:"May declare 'play to mine' \u2014 throws a conservative shot and the party may swap to their lie. Both the Defender and any player who swaps throw from that lie.",ptype:"triggered",skills:["Combat","Social","Physical"],flavor:"You put yourself between the party and the danger.",gear:"Putter + 1 disc",color:C.blue},
+  {name:"Cleric",icon:"\u2728",passive:"Grant a teammate advantage on any drive or approach without spending a token. Spending a token extends this to putts.",ptype:"triggered",skills:["Social","Arcane","Nature"],flavor:"You keep the party together when things fall apart.",gear:"Putter + 1 disc",color:C.gold},
+  {name:"Rogue",icon:"\ud83d\udde1\ufe0f",passive:"After everyone has thrown their drive the Rogue may move to any other drive lie on the hole. Both the Rogue and the original thrower play from that spot.",ptype:"triggered",skills:["Stealth","Social","Combat"],flavor:"You wait, you watch, and you take what's there.",gear:"Putter + 1 disc",color:C.greyDim},
+  {name:"Merchant",icon:"\ud83d\udcb0",passive:"Once per hole after drawing an Adventure card may pay 1gp to redraw it. Active: Spend a token to buy any item or disc at half price at any merchant encounter or at camp.",ptype:"triggered",skills:["Social","Nature","Arcane"],flavor:"Every situation has an angle. You just have to find it.",gear:"Putter + 1 disc",color:C.gold},
+  {name:"Wizard",icon:"\ud83d\udd2e",passive:"Once per hole, after a drive or approach lands, may move their lie up to 3 steps in any direction before throwing next.",ptype:"triggered",skills:["Arcane","Stealth","Social"],flavor:"You don't move to the disc. You move the disc to you.",gear:"Putter + 1 disc",color:C.purple},
+  {name:"Seer",icon:"\ud83d\udd2d",passive:"Once per hole may rethrow any drive or approach after seeing the result.",ptype:"triggered",skills:["Arcane","Social","Nature"],flavor:"You have been here before. You will be here again.",gear:"Putter + 1 disc",color:C.teal},
+  {name:"Monk",icon:"\ud83d\udc4a",passive:"Once per hole before your approach declare a landing zone and throw. Play that lie. Throw a second disc from the same spot \u2014 land within 10 feet of the first and gain advantage on your putt.",ptype:"triggered",skills:["Physical","Nature","Arcane"],flavor:"Still mind, still hand. You have thrown this shot before in your mind.",gear:"Putter + 1 disc",color:C.gold},
+  {name:"Assassin",icon:"\ud83d\udde1\ufe0f",passive:"On favored holes, if your approach lands within circle one your putt is automatic \u2014 pick up and score. Spend a token to use this on any other hole.",ptype:"triggered",skills:["Combat","Stealth","Physical"],flavor:"One clean line. One clean shot. Done.",gear:"Putter + 1 disc",color:C.red},
+  {name:"Bard",icon:"\ud83c\udfb5",passive:"When you spend a token on yourself, declare one teammate before throwing \u2014 they also gain a stored advantage for any single throw this hole at no additional cost.",ptype:"triggered",skills:["Social","Nature","Arcane"],flavor:"Your best moment makes everyone better.",gear:"Putter + 1 disc",color:C.green},
+  {name:"Barbarian",icon:"\ud83e\ude93",passive:"Before throwing you may choose to throw from blue tee regardless of your earned position. Par or better from blue tee draws a Boon. On favored holes draw two Boons instead.",ptype:"triggered",skills:["Combat","Physical","Social"],flavor:"Glory or nothing. The long road is the only road.",gear:"Putter + 1 disc",color:C.red},
+  {name:"Marksman",icon:"\ud83c\udfaf",passive:"When you make a putt from outside circle 2 you may attempt it a second time. If the second putt drops the party score improves by 1 for adventure success this hole. On favored holes this also applies to circle 1 putts.",ptype:"triggered",skills:["Combat","Physical","Stealth"],flavor:"One more time. Cleaner.",gear:"Putter + extra putter + 1 disc (3 total)",color:C.blue},
+  {name:"Dragoon",icon:"\ud83d\udc09",passive:"You may jump putt from anywhere outside circle 1. Finish at par or better with a jump putt and draw a Boon. On favored holes jump putts inside circle 1 are also legal. Spend a token for the same on any other hole.",ptype:"behavioral",skills:["Combat","Physical","Nature"],flavor:"You leap. You fall. You score.",gear:"Putter + 1 disc",color:C.purple},
+  {name:"Artificer",icon:"\ud83d\udd27",passive:"You start with a putter and three gadget discs \u2014 your custom built toolkit. On favored holes or by spending a token you may throw any of your gadget discs freely. Otherwise limit one gadget disc per hole. Discs gained at camp are standard equipment used freely like any other class.",ptype:"triggered",skills:["Physical","Stealth","Arcane"],flavor:"You start with a putter and three gadget discs \u2014 your custom built toolkit.",gear:"Putter + 3 gadget discs (4 total)",color:C.cyan},
+  {name:"Alchemist",icon:"\u2697\ufe0f",passive:"When you birdie, score par instead and bottle the extra stroke. Uncork at any time to reduce the party score by 1 for adventure success. On favored holes or by spending a token, a par earns one luck drop. Three drops fill the bottle. (TODO: add bottle/drop tracker to player sheet)",ptype:"triggered",skills:["Nature","Arcane","Social"],flavor:"Distiller of luck. Every good moment has potential.",gear:"Putter + 1 disc",color:C.green},
+  {name:"Druid",icon:"\ud83c\udf3f",passive:"When your disc lands in the rough, trees, or brush you may throw your scramble shot with advantage on favored holes or by spending a token.",ptype:"triggered",skills:["Nature","Arcane","Physical"],flavor:"The forest is not your enemy. It is your home.",gear:"Putter + 1 disc",color:C.green},
+  {name:"Duelist",icon:"\ud83e\udd3a",passive:"You may declare a duel on any hole \u2014 alternate forehand and backhand on every throw excluding putts. Par or better on a completed duel earns 1gp. On favored holes earn 2gp instead.",ptype:"triggered",skills:["Combat","Physical","Stealth"],flavor:"Steel in both hands. Never the same cut twice.",gear:"Putter + 1 disc",color:C.red},
+];
+
+const PRESTIGE=[
+  {name:"Agent of Chaos",icon:"\ud83c\udfb2",passive:"You may only throw discs whose speed rating is a prime number. On prime numbered holes gain advantage on one throw of your choice. Prestige \u2014 multiclass only.",color:C.purple},
+  {name:"Knight of Balance",icon:"\u2696\ufe0f",passive:"You may only throw discs whose speed rating is an even number. On even numbered holes gain advantage on one throw of your choice. Prestige \u2014 multiclass only.",color:C.teal},
+];
+
+const ADVENTURE_CARDS=[
+  {title:"The Toll Keeper",tags:"Social \u2014 Charm, Cunning",flavor:"A heavyset figure blocks the trail. Arms folded. Not moving.",effect:"The party has 30 seconds to agree \u2014 pay 2gp or push through. Pay: play normally. Push through: all drives with disadvantage.",success:"Gain 3gp.",fail:"Draw a Peril."},
+  {title:"The Wounded Traveler",tags:"Social \u2014 Charm, Spirit",flavor:"Someone on the trail, badly hurt, asking for help.",effect:"Party votes before throwing: stop to help or press on. Stop: costs this hole's gp reward but draw a Boon immediately. Press on: play normally, no gp reward even on success.",success:"Gain 2gp if you stopped. Nothing if you didn't.",fail:"Gain 2 XP \u2014 it weighed on everyone."},
+  {title:"The Hermit",tags:"Social \u2014 Learning, Spirit",flavor:"An old figure sits watching without expression.",effect:"One player may spend 2gp to draw a Boon before throwing.",success:"The hermit nods. Gain 2gp.",fail:"The hermit shakes his head. Nothing."},
+  {title:"The Wager",tags:"Social \u2014 Cunning, Charm",flavor:"A stranger offers a bet. Cocky smile. Probably a trap.",effect:"Before throwing any player may wager up to 3gp. Par or better: win double the wager. Bogey or worse: lose the wager.",success:"Gain 2gp.",fail:"Gain 1gp \u2014 even a bad hole has lessons."},
+  {title:"The Banquet",tags:"Social \u2014 Charm, Learning",flavor:"Word travels fast out here. Someone important is watching tonight.",effect:"Before throwing any player may spend gold to make an impression \u2014 1gp, 2gp, or 3gp each. 0-2gp total: Success earns 3gp back. 3-5gp total: Success earns 6gp back. 6gp or more: Success earns 10gp back and draw a treasure.",success:"See above.",fail:"Lose what you spent."},
+  {title:"The Traveling Merchant",tags:"Social \u2014 Charm, Cunning",flavor:"A trader with a full pack, heading the other direction.",effect:"Before throwing any player may buy or sell treasures at face value. No wrinkle during play.",success:"He throws in a bonus. Gain 2gp.",fail:"He packed up quickly. No bonus."},
+  {title:"Dragon Sighted",tags:"Combat \u2014 Power, Grit",flavor:"A shadow passes over the canopy. Enormous. Gone in seconds.",effect:"No wrinkle this hole \u2014 everyone is rattled.",success:"It didn't see you. Gain 2gp.",fail:"It circled back. The party loses 2gp."},
+  {title:"The Ambush",tags:"Combat \u2014 Power, Cunning",flavor:"They had the high ground. They planned this.",effect:"The two players with the worst scores last hole throw their drives with disadvantage.",success:"You fought through. Gain 3gp.",fail:"You scattered. Draw a Peril. Gain 2 XP."},
+  {title:"The Challenge",tags:"Combat \u2014 Power, Grit",flavor:"A warrior on the trail. He wants to test the party's best fighter.",effect:"One player volunteers before throwing begins. That player must par or better this hole.",success:"Gain 4gp and a stored advantage token.",fail:"Gain 2 XP \u2014 they learned something the hard way."},
+  {title:"Coordinated Attack",tags:"Combat \u2014 Power, Cunning",flavor:"The party moves as one. No hesitation, no scouting each other's results.",effect:"All throws this hole are simultaneous. Count down from three, everyone throws together. No throw may wait for another to land first.",success:"Gain 3gp.",fail:"Gain 1gp \u2014 you tried."},
+  {title:"Plunder",tags:"Combat \u2014 Power, Grit",flavor:"The monster is down but the treasure is still guarded.",effect:"After all players have holed out each may step back after each make and putt again. Miss and your run ends. Gain 1gp for each made putt.",success:"Gain a bonus 2gp on top of whatever you plundered.",fail:"Whatever you plundered is yours to keep regardless."},
+  {title:"Waystation",tags:"Nature \u2014 Spirit, Learning",flavor:"A worn campsite at the trail's edge. Someone was here recently.",effect:"No wrinkle this hole.",success:"The camp yields supplies. Gain 3gp.",fail:"The camp is empty and cold. Gain 1gp \u2014 you needed the rest anyway."},
+  {title:"The Goblin Scout",tags:"Combat \u2014 Cunning, Grit",flavor:"Small tracks in the mud. Fresh. Heading the same direction you are.",effect:"The player with the most gold must spend 1gp or throw their approach with disadvantage.",success:"You caught up with it. Gain 3gp.",fail:"It reported back. Draw a Peril next hole in addition to your normal draw."},
+  {title:"Old Bones",tags:"Nature \u2014 Learning, Spirit",flavor:"The remains of a campfire. Gear scattered. Someone left in a hurry.",effect:"No wrinkle during play.",success:"You find what they left behind. Draw a Boon.",fail:"You find what came after them. Draw a Peril and gain 2 XP."},
+  {title:"Distant Smoke",tags:"Nature \u2014 Learning, Spirit",flavor:"A column of smoke rises from somewhere deeper in the park.",effect:"No wrinkle this hole.",success:"You press toward it boldly. Gain 3gp.",fail:"You hesitate too long. Draw the next Adventure card immediately and read it aloud \u2014 that is what you find there."},
+  {title:"Storm Threatening",tags:"Nature \u2014 Grit, Power",flavor:"The sky has gone the wrong color. The wind is picking up.",effect:"All putts this hole must be made twice consecutively to count. Miss the second and add a stroke.",success:"The storm passes. Gain 2gp.",fail:"The storm arrives. All putts next hole must also be made twice to count."},
+  {title:"The River Crossing",tags:"Physical \u2014 Power, Grit",flavor:"The trail ends at the water. No bridge. No easy way around.",effect:"Before throwing the party chooses: take the long way (everyone throws from one tee box toward blue this hole) or take the short way (everyone throws from one tee box toward red). The longer path is harder \u2014 success earns 6gp, failure earns 2gp. Short way earns standard rewards.",success:"Gain 3gp.",fail:"Gain 1gp \u2014 you made it across but it cost you."},
+  {title:"The Offering Stone",tags:"Arcane \u2014 Spirit, Charm",flavor:"A flat rock at the trailside. Coins and small tokens left by travelers before you.",effect:"Any player may leave 1gp as an offering before throwing. If at least two players offer: the party gains two stored advantage tokens regardless of score.",success:"The offering was worthy. Gain those tokens plus 1gp back each.",fail:"The tokens remain. Something noted your generosity."},
+  {title:"The Standing Stones",tags:"Arcane \u2014 Spirit, Learning",flavor:"Ancient markers arranged in a pattern nobody remembers.",effect:"Before throwing the party may spend 2gp to gain two stored advantage tokens \u2014 the stones respond to offering. No wrinkle during play.",success:"The stones pulse faintly. Gain 2gp.",fail:"The stones are cold and silent. Nothing."},
+  {title:"The Wrong Path",tags:"Arcane \u2014 Learning, Cunning",flavor:"Something redirected you here. You didn't choose this route.",effect:"One player chosen by the group draws a Peril card and reads it aloud but does not apply it yet \u2014 it activates only if the party fails this hole.",success:"The path corrects itself. Discard the Peril unresolved.",fail:"It was leading you here all along. Apply the Peril now."},
+  {title:"The Fairy Ring",tags:"Arcane \u2014 Spirit, Cunning",flavor:"Something small and bright darts between the trees. It stops. It noticed something.",effect:"If any player is carrying a treasure item: that player throws their drive with disadvantage. If nobody is carrying a treasure item: the fairy leads you somewhere lucky. Draw a Boon.",success:"Gain 2gp.",fail:"Gain 1gp."},
+  {title:"The Ruins",tags:"Arcane \u2014 Learning, Cunning",flavor:"Stone walls half standing, something still inside worth having.",effect:"No wrinkle during play.",success:"You search carefully and find something useful. Draw a treasure card.",fail:"Whatever is inside heard you coming. Draw a Peril."},
+  {title:"The Cursed Lie",tags:"Arcane \u2014 Grit, Spirit",flavor:"Something about this spot feels wrong. The ground, the air, the light.",effect:"One player volunteers before throwing begins. That player throws their approach twice and plays the worse lie.",success:"They make par anyway. Gain a stored advantage token and 2 XP.",fail:"They bogey. Disadvantage on their drive next hole."},
+  {title:"The Watchers",tags:"Stealth \u2014 Cunning, Grit",flavor:"Eyes in the treeline. Not animals. Not friendly.",effect:"To avoid detection each player must choose one disc before the hole begins and use it for every throw including putts.",success:"They did not move. Gain 2gp.",fail:"They moved. The party loses 2gp."},
+  {title:"The Decoy",tags:"Stealth \u2014 Cunning, Power",flavor:"One player draws attention so the others can slip through.",effect:"Before throwing one player volunteers as the decoy. They must throw their fastest disc. All other players must throw their slowest.",success:"The distraction worked. Gain 3gp.",fail:"It drew the wrong kind of attention. The decoy player draws a personal Peril."},
+  {title:"Through the Shadows",tags:"Stealth \u2014 Cunning, Grit",flavor:"The only way through is clean. No crashing through brush, no rattling the trees.",effect:"Any player whose throw hits an obstacle draws a personal Peril immediately. Any player who lands clean draws a personal Boon at the end of the hole.",success:"Gain 3gp.",fail:"Gain 1gp."},
+  {title:"Clear Skies",tags:"Nature \u2014 Spirit, Grit",flavor:"Good conditions. Good ground. A clean hole.",effect:"No wrinkle this hole.",success:"Gain 2gp.",fail:"Gain 1gp \u2014 even a bad hole on a good day has something in it."},
+  {title:"Clear Skies",tags:"Nature \u2014 Spirit, Grit",flavor:"Good conditions. Good ground. A clean hole.",effect:"No wrinkle this hole.",success:"Gain 2gp.",fail:"Gain 1gp \u2014 even a bad hole on a good day has something in it."},
+];
+
+const BOON_CARDS=[
+  {title:"Lucky Bounce",effect:"The disc found a line nobody saw coming. Gain 2gp. If the whole party parred this hole: gain 4gp instead.",scope:"Personal"},
+  {title:"Found Coin",effect:"Something glints in the rough near your lie. Gain 3gp.",scope:"Personal"},
+  {title:"Tailwind",effect:"The course opens up ahead. Gain a stored advantage token. If the whole party parred: gain two tokens instead.",scope:"Personal"},
+  {title:"Traveler's Gift",effect:"A friendly face on the trail presses something useful into your hand. Choose one: gain 2gp or gain a stored advantage token.",scope:"Personal"},
+  {title:"Blessed Lie",effect:"Everything landed exactly right. Move one tee box toward red next hole.",scope:"Personal"},
+  {title:"The Find",effect:"Something left behind by someone who came before. Gain 2gp and a stored advantage token.",scope:"Personal"},
+  {title:"Rally",effect:"Your birdie lifts the whole party. Every player gains a stored advantage token.",scope:"Party"},
+  {title:"Merchant Nearby",effect:"A trader appears at exactly the right moment. Any player may spend gold on advantage tokens right now at 2gp each before the next hole begins.",scope:"Party"},
+  {title:"Windfall",effect:"More than expected. Much more. Gain 4gp.",scope:"Personal"},
+  {title:"Safe Passage",effect:"The next stretch of trail looks clear. The party may look at the next Adventure card before drawing it and choose to keep it or shuffle it back.",scope:"Party"},
+  {title:"Second Wind",effect:"You needed that. Cancel one active Peril condition currently affecting you. Or gain 2gp if no Peril is active.",scope:"Personal"},
+  {title:"The Relic",effect:"Something old and useful, half buried near the basket. Draw one additional Boon card.",scope:"Personal"},
+  {title:"Something Glints",effect:"Half buried near your lie. Could be nothing. Isn't. Draw a treasure card.",scope:"Personal"},
+  {title:"Something Glints",effect:"Half buried near your lie. Could be nothing. Isn't. Draw a treasure card.",scope:"Personal"},
+  {title:"Gold Found",effect:"Gain 2gp.",scope:"Personal"},
+  {title:"Gold Found",effect:"Gain 2gp.",scope:"Personal"},
+  {title:"Gold Found",effect:"Gain 2gp.",scope:"Personal"},
+  {title:"Lucky Break",effect:"Gain a stored advantage token.",scope:"Personal"},
+  {title:"Lucky Break",effect:"Gain a stored advantage token.",scope:"Personal"},
+  {title:"Lucky Break",effect:"Gain a stored advantage token.",scope:"Personal"},
+];
+
+const PERIL_CARDS=[
+  {title:"Cornered",tags:"Combat \u2014 Power, Grit",effect:"No cover. No good options. The player who triggered this Peril throws their next drive from blue tee regardless of earned position.",redemption:"Make par anyway. Gain 2 XP.",xp:2,scope:"Personal"},
+  {title:"The Debt Collector",tags:"Social \u2014 Charm, Cunning",effect:"Someone remembers what you took. The player who triggered this Peril must spend 2gp immediately or throw this hole's drives and approaches with disadvantage.",redemption:"Make par anyway. Gain 2 XP.",xp:2,scope:"Personal"},
+  {title:"Cursed Hands",tags:"Arcane \u2014 Spirit, Grit",effect:"The disc feels wrong. Every disc feels wrong. The player who triggered this Peril must use only their putter for the entire hole.",redemption:"Make par anyway. Gain 2 XP.",xp:2,scope:"Personal"},
+  {title:"Spooked",tags:"Stealth \u2014 Cunning, Grit",effect:"A sound in the trees. Close. Wrong. The player who triggered this Peril throws their next approach with disadvantage.",redemption:"Make par anyway. Gain 2 XP.",xp:2,scope:"Personal"},
+  {title:"Lost on the Trail",tags:"Nature \u2014 Grit, Learning",effect:"Wrong turn. Wrong hill. Nothing looks familiar. The whole party throws drives with disadvantage this hole.",redemption:"Party average par or better anyway. Gain 2 XP each.",xp:2,scope:"Party"},
+  {title:"The Weight of It",tags:"Nature \u2014 Grit, Power",effect:"Bad decisions compound. The trail gets harder. The whole party throws their approaches with disadvantage this hole.",redemption:"Party average par or better anyway. Gain 2 XP each.",xp:2,scope:"Party"},
+  {title:"Hexed",tags:"Arcane \u2014 Spirit, Learning",effect:"Something followed you from the last hole. The player who triggered this Peril must discard one treasure item if they have one, or spend 3gp if they don't.",redemption:"None. The hex takes what it wants.",xp:0,scope:"Personal"},
+  {title:"Eyes Closed",tags:"Physical \u2014 Grit, Power",effect:"The path ahead is unclear. The player who triggered this Peril throws their drive with their eyes closed.",redemption:"Land it in the fairway anyway. Gain 3 XP.",xp:3,scope:"Personal"},
+  {title:"Deadweight",tags:"Physical \u2014 Grit, Cunning",effect:"Something is slowing you down. The player who triggered this Peril may only use their two slowest discs this hole.",redemption:"Make par anyway. Gain 2 XP.",xp:2,scope:"Personal"},
+  {title:"The Unraveling",tags:"Physical \u2014 Grit, Power",effect:"Nothing is working. The player who triggered this Peril must make one throw of their choice this hole with their non-dominant hand. They choose which throw.",redemption:"Make par anyway. Gain 3 XP.",xp:3,scope:"Personal"},
+  {title:"Unfinished Business",tags:"Combat \u2014 Grit, Power",effect:"It doesn't count until it's certain. The player who triggered this Peril must sink two consecutive putts for their score to count. Miss either one and add a stroke.",redemption:"Sink both cleanly. Gain 2 XP.",xp:2,scope:"Personal"},
+  {title:"Worst Drive",tags:"Party",effect:"The party plays from the worst drive this hole instead of their own lie.",redemption:"",xp:0,scope:"Party"},
+  {title:"Worst Drive",tags:"Party",effect:"The party plays from the worst drive this hole instead of their own lie.",redemption:"",xp:0,scope:"Party"},
+  {title:"Worst Drive",tags:"Party",effect:"The party plays from the worst drive this hole instead of their own lie.",redemption:"",xp:0,scope:"Party"},
+  {title:"Rattled",tags:"Personal",effect:"The player who triggered this Peril throws one shot of their choice this hole with disadvantage.",redemption:"",xp:0,scope:"Personal"},
+  {title:"Rattled",tags:"Personal",effect:"The player who triggered this Peril throws one shot of their choice this hole with disadvantage.",redemption:"",xp:0,scope:"Personal"},
+  {title:"Rattled",tags:"Personal",effect:"The player who triggered this Peril throws one shot of their choice this hole with disadvantage.",redemption:"",xp:0,scope:"Personal"},
+  {title:"Setback",tags:"Party",effect:"The party loses 2gp.",redemption:"",xp:0,scope:"Party"},
+  {title:"Setback",tags:"Party",effect:"The party loses 2gp.",redemption:"",xp:0,scope:"Party"},
+  {title:"Setback",tags:"Party",effect:"The party loses 2gp.",redemption:"",xp:0,scope:"Party"},
+];
+
+const BETWEEN_CARDS=[
+  {title:"Provisions",effect:"Each player chooses one task: find something edible or useful, call a shot and hit it with your putter, identify something \u2014 name a tree, a bird, a plant you can see, or make fire \u2014 find tinder and collect it.",reward:"Each completed task earns the whole party 1gp and 1 XP. Tasks judged by group consensus.",scope:"Party"},
+  {title:"Provisions",effect:"Each player chooses one task: find something edible or useful, call a shot and hit it with your putter, identify something \u2014 name a tree, a bird, a plant you can see, or make fire \u2014 find tinder and collect it.",reward:"Each completed task earns the whole party 1gp and 1 XP. Tasks judged by group consensus.",scope:"Party"},
+  {title:"Spout Lore",effect:"The trail levels out. There's a moment to breathe. Weave a connection between the adventures you've had.",reward:"Each player who contributes to the story gains 1 XP.",scope:"Personal"},
+  {title:"Spout Lore",effect:"The trail levels out. There's a moment to breathe. Weave a connection between the adventures you've had.",reward:"Each player who contributes to the story gains 1 XP.",scope:"Personal"},
+  {title:"The Stuck Wagon",effect:"The cart is bogged down. Keep it moving. Choose one disc as the wagon. The party rolls it together from this tee to the next \u2014 pass it between players, redirect it around obstacles, keep it rolling.",reward:"If it reaches the next tee without stopping everyone gains 1gp.",scope:"Party"},
+  {title:"Safe Passage",effect:"Don't drop it. The party tosses one disc between players ultimate style while walking to the next tee. If everyone touches it at least once and nobody drops it everyone gains 1 XP.",reward:"Everyone touches it and nobody drops it: 1 XP each.",scope:"Party"},
+  {title:"Called Shot \u2014 Backhand",effect:"Name your target. Backhand only. Each player names a specific target and throws backhand.",reward:"Every player who hits their called target gains 1gp.",scope:"Personal"},
+  {title:"Called Shot \u2014 Forehand",effect:"Name your target. Forehand only. Each player names a specific target and throws forehand.",reward:"Every player who hits their called target gains 1gp.",scope:"Personal"},
+  {title:"Closest to the Pin \u2014 Backhand",effect:"Find a natural target and mark a throwing line. Backhand only. Everyone throws backhand.",reward:"Closest gains 1gp.",scope:"Personal"},
+  {title:"Closest to the Pin \u2014 Forehand",effect:"Find a natural target and mark a throwing line. Forehand only. Everyone throws forehand.",reward:"Closest gains 1gp.",scope:"Personal"},
+  {title:"Swooping Attack",effect:"Something large descends from above. Drive it back. Take turns \u2014 one player launches a disc straight up while one other player tries to hit it before it lands. Rotate until everyone has had a turn throwing.",reward:"Each successful hit earns that player 1gp.",scope:"Personal"},
+  {title:"Perilous Terrain",effect:"The path ahead is treacherous. Keep your gear steady. Each player balances a disc on one fingertip for the walk to the next tee.",reward:"Drop it and lose 1gp. Make it and your gear arrives unscathed.",scope:"Personal"},
+];
+
+const TREASURE_CARDS=[
+  // \u2500\u2500 CONSUMABLE \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  {title:"Magic Mirror",consumable:true,effect:"A silver disc, perfectly reflective, humming faintly. Activate at camp to unlock a duplicate of any disc already in your bag.",value:10},
+  {title:"The Cache",consumable:true,effect:"Wrapped in oilcloth, still dry after years in the ground. Activate at camp to unlock any one disc of your choice for free.",value:12},
+  {title:"The Lucky Chip",consumable:true,effect:"A battered old disc, cracked but still flying. Activate at any point to rethrow any single shot at no token cost.",value:6},
+  {title:"Ghost Disc",consumable:true,effect:"Translucent, weightless, impossible. Activate to remove your score from the party average this hole. Your personal score still stands.",value:8},
+  {title:"Oathstone",consumable:true,effect:"Smooth, heavy, warm in the hand. Activate before a hole begins. Party pars or better \u2014 everyone gains 5gp. Party fails \u2014 everyone loses 3gp. Cannot be cancelled.",value:6},
+  {title:"Cursed Ring",consumable:true,effect:"It slipped onto your finger before you could stop it. Choose one disc not in your bag and carry it in your non-throwing hand for an entire front or back nine without setting it down. Success \u2014 it joins your bag permanently. Failure \u2014 it is lost.",value:5},
+  {title:"Elixir of Clarity",consumable:true,effect:"Brewed from something found on the trail. Tastes wrong but feels right. Activate by drinking \u2014 gain two advantage tokens and cancel one active Peril condition.",value:6},
+  {title:"Smoke Bomb",consumable:true,effect:"A small clay sphere, warm to the touch. Activate to skip the current Adventure card with no penalty and no redraw \u2014 the hole plays with no encounter.",value:4},
+  {title:"Speaking Stone",consumable:true,effect:"Two stones, worn smooth, always warm. Activate to give a teammate your current tee box assignment for this hole. They choose which to play from.",value:4},
+  {title:"Tinker's Kit",consumable:true,effect:"A small roll of tools and odd components. Fixes what's broken. Activate to recharge any one spent reusable item \u2014 it may be used again this round.",value:5},
+  {title:"The War Horn",consumable:true,effect:"Ancient, dented, unmistakably loud. The sound carries further than it should. Activate to call the party to glory \u2014 everyone throws from blue tee with advantage this hole.",value:7},
+  // \u2500\u2500 REUSABLE \u2014 once per round, recharges at camp \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  {title:"Boots of Swiftness",consumable:false,effect:"They fit perfectly regardless of who puts them on. Activate at any tee box to choose your tee position freely this hole.",value:6},
+  {title:"The Compass",consumable:false,effect:"The needle points somewhere that isn't north. Activate at any tee box to skip the current Adventure card and draw a fresh one.",value:5},
+  {title:"The Whetstone",consumable:false,effect:"Swirls of sparkling black obsidian catch the light strangely. Activate to treat any one disc as a different disc type for one hole.",value:4},
+  {title:"Cloak of Shadows",consumable:false,effect:"Dark fabric that seems to swallow light. Activate on any Stealth tagged hole to ignore all conditions on that card.",value:3},
+  {title:"The Healer's Kit",consumable:false,effect:"The pouch refills itself overnight. Nobody questions it. Activate at any time to cancel one active Peril condition for any player.",value:7},
+  {title:"Signal Lantern",consumable:false,effect:"A captured wisp, restless but bound. Activate to move a teammate to your lie. They throw from your spot instead of their own this hole.",value:4},
+  {title:"Thieves Tools",consumable:false,effect:"A worn leather roll of small implements. Activate at any merchant encounter to buy one item without spending gold.",value:7},
+  {title:"Bag of Holding",consumable:false,effect:"Larger on the inside than the outside. Nobody questions it. Activate once per round to draw a treasure card and use it immediately for one hole. Return it to the deck after the hole.",value:6},
+  {title:"Traveler's Cloak",consumable:false,effect:"Worn and patched. Has seen every kind of weather. Activate to ignore all throw conditions on the current Peril card this hole.",value:5},
+];
+
+const RULES=[
+  {t:"The Quest",b:"You are a party of adventurers on a shared quest across 18 holes. Each hole is an encounter. The party succeeds or fails together based on average score. Par or better is a success. Over par is a failure."},
+  {t:"Tee Boxes",b:"Your score on the previous hole determines your tee box. Birdie or better \u2014 blue tee. Par \u2014 white tee. Bogey or worse \u2014 red tee. Everyone starts on white tee for hole one."},
+  {t:"The Cards",b:"At each tee box, before anyone throws, draw one Adventure card and read it aloud. Each birdie or better also draws a Boon card. Each bogey or worse also draws a Peril card."},
+  {t:"Card Timing",b:"Adventure cards affect this hole. Draw at the tee, resolve before you leave. Boon cards reward you immediately after this hole. Peril cards condition your next hole. XP is earned immediately on draw. Tokens and items carry until spent."},
+  {t:"Between Holes",b:"On longer walks between holes the party may optionally draw one Between Holes card. Participation is never required and skipping carries no penalty \u2014 only the potential reward is missed."},
+  {t:"Party Success and Failure",b:"After everyone holes out calculate the party average score. Par or better is a success \u2014 take the success reward on the Adventure card. Over par is a failure \u2014 take the fail consequence."},
+  {t:"Gold",b:"Every player earns gold individually. Gold rewards on cards pay each player that amount. Spend gold at camp after hole nine or hole eighteen to unlock new discs. A disc costs 10gp."},
+  {t:"Advantage and Disadvantage",b:"Advantage \u2014 throw twice, play the better lie. Disadvantage \u2014 throw twice, play the worse lie. Disadvantage cannot stack with itself. Other conditions can stack alongside it."},
+  {t:"Advantage Tokens",b:"Stored advantage tokens can be spent at any time to take advantage on any single throw or to use a triggered class passive outside of your skill tags. Earn tokens from Boon cards, Adventure card successes, and level ups. Start with one token at character creation. Unspent tokens at the end of a round convert to 1gp each or carry forward to the next session."},
+  {t:"Skills",b:"Your class gives you skills, giving advantages on certain encounters. If your character has a skill listed on the adventure card, you are proficient, and gain some benefit. Benefits include greater rewards or free uses of abilities. Choose one skill from your class list at level 1. Choose a second at level 2. At level 3 you may choose a third or instead choose to multiclass or prestige class."},
+  {t:"Experience and Leveling",b:"Drawing a Peril card earns XP immediately as printed on the card. Typically 2 XP. Level 1 to Level 2 \u2014 8 XP. Choose a second skill, gain one advantage token. Level 2 to Level 3 \u2014 9 XP. Choose a third skill or a multiclass passive, gain one advantage token."},
+  {t:"The Camp",b:"After hole nine and after hole eighteen the party returns to camp. Spend gold to unlock new discs at 10gp each. Spend XP to level up and choose a new skill or multiclass passive. Convert unspent advantage tokens to 1gp each or carry them forward. Buy or sell treasure items at face value if a merchant is available. Merchant class players buy at half price. Each player nominates one other player for a roleplay or character moment they enjoyed this round \u2014 that player gains 1 XP."},
+  {t:"Disc Inventory",b:"You start with a putter and one class appropriate disc. Fighters start with a putter, their chosen weapon, and one additional disc. Marksmen start with two putters and one additional disc. Artificers start with a putter and three gadget discs. New discs are unlocked at camp with gold. Your physical bag is your inventory \u2014 you can only use discs you have actually unlocked. Carrying two of the same disc is a legitimate strategic choice once advantage is in play."},
+  {t:"Treasure Items",b:"Treasure cards are holdable magic items. Keep them until you choose to activate them. Each treasure has a printed gold value for buying and selling at merchant encounters. Reusable items recharge at camp after hole nine and after hole eighteen."},
+  {t:"Homebrew Classes",b:"Players are encouraged to invent their own class. Every class needs one passive ability and three skills chosen from Combat, Social, Stealth, Nature, Arcane, Physical. The group eyeballs whether it feels balanced with existing classes before approving it."},
+  {t:"Multiclass & Prestige",b:"At level 3 instead of choosing a third skill you may choose a passive from any other class or prestige class as your multiclass option. Multiclass passives have no associated skills and never fire for free. Behavioral passives are always active at no cost as a multiclass. Triggered passives always cost a token to use as a multiclass. Prestige class passives come with permanent disc speed restrictions."},
+];
+
+const shuffle=a=>{const b=[...a];for(let i=b.length-1;i>0;i--){const j=0|Math.random()*(i+1);[b[i],b[j]]=[b[j],b[i]];}return b;};
+
+const Btn=({children,onClick,bg=C.gold,fg=C.bgDark,border:bd,style:s,...p})=>(
+  React.createElement('button', { onClick: onClick, style: {
+    width:"100%",padding:"13px 0",background:bg,
+    border:`4px solid ${bd||C.borderBright}`,borderRadius:0,
+    color:fg,fontFamily:BF,fontSize:15,cursor:"pointer",
+    letterSpacing:1,textShadow:"none",
+    boxShadow:bevelBtn(bd||C.borderBright),
+    ...s
+  }, ...p, __source: {fileName: _jsxFileName, lineNumber: 200}}, children)
+);
+
+const Panel=({children,style:s})=>(
+  React.createElement('div', { style: {
+    background:C.bgCard,
+    border:`4px solid ${C.borderBright}`,
+    borderRadius:0,padding:14,marginBottom:10,
+    boxShadow:bevel(C.borderBright),
+    ...s
+  }, __source: {fileName: _jsxFileName, lineNumber: 211}}, children)
+);
+
+const Tag=({text,color})=>(
+  React.createElement('span', { style: {
+    display:"inline-block",padding:"2px 8px",borderRadius:0,
+    fontSize:16,fontFamily:BF,
+    background:C.bgDark,border:`2px solid ${color}`,
+    color,marginRight:4,marginBottom:4,
+  }, __source: {fileName: _jsxFileName, lineNumber: 221}}, text)
+);
+
+function ClassDetail({cls,onSelect,onBack}){
+  return(
+    React.createElement('div', { style: {position:"fixed",inset:0,background:C.bg,zIndex:1000,overflowY:"auto",padding:"20px 16px 80px"}, __source: {fileName: _jsxFileName, lineNumber: 231}}
+      , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:cls.color,marginBottom:6,textShadow:OLH}, __source: {fileName: _jsxFileName, lineNumber: 232}}, cls.icon, " " , cls.name)
+      , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.parchment,marginBottom:14,lineHeight:1.4}, __source: {fileName: _jsxFileName, lineNumber: 233}}, cls.flavor)
+      , React.createElement(Panel, {__source: {fileName: _jsxFileName, lineNumber: 234}}
+        , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:cls.ptype==="behavioral"?C.green:C.blue,marginBottom:6}, __source: {fileName: _jsxFileName, lineNumber: 235}}, cls.ptype==="behavioral"?"\ud83d\udfe2 ALWAYS ACTIVE":"\ud83d\udd35 TRIGGERED")
+        , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.white,lineHeight:1.5}, __source: {fileName: _jsxFileName, lineNumber: 236}}, cls.passive)
+      )
+      , React.createElement(Panel, {__source: {fileName: _jsxFileName, lineNumber: 238}}
+        , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.grey,marginBottom:6}, __source: {fileName: _jsxFileName, lineNumber: 239}}, "SKILLS")
+        , React.createElement('div', {__source: {fileName: _jsxFileName, lineNumber: 240}}, cls.skills.map(s=>React.createElement(Tag, { key: s, text: s, color: C.cyan, __source: {fileName: _jsxFileName, lineNumber: 240}})))
+      )
+      , React.createElement(Panel, {__source: {fileName: _jsxFileName, lineNumber: 242}}
+        , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.grey,marginBottom:6}, __source: {fileName: _jsxFileName, lineNumber: 243}}, "STARTING GEAR" )
+        , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.white}, __source: {fileName: _jsxFileName, lineNumber: 244}}, cls.gear)
+      )
+      , React.createElement('div', { style: {display:"flex",gap:10,marginTop:14}, __source: {fileName: _jsxFileName, lineNumber: 246}}
+        , React.createElement(Btn, { onClick: onBack, bg: C.bgCard, fg: C.whiteDim, border: C.borderBright, style: {flex:1}, __source: {fileName: _jsxFileName, lineNumber: 247}}, "\u2190 BACK" )
+        , React.createElement(Btn, { onClick: onSelect, bg: cls.color, fg: C.bgDark, style: {flex:1}, __source: {fileName: _jsxFileName, lineNumber: 248}}, "SELECT")
+      )
+    )
+  );
+}
+
+function CardOverlay({card,deck,onDismiss,onAction,questPlayers,phase,setPhase,holeScores,setHoleScores,cardMeta,setCardMeta}){
+  const ds={
+    adventure:{border:C.gold,accent:C.gold,label:"ADVENTURE"},
+    boon:{border:C.green,accent:C.green,label:"BOON"},
+    peril:{border:C.red,accent:C.red,label:"PERIL"},
+    between:{border:C.blue,accent:C.blue,label:"BETWEEN HOLES"},
+    treasure:{border:C.gold,accent:C.gold,label:"TREASURE"},
+  }[deck];
+  const isPersonal=card.scope==="Personal";
+  const needsAssign=isPersonal&&(questPlayers&&questPlayers.length)>0;
+  const pBtn=(p)=>({
+    width:"100%",padding:"12px 14px",marginBottom:6,
+    background:C.bgDark,border:`4px solid ${(p.cls&&p.cls.color)||C.borderBright}`,
+    borderRadius:0,cursor:"pointer",display:"flex",alignItems:"center",gap:10,textAlign:"left",
+    boxShadow:bevel((p.cls&&p.cls.color)||C.borderBright),
+  });
+  return(
+    React.createElement('div', { style: {position:"fixed",inset:0,background:"rgba(0,0,0,0.88)",zIndex:1000,overflowY:"auto",padding:"14px 12px 40px"}, __source: {fileName: _jsxFileName, lineNumber: 271}}
+      , React.createElement('div', { style: {background:ds.border,padding:"3px 14px",marginBottom:0,display:"inline-block"}, __source: {fileName: _jsxFileName, lineNumber: 272}}
+        , React.createElement('span', { style: {fontFamily:BF,fontSize:16,letterSpacing:4,color:C.bgDark}, __source: {fileName: _jsxFileName, lineNumber: 273}}, ds.label)
+      )
+      , React.createElement('div', { style: {
+        background:"linear-gradient(180deg,#c8a84b 0%,#d4b86a 10%,#cdb060 88%,#b89030 100%)",
+        padding:"16px 18px 14px",marginBottom:10,
+        boxShadow:"0 4px 0 #5a3a08,0 7px 0 #2a1404,inset 0 1px 0 #f0d880,inset 0 -1px 0 #907020",
+        clipPath:"polygon(0 4px,6px 0,14px 3px,24px 0,36px 4px,55% 1px,calc(100% - 28px) 0,calc(100% - 12px) 3px,100% 0,100% calc(100% - 3px),calc(100% - 8px) 100%,calc(100% - 20px) calc(100% - 2px),50% calc(100% - 4px),18px calc(100% - 1px),6px 100%,0 calc(100% - 3px))",
+      }, __source: {fileName: _jsxFileName, lineNumber: 275}}
+        , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:5}, __source: {fileName: _jsxFileName, lineNumber: 281}}
+          , React.createElement('div', { style: {fontFamily:BF,fontSize:14,color:"#2a1408",lineHeight:1.2,flex:1}, __source: {fileName: _jsxFileName, lineNumber: 282}}, card.title)
+          , (()=>{
+            const SKILLS=new Set(["Combat","Social","Stealth","Nature","Arcane","Physical"]);
+            const skillTags=[...new Set((card.tags||"").split(/[\u2014,]/).map(s=>s.trim()).filter(s=>SKILLS.has(s)))];
+            const scope=deck==="peril"&&card.scope?card.scope:null;
+            const labels=[...skillTags,...(scope?[scope]:[])]; 
+            if(!labels.length) return null;
+            return React.createElement('div', { style: {display:"flex",gap:3,flexShrink:0,marginLeft:6,flexWrap:"wrap",justifyContent:"flex-end"}, __source: {fileName: _jsxFileName, lineNumber: 289}}, labels.map((t,i)=>(
+              React.createElement('span', { key: i, style: {display:"inline-block",padding:"1px 6px",background:"#3a240855",color:"#2a1408",fontFamily:BF,fontSize:12,whiteSpace:"nowrap"}, __source: {fileName: _jsxFileName, lineNumber: 290}}, t)
+            )));
+          })()
+        )
+        , card.flavor&&React.createElement('div', { style: {fontFamily:BF,fontSize:14,color:"#4a3010",marginBottom:9,lineHeight:1.4,fontStyle:"italic"}, __source: {fileName: _jsxFileName, lineNumber: 294}}, card.flavor)
+        , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:"#1e0e04",lineHeight:1.5,marginBottom:7}, __source: {fileName: _jsxFileName, lineNumber: 295}}, card.effect)
+        , card.reward&&React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:"#1a4010",marginBottom:5}, __source: {fileName: _jsxFileName, lineNumber: 296}}, "\u25b6 " , card.reward)
+        , card.redemption&&card.redemption.length>0&&React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:"#104040",marginBottom:5}, __source: {fileName: _jsxFileName, lineNumber: 297}}, "\u21a9 " , card.redemption)
+        , card.xp>0&&React.createElement('div', { style: {fontFamily:BF,fontSize:14,color:"#5a2800",marginBottom:4}, __source: {fileName: _jsxFileName, lineNumber: 298}}, "+", card.xp, " XP" )
+        , card.value!==undefined&&React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:"#5a2800",marginBottom:2}, __source: {fileName: _jsxFileName, lineNumber: 299}}, "VALUE: " , card.value, "gp")
+      )
+
+      , deck==="adventure"&&phase==="score"&&(questPlayers&&questPlayers.length)>0&&(()=>{
+        const scores=holeScores||{};
+        const avg=questPlayers.reduce((a,p)=>a+(scores[p.id]||0),0)/questPlayers.length;
+        const partySuccess=avg<=0;
+        const adj2=(pid,d)=>setHoleScores(prev=>({...prev,[pid]:(parseInt(prev[pid])||0)+d}));
+        const t=card.title;
+        const m=cardMeta;
+        const setM=setCardMeta;
+        // \u2500\u2500 helper styles \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+        const choiceBtn=(active,color)=>({width:"100%",padding:"11px 12px",marginBottom:6,background:active?color+"22":C.bgDark,border:`3px solid ${active?color:C.greyDim}`,borderRadius:0,cursor:"pointer",textAlign:"left",boxShadow:active?bevel(color):"none"});
+        const sectionHdr=(label)=>React.createElement('div', { style: {fontFamily:BF,fontSize:13,color:C.grey,letterSpacing:2,marginBottom:8,marginTop:4,borderBottom:`1px solid ${C.border}`,paddingBottom:4}, __source: {fileName: _jsxFileName, lineNumber: 312}}, label);
+        const badge=(txt,color)=>React.createElement('div', { style: {fontFamily:BF,fontSize:12,color,border:`1px solid ${color}44`,padding:"3px 8px",display:"inline-block",marginBottom:8}, __source: {fileName: _jsxFileName, lineNumber: 313}}, txt);
+        // \u2500\u2500 per-card pre-play UI \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+        const prePlay=(()=>{
+          if(t==="The Wounded Traveler") return React.createElement(React.Fragment, null
+            , sectionHdr("BEFORE THROWING \u2014 PARTY DECIDES")
+            , React.createElement('button', { onClick: ()=>setM(p=>({...p,stopped:true})), style: choiceBtn(m.stopped===true,C.green), __source: {fileName: _jsxFileName, lineNumber: 318}}
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:14,color:m.stopped===true?C.green:C.whiteDim}, __source: {fileName: _jsxFileName, lineNumber: 319}}, "\u270b WE STOP TO HELP"    )
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:12,color:C.greyDim}, __source: {fileName: _jsxFileName, lineNumber: 320}}, "No gp reward this hole. Draw a Boon immediately below."         )
+            )
+            , React.createElement('button', { onClick: ()=>setM(p=>({...p,stopped:false})), style: choiceBtn(m.stopped===false,C.red), __source: {fileName: _jsxFileName, lineNumber: 322}}
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:14,color:m.stopped===false?C.red:C.whiteDim}, __source: {fileName: _jsxFileName, lineNumber: 323}}, "\u2192 WE PRESS ON"   )
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:12,color:C.greyDim}, __source: {fileName: _jsxFileName, lineNumber: 324}}, "Play normally. No gp reward even on success."       )
+            )
+            , m.stopped===true&&!m.boonDrawn&&React.createElement('button', { onClick: ()=>{const bc=draw(bD,setBD,BOON_CARDS);setM(p=>({...p,boonDrawn:true,boonCard:bc}));}, style: {width:"100%",padding:"10px",marginTop:4,background:C.green+"18",border:`3px solid ${C.green}`,borderRadius:0,color:C.green,fontFamily:BF,fontSize:14,cursor:"pointer"}, __source: {fileName: _jsxFileName, lineNumber: 326}}, "\u2728 DRAW BOON NOW"   )
+            , m.boonCard&&React.createElement('div', { style: {background:C.bgDark,border:`2px solid ${C.green}44`,padding:"8px 10px",marginTop:4,fontFamily:BF,fontSize:13,color:C.whiteDim}, __source: {fileName: _jsxFileName, lineNumber: 327}}, React.createElement('span', { style: {color:C.green}, __source: {fileName: _jsxFileName, lineNumber: 327}}, "BOON: " , m.boonCard.title), " \u2014 "  , m.boonCard.effect)
+          );
+          if(t==="The Toll Keeper") return React.createElement(React.Fragment, null
+            , sectionHdr("BEFORE THROWING \u2014 PARTY DECIDES")
+            , React.createElement('button', { onClick: ()=>setM(p=>({...p,paid:true})), style: choiceBtn(m.paid===true,C.green), __source: {fileName: _jsxFileName, lineNumber: 331}}
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:14,color:m.paid===true?C.green:C.whiteDim}, __source: {fileName: _jsxFileName, lineNumber: 332}}, "\ud83d\udcb0 PAY 2GP \u2014 play normally"     )
+            )
+            , React.createElement('button', { onClick: ()=>setM(p=>({...p,paid:false})), style: choiceBtn(m.paid===false,C.red), __source: {fileName: _jsxFileName, lineNumber: 334}}
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:14,color:m.paid===false?C.red:C.whiteDim}, __source: {fileName: _jsxFileName, lineNumber: 335}}, "\u2192 PUSH THROUGH \u2014 all drives with disadvantage"       )
+            )
+            , m.paid===true&&React.createElement('div', { style: {fontFamily:BF,fontSize:12,color:C.gold,marginTop:4}, __source: {fileName: _jsxFileName, lineNumber: 337}}, "\ud83d\udcb0 2gp will be deducted from each player on resolve."         )
+          );
+          if(t==="The Banquet") return React.createElement(React.Fragment, null
+            , sectionHdr("IMPRESSION \u2014 HOW MUCH DOES EACH PLAYER SPEND?")
+            , questPlayers.map(p=>{
+              const spent=(m.banquetSpend&&m.banquetSpend[p.id])||0;
+              return React.createElement('div', { key: p.id, style: {display:"flex",alignItems:"center",gap:8,marginBottom:8}, __source: {fileName: _jsxFileName, lineNumber: 343}}
+                , React.createElement('span', { style: {fontSize:14}, __source: {fileName: _jsxFileName, lineNumber: 344}}, (p.cls&&p.cls.icon)||"\u2753")
+                , React.createElement('div', { style: {fontFamily:BF,fontSize:13,color:(p.cls&&p.cls.color)||C.gold,flex:1}, __source: {fileName: _jsxFileName, lineNumber: 345}}, p.name, " " , React.createElement('span', { style: {color:C.greyDim}, __source: {fileName: _jsxFileName, lineNumber: 345}}, "(has \ud83d\udcb0" , p.gold, ")"))
+                , [0,1,2,3].map(n=>React.createElement('button', { key: n, onClick: ()=>setM(prev=>({...prev,banquetSpend:{...prev.banquetSpend,[p.id]:n}})), style: {width:32,height:32,background:spent===n?C.gold+"33":C.bgDark,border:`2px solid ${spent===n?C.gold:C.greyDim}`,borderRadius:0,color:spent===n?C.gold:C.greyDim,fontFamily:BF,fontSize:13,cursor:"pointer"}, __source: {fileName: _jsxFileName, lineNumber: 346}}, n))
+              );
+            })
+            , (()=>{const total=Object.values(m.banquetSpend||{}).reduce((a,v)=>a+v,0);const tier=total>=6?"10gp + treasure":total>=3?"6gp":total>0?"3gp":"no reward";return React.createElement('div', { style: {fontFamily:BF,fontSize:13,color:C.parchment,marginTop:4}, __source: {fileName: _jsxFileName, lineNumber: 349}}, "Total: " , total, "gp \u2192 success pays "    , tier);})()
+          );
+          if(t==="The Wager") return React.createElement(React.Fragment, null
+            , sectionHdr("WAGER \u2014 HOW MUCH DOES EACH PLAYER BET? (0\u20133gp)")
+            , questPlayers.map(p=>{
+              const w=(m.wager&&m.wager[p.id])||0;
+              return React.createElement('div', { key: p.id, style: {display:"flex",alignItems:"center",gap:8,marginBottom:8}, __source: {fileName: _jsxFileName, lineNumber: 355}}
+                , React.createElement('span', { style: {fontSize:14}, __source: {fileName: _jsxFileName, lineNumber: 356}}, (p.cls&&p.cls.icon)||"\u2753")
+                , React.createElement('div', { style: {fontFamily:BF,fontSize:13,color:(p.cls&&p.cls.color)||C.gold,flex:1}, __source: {fileName: _jsxFileName, lineNumber: 357}}, p.name, " " , React.createElement('span', { style: {color:C.greyDim}, __source: {fileName: _jsxFileName, lineNumber: 357}}, "(\ud83d\udcb0", p.gold, ")"))
+                , [0,1,2,3].map(n=>React.createElement('button', { key: n, onClick: ()=>setM(prev=>({...prev,wager:{...prev.wager,[p.id]:n}})), style: {width:32,height:32,background:w===n?C.gold+"33":C.bgDark,border:`2px solid ${w===n?C.gold:C.greyDim}`,borderRadius:0,color:w===n?C.gold:C.greyDim,fontFamily:BF,fontSize:13,cursor:"pointer"}, __source: {fileName: _jsxFileName, lineNumber: 358}}, n))
+              );
+            })
+            , React.createElement('div', { style: {fontFamily:BF,fontSize:12,color:C.greyDim,marginTop:2}, __source: {fileName: _jsxFileName, lineNumber: 361}}, "Par or better: win double. Bogey: lose it. Success also gains 2gp each."            )
+          );
+          if(t==="The Hermit") return React.createElement(React.Fragment, null
+            , sectionHdr("OPTIONAL \u2014 SPEND 2GP FOR A BOON")
+            , questPlayers.map(p=>{
+              const paid=m.hermitPaid===p.id;
+              return React.createElement('button', { key: p.id, onClick: ()=>{
+                if(paid){setM(prev=>({...prev,hermitPaid:null,hermitBoon:null}));return;}
+                if(p.gold<2) return;
+                const bc=draw(bD,setBD,BOON_CARDS);
+                _setAndSavePlayers(ps=>ps.map(pl=>pl.id===p.id?{...pl,gold:pl.gold-2}:pl));
+                setM(prev=>({...prev,hermitPaid:p.id,hermitBoon:bc}));
+              }, style: choiceBtn(paid,C.teal), __source: {fileName: _jsxFileName, lineNumber: 367}}
+                , React.createElement('div', { style: {display:"flex",alignItems:"center",gap:8}, __source: {fileName: _jsxFileName, lineNumber: 374}}
+                  , React.createElement('span', { style: {fontSize:14}, __source: {fileName: _jsxFileName, lineNumber: 375}}, (p.cls&&p.cls.icon)||"\u2753")
+                  , React.createElement('div', { style: {fontFamily:BF,fontSize:13,color:paid?C.teal:p.gold>=2?C.whiteDim:C.greyDim}, __source: {fileName: _jsxFileName, lineNumber: 376}}, p.name, " " , paid?"\u2014 paid 2gp \u2713":`(\ud83d\udcb0${p.gold})`, p.gold<2&&!paid?" \u2014 not enough":"")
+                )
+              );
+            })
+            , m.hermitBoon&&React.createElement('div', { style: {background:C.bgDark,border:`2px solid ${C.teal}44`,padding:"8px 10px",marginTop:4,fontFamily:BF,fontSize:13,color:C.whiteDim}, __source: {fileName: _jsxFileName, lineNumber: 380}}, React.createElement('span', { style: {color:C.teal}, __source: {fileName: _jsxFileName, lineNumber: 380}}, "BOON: " , m.hermitBoon.title), " \u2014 "  , m.hermitBoon.effect)
+          );
+          if(t==="The Standing Stones") return React.createElement(React.Fragment, null
+            , sectionHdr("OPTIONAL \u2014 PARTY SPENDS 2GP FOR 2 TOKENS")
+            , React.createElement('button', { onClick: ()=>{
+              if(m.stonesPaid) return;
+              const partyCanAfford=questPlayers.every(p=>p.gold>=1);
+              if(!partyCanAfford) return;
+              _setAndSavePlayers(ps=>ps.map(p=>questPlayersFromQuest.find(q=>q.id===p.id)?{...p,gold:p.gold-1,tokens:p.tokens+1}:p));
+              setM(prev=>({...prev,stonesPaid:true}));
+            }, style: choiceBtn(!!m.stonesPaid,C.purple), __source: {fileName: _jsxFileName, lineNumber: 384}}
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:14,color:m.stonesPaid?C.purple:C.whiteDim}, __source: {fileName: _jsxFileName, lineNumber: 391}}, m.stonesPaid?"\u2713 PAID \u2014 2 tokens granted":"\ud83d\udc9c SPEND 2GP \u2014 gain 2 advantage tokens")
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:12,color:C.greyDim}, __source: {fileName: _jsxFileName, lineNumber: 392}}, "Costs 1gp each from every player. Tokens granted immediately."        )
+            )
+          );
+          if(t==="The Offering Stone") return React.createElement(React.Fragment, null
+            , sectionHdr("OFFERING \u2014 TAP EACH PLAYER WHO LEAVES 1GP")
+            , questPlayers.map(p=>{
+              const offered=(m.offering&&m.offering[p.id]);
+              return React.createElement('button', { key: p.id, onClick: ()=>{
+                if(offered) return; // can't un-offer
+                if(p.gold<1) return;
+                _setAndSavePlayers(ps=>ps.map(pl=>pl.id===p.id?{...pl,gold:pl.gold-1}:pl));
+                setM(prev=>({...prev,offering:{...prev.offering,[p.id]:true}}));
+              }, style: choiceBtn(!!offered,C.purple), __source: {fileName: _jsxFileName, lineNumber: 399}}
+                , React.createElement('div', { style: {display:"flex",alignItems:"center",gap:8}, __source: {fileName: _jsxFileName, lineNumber: 405}}
+                  , React.createElement('span', { style: {fontSize:14}, __source: {fileName: _jsxFileName, lineNumber: 406}}, (p.cls&&p.cls.icon)||"\u2753")
+                  , React.createElement('div', { style: {fontFamily:BF,fontSize:13,color:offered?C.purple:p.gold>=1?C.whiteDim:C.greyDim}, __source: {fileName: _jsxFileName, lineNumber: 407}}, p.name, " " , offered?"\u2014 offered 1gp \u2713":`(\ud83d\udcb0${p.gold})`)
+                )
+              );
+            })
+            , (()=>{
+              const offerers=Object.keys(m.offering||{}).filter(id=>m.offering[id]).length;
+              if(offerers>=2&&!m.stonesTokensGranted){
+                setM(prev=>({...prev,stonesTokensGranted:true}));
+                _setAndSavePlayers(ps=>ps.map(p=>questPlayersFromQuest.find(q=>q.id===p.id)?{...p,tokens:p.tokens+1}:p));
+              }
+              return React.createElement('div', { style: {fontFamily:BF,fontSize:12,color:offerers>=2?C.purple:C.greyDim,marginTop:4}, __source: {fileName: _jsxFileName, lineNumber: 417}}, offerers, " offering" , offerers!==1?"s":"", " \u2014 "  , offerers>=2?"2 tokens granted to party":"need 2+ to trigger tokens");
+            })()
+          );
+          if(t==="The River Crossing") return React.createElement(React.Fragment, null
+            , sectionHdr("BEFORE THROWING \u2014 PARTY CHOOSES")
+            , React.createElement('button', { onClick: ()=>setM(p=>({...p,river:"long"})), style: choiceBtn(m.river==="long",C.blue), __source: {fileName: _jsxFileName, lineNumber: 422}}
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:14,color:m.river==="long"?C.blue:C.whiteDim}, __source: {fileName: _jsxFileName, lineNumber: 423}}, "\ud83d\udd35 TAKE THE LONG WAY \u2014 harder"      )
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:12,color:C.greyDim}, __source: {fileName: _jsxFileName, lineNumber: 424}}, "Everyone moves one tee box toward blue."      )
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:12,color:C.gold,marginTop:2}, __source: {fileName: _jsxFileName, lineNumber: 425}}, "\u2726 Success: 6gp \u00b7 Fail: 2gp"     )
+            )
+            , React.createElement('button', { onClick: ()=>setM(p=>({...p,river:"short"})), style: choiceBtn(m.river==="short",C.green), __source: {fileName: _jsxFileName, lineNumber: 427}}
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:14,color:m.river==="short"?C.green:C.whiteDim}, __source: {fileName: _jsxFileName, lineNumber: 428}}, "\ud83d\udd34 TAKE THE SHORT WAY \u2014 easier"      )
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:12,color:C.greyDim}, __source: {fileName: _jsxFileName, lineNumber: 429}}, "Everyone moves one tee box toward red."      )
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:12,color:C.goldDim,marginTop:2}, __source: {fileName: _jsxFileName, lineNumber: 430}}, "Success: 3gp \u00b7 Fail: 1gp"    )
+            )
+            , m.river&&badge(`${m.river==="long"?"\ud83d\udd35 Long way \u2014 double rewards":"\ud83d\udd34 Short way \u2014 standard rewards"}`,m.river==="long"?C.blue:C.green)
+          );
+          if(t==="The Wrong Path") return React.createElement(React.Fragment, null
+            , sectionHdr("BEFORE THROWING \u2014 ONE PLAYER DRAWS A PERIL")
+            , !m.wrongPathPeril&&React.createElement(React.Fragment, null
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:13,color:C.greyDim,marginBottom:8}, __source: {fileName: _jsxFileName, lineNumber: 437}}, "The group chooses who draws. That player reads it aloud \u2014 it only activates if the party fails."                 )
+              , questPlayers.map(p=>React.createElement('button', { key: p.id, onClick: ()=>{
+                const pc=draw(pD,setPD,PERIL_CARDS);
+                setM(prev=>({...prev,wrongPathPeril:pc,wrongPathPid:p.id,wrongPathPname:p.name}));
+              }, style: choiceBtn(false,C.purple), __source: {fileName: _jsxFileName, lineNumber: 438}}
+                , React.createElement('div', { style: {display:"flex",alignItems:"center",gap:8}, __source: {fileName: _jsxFileName, lineNumber: 442}}
+                  , React.createElement('span', { style: {fontSize:14}, __source: {fileName: _jsxFileName, lineNumber: 443}}, (p.cls&&p.cls.icon)||"\u2753")
+                  , React.createElement('div', { style: {fontFamily:BF,fontSize:13,color:C.whiteDim}, __source: {fileName: _jsxFileName, lineNumber: 444}}, p.name, " draws the peril"   )
+                )
+              ))
+            )
+            , m.wrongPathPeril&&React.createElement(React.Fragment, null
+              , React.createElement('div', { style: {background:C.red+"18",border:`2px solid ${C.red}55`,borderRadius:0,padding:"10px 12px",marginBottom:6}, __source: {fileName: _jsxFileName, lineNumber: 449}}
+                , React.createElement('div', { style: {fontFamily:BF,fontSize:13,color:C.red,marginBottom:3}, __source: {fileName: _jsxFileName, lineNumber: 450}}, "\u26a0 " , m.wrongPathPeril.title, " \u2014 drawn by "    , m.wrongPathPname)
+                , m.wrongPathPeril.tags&&React.createElement('div', { style: {fontFamily:BF,fontSize:12,color:C.greyDim,marginBottom:4}, __source: {fileName: _jsxFileName, lineNumber: 451}}, m.wrongPathPeril.tags)
+                , React.createElement('div', { style: {fontFamily:BF,fontSize:13,color:C.whiteDim,lineHeight:1.5,marginBottom:4}, __source: {fileName: _jsxFileName, lineNumber: 452}}, m.wrongPathPeril.effect)
+                , m.wrongPathPeril.redemption&&React.createElement('div', { style: {fontFamily:BF,fontSize:12,color:C.teal}, __source: {fileName: _jsxFileName, lineNumber: 453}}, "\u21a9 " , m.wrongPathPeril.redemption)
+              )
+              , badge("Held \u2014 activates only on party failure",C.red)
+            )
+          );
+          return null;
+        })();
+        return React.createElement(React.Fragment, null
+          , prePlay&&React.createElement('div', { style: {marginBottom:12}, __source: {fileName: _jsxFileName, lineNumber: 461}}, prePlay)
+          , sectionHdr("SCORE")
+          , React.createElement('div', { style: {marginBottom:10}, __source: {fileName: _jsxFileName, lineNumber: 463}}
+            , questPlayers.map(p=>{
+              const n=scores[p.id]||0;
+              const cl=n<0?C.green:n>0?C.red:C.whiteDim;
+              const label=n===0?"E":n>0?`+${n}`:`${n}`;
+              return React.createElement('div', { key: p.id, style: {display:"flex",alignItems:"center",gap:8,marginBottom:6}, __source: {fileName: _jsxFileName, lineNumber: 468}}
+                , React.createElement('span', { style: {fontSize:14,flexShrink:0}, __source: {fileName: _jsxFileName, lineNumber: 469}}, (p.cls&&p.cls.icon)||"\u2753")
+                , React.createElement('div', { style: {fontFamily:BF,fontSize:14,color:(p.cls&&p.cls.color)||C.gold,flex:1}, __source: {fileName: _jsxFileName, lineNumber: 470}}, p.name)
+                , React.createElement('div', { style: {fontFamily:BF,fontSize:15,color:cl,minWidth:36,textAlign:"right"}, __source: {fileName: _jsxFileName, lineNumber: 471}}, label)
+                , React.createElement('button', { onClick: ()=>adj2(p.id,-1), style: {width:38,height:38,background:C.bgDark,border:`3px solid ${C.green}`,borderRadius:0,color:C.green,fontFamily:BF,fontSize:15,cursor:"pointer",boxShadow:bevel(C.green)}, __source: {fileName: _jsxFileName, lineNumber: 472}}, "-")
+                , React.createElement('button', { onClick: ()=>adj2(p.id,1), style: {width:38,height:38,background:C.bgDark,border:`3px solid ${C.red}`,borderRadius:0,color:C.red,fontFamily:BF,fontSize:15,cursor:"pointer",boxShadow:bevel(C.red)}, __source: {fileName: _jsxFileName, lineNumber: 473}}, "+")
+              );
+            })
+          )
+          , React.createElement('div', { style: {fontFamily:BF,fontSize:14,color:partySuccess?C.green:C.red,marginBottom:10,textAlign:"center"}, __source: {fileName: _jsxFileName, lineNumber: 477}}, "PARTY: "
+             , partySuccess?"SUCCESS \u2713":"FAIL \u2717", " (avg "  , avg===0?"E":avg>0?`+${avg.toFixed(1)}`:avg.toFixed(1), ")"
+          )
+          , React.createElement('button', { onClick: ()=>onAction("success"), disabled: !partySuccess, style: {width:"100%",padding:"14px",marginBottom:8,background:partySuccess?C.bgDark:"#111",border:`4px solid ${partySuccess?C.green:C.greyDim}`,borderRadius:0,cursor:partySuccess?"pointer":"default",textAlign:"left",boxShadow:partySuccess?bevel(C.green):"none",opacity:partySuccess?1:0.35}, __source: {fileName: _jsxFileName, lineNumber: 480}}
+            , React.createElement('div', { style: {fontFamily:BF,fontSize:15,color:partySuccess?C.green:C.greyDim,marginBottom:2}, __source: {fileName: _jsxFileName, lineNumber: 481}}, "\u2713 SUCCESS" )
+            , React.createElement('div', { style: {fontFamily:BF,fontSize:14,color:partySuccess?C.white:C.greyDim}, __source: {fileName: _jsxFileName, lineNumber: 482}}, card.success)
+          )
+          , React.createElement('button', { onClick: ()=>onAction("fail"), disabled: partySuccess, style: {width:"100%",padding:"14px",marginBottom:8,background:!partySuccess?C.bgDark:"#111",border:`4px solid ${!partySuccess?C.red:C.greyDim}`,borderRadius:0,cursor:!partySuccess?"pointer":"default",textAlign:"left",boxShadow:!partySuccess?bevel(C.red):"none",opacity:!partySuccess?1:0.35}, __source: {fileName: _jsxFileName, lineNumber: 484}}
+            , React.createElement('div', { style: {fontFamily:BF,fontSize:15,color:!partySuccess?C.red:C.greyDim,marginBottom:2}, __source: {fileName: _jsxFileName, lineNumber: 485}}, "\u2717 FAIL" )
+            , React.createElement('div', { style: {fontFamily:BF,fontSize:14,color:!partySuccess?C.white:C.greyDim}, __source: {fileName: _jsxFileName, lineNumber: 486}}, card.fail)
+          )
+          , React.createElement('button', { onClick: ()=>setPhase("adjust"), style: {width:"100%",padding:"10px 0",marginBottom:8,background:"transparent",border:`2px solid ${C.grey}`,borderRadius:0,color:C.grey,fontFamily:BF,fontSize:14,cursor:"pointer"}, __source: {fileName: _jsxFileName, lineNumber: 488}}, "ADJUST INDIVIDUAL PLAYER"  )
+        );
+      })()
+
+      , deck==="adventure"&&phase==="adjust"&&(questPlayers&&questPlayers.length)>0&&React.createElement(React.Fragment, null
+        , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.grey,marginBottom:8}, __source: {fileName: _jsxFileName, lineNumber: 493}}, "TAP PLAYER TO ADJUST"   )
+        , questPlayers.map(p=>React.createElement('button', { key: p.id, onClick: ()=>onAction("adjustPlayer",p.id), style: pBtn(p), __source: {fileName: _jsxFileName, lineNumber: 494}}
+          , React.createElement('span', { style: {fontSize:22}, __source: {fileName: _jsxFileName, lineNumber: 495}}, (p.cls&&p.cls.icon)||"\u2753")
+          , React.createElement('div', {__source: {fileName: _jsxFileName, lineNumber: 496}}, React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:(p.cls&&p.cls.color)||C.gold}, __source: {fileName: _jsxFileName, lineNumber: 496}}, p.name)
+          , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.whiteDim}, __source: {fileName: _jsxFileName, lineNumber: 497}}, "\ud83d\udcb0", p.gold, " \u2726" , p.xp, " \ud83d\udee1" , p.tokens))
+        ))
+        , React.createElement('button', { onClick: ()=>setPhase("read"), style: {width:"100%",padding:"10px 0",background:"transparent",border:`2px solid ${C.grey}`,borderRadius:0,color:C.grey,fontFamily:BF,fontSize:16,cursor:"pointer"}, __source: {fileName: _jsxFileName, lineNumber: 499}}, "\u2190 BACK" )
+      )
+
+      , phase==="assign"&&needsAssign&&React.createElement(React.Fragment, null
+        , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.grey,marginBottom:8}, __source: {fileName: _jsxFileName, lineNumber: 503}}, "ASSIGN TO PLAYER"  )
+        , questPlayers.map(p=>React.createElement('button', { key: p.id, onClick: ()=>onAction("assign",p.id), style: pBtn(p), __source: {fileName: _jsxFileName, lineNumber: 504}}
+          , React.createElement('span', { style: {fontSize:22}, __source: {fileName: _jsxFileName, lineNumber: 505}}, (p.cls&&p.cls.icon)||"\u2753")
+          , React.createElement('div', {__source: {fileName: _jsxFileName, lineNumber: 506}}, React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:(p.cls&&p.cls.color)||C.gold}, __source: {fileName: _jsxFileName, lineNumber: 506}}, p.name)
+          , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.whiteDim}, __source: {fileName: _jsxFileName, lineNumber: 507}}, "\ud83d\udcb0", p.gold, " \u2726" , p.xp, " \ud83d\udee1" , p.tokens))
+        ))
+      )
+
+      , deck==="treasure"&&phase==="read"&&(questPlayers&&questPlayers.length)>0&&React.createElement(React.Fragment, null
+        , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.grey,marginBottom:8}, __source: {fileName: _jsxFileName, lineNumber: 512}}, "ASSIGN TO PLAYER"  )
+        , questPlayers.map(p=>React.createElement('button', { key: p.id, onClick: ()=>onAction("assignTreasure",p.id), style: pBtn(p), __source: {fileName: _jsxFileName, lineNumber: 513}}
+          , React.createElement('span', { style: {fontSize:22}, __source: {fileName: _jsxFileName, lineNumber: 514}}, (p.cls&&p.cls.icon)||"\u2753")
+          , React.createElement('div', {__source: {fileName: _jsxFileName, lineNumber: 515}}, React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:(p.cls&&p.cls.color)||C.gold}, __source: {fileName: _jsxFileName, lineNumber: 515}}, p.name)
+          , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.whiteDim}, __source: {fileName: _jsxFileName, lineNumber: 516}}, "\ud83d\udcb0", p.gold, " \u00b7 "  , (p.treasures||[]).length, " treasures" ))
+        ))
+      )
+
+      , deck==="between"&&phase==="read"&&(questPlayers&&questPlayers.length)>0&&React.createElement(React.Fragment, null
+        , React.createElement('div', { style: {fontFamily:BF,fontSize:13,color:C.grey,marginBottom:8,textAlign:"center"}, __source: {fileName: _jsxFileName, lineNumber: 521}}, "APPLY REWARD TO PARTY MEMBERS WHO COMPLETED THE TASK"        )
+        , questPlayers.map(p=>React.createElement('button', { key: p.id, onClick: ()=>onAction("assignBetween",p.id), style: pBtn(p), __source: {fileName: _jsxFileName, lineNumber: 522}}
+          , React.createElement('span', { style: {fontSize:22}, __source: {fileName: _jsxFileName, lineNumber: 523}}, (p.cls&&p.cls.icon)||"\u2753")
+          , React.createElement('div', {__source: {fileName: _jsxFileName, lineNumber: 524}}, React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:(p.cls&&p.cls.color)||C.gold}, __source: {fileName: _jsxFileName, lineNumber: 524}}, p.name)
+          , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.whiteDim}, __source: {fileName: _jsxFileName, lineNumber: 525}}, "\ud83d\udcb0", p.gold, " \u2726" , p.xp, " \ud83d\udee1" , p.tokens))
+        ))
+      )
+      , deck==="peril"&&card.scope==="Party"&&phase==="read"&&React.createElement(Btn, { onClick: ()=>onAction("applyPartyPeril"), bg: C.red, fg: C.bgDark, border: C.red, style: {marginBottom:8}, __source: {fileName: _jsxFileName, lineNumber: 528}}, "APPLY TO WHOLE PARTY"   )
+      , deck!=="adventure"&&deck!=="between"&&deck!=="peril"&&!needsAssign&&deck!=="treasure"&&phase==="read"&&React.createElement(Btn, { onClick: onDismiss, bg: ds.accent, fg: C.bgDark, border: ds.accent, style: {marginBottom:8}, __source: {fileName: _jsxFileName, lineNumber: 529}}, "DISMISS")
+      , deck==="peril"&&card.scope!=="Party"&&!needsAssign&&phase==="read"&&React.createElement(Btn, { onClick: onDismiss, bg: ds.accent, fg: C.bgDark, border: ds.accent, style: {marginBottom:8}, __source: {fileName: _jsxFileName, lineNumber: 530}}, "DISMISS")
+      , deck!=="adventure"&&deck!=="between"&&needsAssign&&phase==="read"&&React.createElement(Btn, { onClick: ()=>setPhase("assign"), bg: ds.accent, fg: C.bgDark, border: ds.accent, style: {marginBottom:8}, __source: {fileName: _jsxFileName, lineNumber: 531}}, "ASSIGN TO PLAYER"  )
+      , React.createElement('button', { onClick: onDismiss, style: {width:"100%",padding:"12px 0",background:"transparent",border:`2px solid ${C.grey}`,borderRadius:0,color:C.grey,fontFamily:BF,fontSize:16,cursor:"pointer"}, __source: {fileName: _jsxFileName, lineNumber: 532}}, "CLOSE WITHOUT ACTION"  )
+    )
+  );
+}
+
+function PlayerSheet({player,onClose,onAdj}){
+  const p=player;
+  return(
+    React.createElement('div', { style: {position:"fixed",inset:0,background:"rgba(0,0,0,0.88)",display:"flex",alignItems:"flex-end",zIndex:1000}, onClick: onClose, __source: {fileName: _jsxFileName, lineNumber: 540}}
+      , React.createElement('div', { onClick: e=>e.stopPropagation(), style: {background:C.bgCard,border:`4px solid ${C.borderBright}`,borderRadius:0,padding:"20px 16px 28px",width:"100%",maxWidth:500,maxHeight:"80vh",overflowY:"auto",boxShadow:bevel(C.borderBright)}, __source: {fileName: _jsxFileName, lineNumber: 541}}
+        , React.createElement('div', { style: {display:"flex",alignItems:"center",gap:10,marginBottom:14}, __source: {fileName: _jsxFileName, lineNumber: 542}}
+          , React.createElement('span', { style: {fontSize:32}, __source: {fileName: _jsxFileName, lineNumber: 543}}, (p.cls&&p.cls.icon)||"\u2753")
+          , React.createElement('div', {__source: {fileName: _jsxFileName, lineNumber: 544}}
+            , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:(p.cls&&p.cls.color)||C.gold,textShadow:OLH}, __source: {fileName: _jsxFileName, lineNumber: 545}}, p.name)
+            , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.whiteDim}, __source: {fileName: _jsxFileName, lineNumber: 546}}, (p.cls&&p.cls.name), " \u00b7 Lv"  , p.level||1)
+          )
+        )
+        , [["\ud83d\udcb0 Gold",p.gold,C.gold,"gold"],["\u2726 XP",p.xp,C.purple,"xp"],["\ud83d\udee1 Tokens",p.tokens,C.cyan,"tokens"]].map(([label,val,cl,field])=>(
+          React.createElement('div', { key: field, style: {display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:`2px solid ${C.borderBright}44`}, __source: {fileName: _jsxFileName, lineNumber: 550}}
+            , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:cl}, __source: {fileName: _jsxFileName, lineNumber: 551}}, label)
+            , React.createElement('div', { style: {display:"flex",alignItems:"center",gap:10}, __source: {fileName: _jsxFileName, lineNumber: 552}}
+              , React.createElement('button', { onClick: ()=>onAdj(field,-1), style: {width:38,height:38,background:C.bgDark,border:`3px solid ${C.red}`,borderRadius:0,color:C.red,fontSize:15,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:bevel(C.red)}, __source: {fileName: _jsxFileName, lineNumber: 553}}, "\u2212")
+              , React.createElement('span', { style: {fontFamily:BF,fontSize:16,color:C.white,minWidth:36,textAlign:"center"}, __source: {fileName: _jsxFileName, lineNumber: 554}}, val)
+              , React.createElement('button', { onClick: ()=>onAdj(field,1), style: {width:38,height:38,background:C.bgDark,border:`3px solid ${C.green}`,borderRadius:0,color:C.green,fontSize:15,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:bevel(C.green)}, __source: {fileName: _jsxFileName, lineNumber: 555}}, "+")
+            )
+          )
+        ))
+        , React.createElement('div', { style: {display:"flex",alignItems:"center",gap:8,marginTop:12,marginBottom:10}, __source: {fileName: _jsxFileName, lineNumber: 559}}
+          , React.createElement('div', { style: {width:14,height:14,background:TEE[p.tee],border:`2px solid ${C.borderBright}`}, __source: {fileName: _jsxFileName, lineNumber: 560}})
+          , React.createElement('span', { style: {fontFamily:BF,fontSize:16,color:C.whiteDim}, __source: {fileName: _jsxFileName, lineNumber: 561}}, "TEE: " , p.tee.toUpperCase())
+        )
+        , React.createElement('div', { style: {background:C.bgDark,border:`3px solid ${(p.cls&&p.cls.ptype)==="behavioral"?C.green:C.blue}`,borderRadius:0,padding:10,marginBottom:12,boxShadow:bevel((p.cls&&p.cls.ptype)==="behavioral"?C.green:C.blue)}, __source: {fileName: _jsxFileName, lineNumber: 563}}
+          , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:(p.cls&&p.cls.ptype)==="behavioral"?C.green:C.blue,marginBottom:4}, __source: {fileName: _jsxFileName, lineNumber: 564}}, (p.cls&&p.cls.ptype)==="behavioral"?"\ud83d\udfe2 ALWAYS ACTIVE":"\ud83d\udd35 TRIGGERED")
+          , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.whiteDim,lineHeight:1.4}, __source: {fileName: _jsxFileName, lineNumber: 565}}, (p.cls&&p.cls.passive))
+        )
+        , React.createElement(Btn, { onClick: onClose, bg: C.bgCard, fg: C.whiteDim, border: C.borderBright, __source: {fileName: _jsxFileName, lineNumber: 567}}, "CLOSE")
+      )
+    )
+  );
+}
+
+ function App(){
+  const [tab,setTab]=_react.useState.call(void 0, "codex");
+  const [docSec,setDocSec]=_react.useState.call(void 0, null);
+  const _loadPlayers=()=>{
+    try{
+      const raw=localStorage.getItem("dgd_players");
+      if(raw){
+        const saved=JSON.parse(raw);
+        return saved.map(p=>({...p,cls:CLASSES.find(c=>c.name===p.clsName)||null}));
+      }
+    }catch(e){}
+    return [];
+  };
+  const [allPlayers,setAllPlayers]=_react.useState.call(void 0, _loadPlayers);
+  const [editIdx,setEditIdx]=_react.useState.call(void 0, null);
+  const [eName,setEName]=_react.useState.call(void 0, "");
+  const [eCls,setECls]=_react.useState.call(void 0, null);
+  const [classDetail,setClassDetail]=_react.useState.call(void 0, null);
+  const [partyView,setPartyView]=_react.useState.call(void 0, "list");
+  const [sheetPlayerId,setSheetPlayerId]=_react.useState.call(void 0, null);
+  const [expandedTreasure,setExpandedTreasure]=_react.useState.call(void 0, null);
+  const _loadQuests=()=>{try{const r=localStorage.getItem("dgd_quests");return r?JSON.parse(r):[];}catch(e){return [];}};
+  const _loadActiveQuestId=()=>{try{const r=localStorage.getItem("dgd_activeQuestId");return r?JSON.parse(r):null;}catch(e){return null;}};
+  const [quests,setQuests]=_react.useState.call(void 0, _loadQuests);
+  const [activeQuestId,setActiveQuestId]=_react.useState.call(void 0, _loadActiveQuestId);
+  const [questView,setQuestView]=_react.useState.call(void 0, "manager");
+  const [questPlayerIds,setQuestPlayerIds]=_react.useState.call(void 0, []);
+  const [aD,setAD]=_react.useState.call(void 0, []);
+  const [bD,setBD]=_react.useState.call(void 0, []);
+  const [pD,setPD]=_react.useState.call(void 0, []);
+  const [bhD,setBhD]=_react.useState.call(void 0, []);
+  const [tD,setTD]=_react.useState.call(void 0, []);
+  const [card,setCard]=_react.useState.call(void 0, null);
+  const [activeAdventureCard,setActiveAdventureCard]=_react.useState.call(void 0, null); // persists until success/fail
+  const [scorecardQuestId,setScorecardQuestId]=_react.useState.call(void 0, null);
+  const [cardDeck,setCardDeck]=_react.useState.call(void 0, null);
+  const [cardPhase,setCardPhase]=_react.useState.call(void 0, "read");
+  const [cardMeta,setCardMeta]=_react.useState.call(void 0, {});
+  const [sheetId,setSheetId]=_react.useState.call(void 0, null);
+  const [drawQueue,setDrawQueue]=_react.useState.call(void 0, []);
+  const [holeScores,setHoleScores]=_react.useState.call(void 0, {});
+
+  // Auto-save wrappers
+  const _savePlayers=(ps)=>{
+    try{
+      const toSave=ps.map(p=>({...p,clsName:p.cls?p.cls.name:null,cls:undefined}));
+      localStorage.setItem("dgd_players",JSON.stringify(toSave));
+    }catch(e){}
+  };
+  const _setAndSavePlayers=(updater)=>{
+    setAllPlayers(prev=>{
+      const next=typeof updater==="function"?updater(prev):updater;
+      try{
+        const toSave=next.map(p=>({...p,clsName:p.cls?p.cls.name:null,cls:undefined}));
+        localStorage.setItem("dgd_players",JSON.stringify(toSave));
+      }catch(e){}
+      return next;
+    });
+  };
+  const _setAndSaveQuests=(updater)=>{
+    setQuests(prev=>{
+      const next=typeof updater==="function"?updater(prev):updater;
+      try{localStorage.setItem("dgd_quests",JSON.stringify(next));}catch(e){}
+      return next;
+    });
+  };
+  const _setAndSaveActiveQuestId=(id)=>{
+    setActiveQuestId(id);
+    try{localStorage.setItem("dgd_activeQuestId",JSON.stringify(id));}catch(e){}
+  };
+
+  const activeQuest=quests.find(q=>q.id===activeQuestId)||null;
+  const hole=(activeQuest&&activeQuest.hole)||1;
+  const perils=(activeQuest&&activeQuest.perils)||[];
+  const questPlayersFromQuest=allPlayers.filter(p=>((activeQuest&&activeQuest.playerIds)||[]).includes(p.id));
+  const questPlayers=questView==="play"?questPlayersFromQuest:allPlayers.filter(p=>questPlayerIds.includes(p.id));
+  const adj=(pid,f,d)=>_setAndSavePlayers(ps=>ps.map(p=>p.id===pid?{...p,[f]:Math.max(0,p[f]+d)}:p));
+
+  function addPlayer(){
+    if(allPlayers.length>=8)return;
+    const p={id:Date.now(),name:"",cls:null,gold:0,xp:0,tokens:1,tee:"white",level:1,notes:"",treasures:[],chosenSkills:[],gear:[],scoreHistory:[]};
+    _setAndSavePlayers(prev=>[...prev,p]);setEditIdx(allPlayers.length);setEName("");setECls(null);setPartyView("newchar");
+  }
+  function savePlayer(){
+    if(editIdx===null)return;
+    const cls=eCls!==null?CLASSES[eCls]:null;
+    const startGear=cls?cls.gear.split(/[,+]/).map(s=>s.trim()).filter(Boolean):[];
+    _setAndSavePlayers(p=>{const n=[...p];n[editIdx]={...n[editIdx],name:eName,cls,gear:startGear};return n;});
+    setEditIdx(null);setPartyView("list");
+  }
+  function updatePlayerField(pid,field,val){_setAndSavePlayers(ps=>ps.map(p=>p.id===pid?{...p,[field]:val}:p));}
+  function levelUp(pid){
+    _setAndSavePlayers(ps=>ps.map(p=>{
+      if(p.id!==pid)return p;
+      const need=p.level===1?8:p.level===2?9:99;
+      if(p.xp<need)return p;
+      return{...p,level:p.level+1,xp:p.xp-need,tokens:p.tokens+1};
+    }));
+  }
+  function createQuest(){
+    const id=Date.now();
+    const nq={id,playerIds:[...questPlayerIds],hole:1,perils:[],aDeck:shuffle(ADVENTURE_CARDS),bDeck:shuffle(BOON_CARDS),pDeck:shuffle(PERIL_CARDS),bhDeck:shuffle(BETWEEN_CARDS),tDeck:shuffle(TREASURE_CARDS),roundScore:0,startDate:new Date().toLocaleDateString()};
+    _setAndSaveQuests(qs=>[...qs,nq]);
+    _setAndSavePlayers(ps=>ps.map(p=>questPlayerIds.includes(p.id)?{...p,tee:"white",gold:0,xp:0,tokens:1,level:1}:p));
+    _setAndSaveActiveQuestId(nq.id);setAD(nq.aDeck);setBD(nq.bDeck);setPD(nq.pDeck);setBhD(nq.bhDeck);setTD(nq.tDeck);
+    setDrawQueue([]);setCard(null);setCardDeck(null);setActiveAdventureCard(null);setQuestView("play");
+  }
+  function resumeQuest(q){
+    _setAndSaveActiveQuestId(q.id);setAD(q.aDeck);setBD(q.bDeck);setPD(q.pDeck);setBhD(q.bhDeck);setTD(q.tDeck);
+    setDrawQueue([]);setCard(null);setCardDeck(null);setActiveAdventureCard(null);setQuestView("play");
+  }
+  function updateQuestHole(h){_setAndSaveQuests(qs=>qs.map(q=>q.id===activeQuestId?{...q,hole:h}:q));}
+  function updateQuestPerils(p){_setAndSaveQuests(qs=>qs.map(q=>q.id===activeQuestId?{...q,perils:p}:q));}
+  function deleteQuest(qid){_setAndSaveQuests(qs=>qs.filter(q=>q.id!==qid));if(activeQuestId===qid){_setAndSaveActiveQuestId(null);setQuestView("manager");}}
+  function backToManager(){
+    _setAndSaveQuests(qs=>qs.map(q=>q.id===activeQuestId?{...q,hole,perils,aDeck:aD,bDeck:bD,pDeck:pD,bhDeck:bhD,tDeck:tD}:q));
+    setQuestView("manager");
+  }
+
+  function draw(dk,setDk,src){let d=dk.length?dk:shuffle(src);if(!dk.length)setDk(d);const c=d[0];setDk(d.slice(1));return c;}
+  function tapDeck(type){
+    if(type==="adventure"){
+      if(activeAdventureCard){
+        // Reopen the same card \u2014 don't draw a new one
+        setCard(activeAdventureCard.card);
+        setCardDeck("adventure");
+        setCardMeta(activeAdventureCard.meta||{});
+        setCardPhase("score");
+        setHoleScores(activeAdventureCard.scores||{});
+        return;
+      }
+      // No active card \u2014 draw a fresh one
+      const c=draw(aD,setAD,ADVENTURE_CARDS);
+      const init={};
+      questPlayersFromQuest.forEach(p=>{init[p.id]=0;});
+      setHoleScores(init);
+      setActiveAdventureCard({card:c,meta:{},scores:init});
+      setCard(c);setCardDeck("adventure");setCardMeta({});setCardPhase("score");
+      return;
+    }
+    let c;
+    if(type==="boon")c=draw(bD,setBD,BOON_CARDS);
+    else if(type==="peril")c=draw(pD,setPD,PERIL_CARDS);
+    else if(type==="between")c=draw(bhD,setBhD,BETWEEN_CARDS);
+    else c=draw(tD,setTD,TREASURE_CARDS);
+    setCard(c);setCardDeck(type);setCardMeta({});
+    setCardPhase("read");
+  }
+
+  function cardAction(act,pid){
+    if(act==="success"||act==="fail"){
+      const text=act==="success"?card.success:card.fail;
+      const gm=text.match(/[Gg]ain\s+(\d+)\s*gp/);
+      const lm=text.match(/loses?\s+(\d+)\s*gp/i);
+      const xm=text.match(/[Gg]ain\s+(\d+)\s*XP/i);
+      const t=card.title;
+      const m=cardMeta;
+      // \u2500\u2500 Per-card custom reward logic \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+      if(t==="The Wounded Traveler"&&act==="success"){
+        // 2gp only if stopped; nothing if pressed on
+        if(m.stopped) _setAndSavePlayers(ps=>ps.map(p=>questPlayersFromQuest.find(q=>q.id===p.id)?{...p,gold:p.gold+2}:p));
+      } else if(t==="The Toll Keeper"){
+        // deduct 2gp if party paid the toll
+        if(m.paid) _setAndSavePlayers(ps=>ps.map(p=>questPlayersFromQuest.find(q=>q.id===p.id)?{...p,gold:Math.max(0,p.gold-2)}:p));
+        if(act==="success"){
+          _setAndSavePlayers(ps=>ps.map(p=>questPlayersFromQuest.find(q=>q.id===p.id)?{...p,gold:p.gold+3}:p));
+        } else {
+          if(!m.paid){const pc=draw(pD,setPD,PERIL_CARDS);updateQuestPerils([...perils,{card:pc,pid:null,pname:"Party"}]);}
+        }
+      } else if(t==="The Banquet"){
+        if(act==="success"){
+          const total=Object.values(m.banquetSpend||{}).reduce((a,v)=>a+v,0);
+          const payout=total>=6?10:total>=3?6:3;
+          // give each player their payout back
+          questPlayersFromQuest.forEach(p=>{
+            const spent=(m.banquetSpend&&m.banquetSpend[p.id])||0;
+            const gain=payout; // each player gets full payout tier (card says "earns X back")
+            _setAndSavePlayers(ps=>ps.map(pl=>pl.id===p.id?{...pl,gold:Math.max(0,pl.gold+gain)}:pl));
+          });
+          // draw treasure if 6gp+ total
+          if(total>=6){
+            const tc=draw(tD,setTD,TREASURE_CARDS);
+            setCard(tc);setCardDeck("treasure");setCardPhase("read");
+          }
+        } else {
+          // fail: each player loses what they spent
+          questPlayersFromQuest.forEach(p=>{
+            const spent=(m.banquetSpend&&m.banquetSpend[p.id])||0;
+            if(spent>0) _setAndSavePlayers(ps=>ps.map(pl=>pl.id===p.id?{...pl,gold:Math.max(0,pl.gold-spent)}:pl));
+          });
+        }
+      } else if(t==="The Wager"){
+        questPlayersFromQuest.forEach(p=>{
+          const w=(m.wager&&m.wager[p.id])||0;
+          if(w===0) return;
+          if(act==="success"){
+            _setAndSavePlayers(ps=>ps.map(pl=>pl.id===p.id?{...pl,gold:pl.gold+w}:pl)); // win double = +w net (already spent)
+          } else {
+            _setAndSavePlayers(ps=>ps.map(pl=>pl.id===p.id?{...pl,gold:Math.max(0,pl.gold-w)}:pl));
+          }
+        });
+        // base gp from success text still applies for non-wager reward
+        if(act==="success"&&gm) _setAndSavePlayers(ps=>ps.map(p=>questPlayersFromQuest.find(q=>q.id===p.id)?{...p,gold:p.gold+parseInt(gm[1])}:p));
+        if(act==="fail"&&gm) _setAndSavePlayers(ps=>ps.map(p=>questPlayersFromQuest.find(q=>q.id===p.id)?{...p,gold:p.gold+parseInt(gm[1])}:p));
+      } else if(t==="The Hermit"){
+        if(act==="success"&&gm) _setAndSavePlayers(ps=>ps.map(p=>questPlayersFromQuest.find(q=>q.id===p.id)?{...p,gold:p.gold+parseInt(gm[1])}:p));
+        // boon already drawn inline if player spent 2gp
+      } else if(t==="The Standing Stones"){
+        if(m.stonesPaid){
+          // tokens already granted inline; just apply success gp
+          if(act==="success"&&gm) _setAndSavePlayers(ps=>ps.map(p=>questPlayersFromQuest.find(q=>q.id===p.id)?{...p,gold:p.gold+parseInt(gm[1])}:p));
+        } else {
+          if(act==="success"&&gm) _setAndSavePlayers(ps=>ps.map(p=>questPlayersFromQuest.find(q=>q.id===p.id)?{...p,gold:p.gold+parseInt(gm[1])}:p));
+        }
+      } else if(t==="The Offering Stone"){
+        const offerers=Object.keys(m.offering||{}).filter(id=>m.offering[id]);
+        if(offerers.length>=2){
+          // tokens already granted inline; return 1gp on success
+          if(act==="success") offerers.forEach(id=>{
+            _setAndSavePlayers(ps=>ps.map(p=>p.id===parseInt(id)?{...p,gold:p.gold+1}:p));
+          });
+        }
+        if(act==="success"&&gm) _setAndSavePlayers(ps=>ps.map(p=>questPlayersFromQuest.find(q=>q.id===p.id)?{...p,gold:p.gold+parseInt(gm[1])}:p));
+      } else if(t==="The River Crossing"){
+        const riverGp=act==="success"?(m.river==="long"?6:3):(m.river==="long"?2:1);
+        _setAndSavePlayers(ps=>ps.map(p=>questPlayersFromQuest.find(q=>q.id===p.id)?{...p,gold:p.gold+riverGp}:p));
+      } else if(t==="The Wrong Path"){
+        // Success: discard peril unresolved \u2014 just apply standard gp
+        if(act==="success"&&gm) _setAndSavePlayers(ps=>ps.map(p=>questPlayersFromQuest.find(q=>q.id===p.id)?{...p,gold:p.gold+parseInt(gm[1])}:p));
+        // Fail: apply the held peril now
+        if(act==="fail"&&m.wrongPathPeril){
+          const pc=m.wrongPathPeril;
+          const pid=m.wrongPathPid;
+          const pname=m.wrongPathPname||"?";
+          if(pc.xp>0&&pid) adj(pid,"xp",pc.xp);
+          if(pc.scope==="Party"){
+            const plm=(pc.effect||"").match(/loses?\s+(\d+)\s*gp/i);
+            if(plm){const n=parseInt(plm[1]);_setAndSavePlayers(ps=>ps.map(p=>questPlayersFromQuest.find(q=>q.id===p.id)?{...p,gold:Math.max(0,p.gold-n)}:p));}
+            else updateQuestPerils([...perils,{card:pc,pid:null,pname:"Party"}]);
+          } else {
+            updateQuestPerils([...perils,{card:pc,pid,pname}]);
+          }
+        }
+      } else {
+        // Default: apply gp/loss/xp from success/fail text
+        if(gm)_setAndSavePlayers(ps=>ps.map(p=>questPlayersFromQuest.find(q=>q.id===p.id)?{...p,gold:p.gold+parseInt(gm[1])}:p));
+        if(lm)_setAndSavePlayers(ps=>ps.map(p=>questPlayersFromQuest.find(q=>q.id===p.id)?{...p,gold:Math.max(0,p.gold-parseInt(lm[1]))}:p));
+        if(xm)_setAndSavePlayers(ps=>ps.map(p=>questPlayersFromQuest.find(q=>q.id===p.id)?{...p,xp:p.xp+parseInt(xm[1])}:p));
+      }
+      const queue=[];
+      questPlayersFromQuest.forEach(p=>{
+        const n=holeScores[p.id]||0;
+        const newTee=n<0?"blue":n===0?"white":"red";
+        // Record hole score in player's scoreHistory
+        _setAndSavePlayers(ps=>ps.map(pl=>{
+          if(pl.id!==p.id) return pl;
+          const hist=[...(pl.scoreHistory||[])];
+          const qi=hist.findIndex(r=>r.questId===activeQuestId);
+          if(qi>=0){
+            const holes=[...hist[qi].holes,{hole,score:n}];
+            const total=holes.reduce((a,h)=>a+h.score,0);
+            hist[qi]={...hist[qi],holes,total};
+          } else {
+            hist.push({questId:activeQuestId,date:new Date().toLocaleDateString(),holes:[{hole,score:n}],total:n});
+          }
+          return {...pl,tee:newTee,scoreHistory:hist};
+        }));
+        if(n<0) queue.push({pid:p.id,pname:p.name,type:"boon"});
+        if(n>0) queue.push({pid:p.id,pname:p.name,type:"peril"});
+      });
+      const holeTotal=Object.values(holeScores).reduce((a,v)=>a+(v||0),0);
+      _setAndSaveQuests(qs=>qs.map(q=>q.id===activeQuestId?{...q,roundScore:(q.roundScore||0)+holeTotal,hole:Math.min(18,hole+1),perils,aDeck:aD,bDeck:bD,pDeck:pD,bhDeck:bhD,tDeck:tD}:q));
+      // advance hole in local state too
+      const nh=Math.min(18,hole+1);
+      updateQuestHole(nh);
+      setActiveAdventureCard(null);
+      setCard(null);setCardDeck(null);
+      setDrawQueue(queue);
+      return;
+    }
+    if(act==="adjustPlayer"&&pid!==undefined){setSheetId(pid);return;}
+    if(act==="assign"&&pid!==undefined){
+      const text=(card.effect||"")+" "+(card.reward||"");
+      const gm=text.match(/[Gg]ain\s+(\d+)\s*gp/);
+      const lm=text.match(/loses?\s+(\d+)\s*gp/i);
+      const xm=text.match(/[Gg]ain\s+(\d+)\s*XP/i);
+      const t1=text.match(/[Gg]ain\s+a\s+(stored\s+)?advantage token/i);
+      const tm=text.match(/[Gg]ain\s+(\d+)\s*(stored\s+)?advantage token/i);
+      const drawTreasure=/[Dd]raw\s+a\s+treasure/i.test(text);
+      const drawBoon=/[Dd]raw\s+(one\s+additional|a)\s+[Bb]oon/i.test(text);
+      if(gm) adj(pid,"gold",parseInt(gm[1]));
+      if(lm) adj(pid,"gold",-parseInt(lm[1]));
+      if(xm) adj(pid,"xp",parseInt(xm[1]));
+      if(card.xp>0) adj(pid,"xp",card.xp);
+      if(t1) adj(pid,"tokens",1);
+      else if(tm) adj(pid,"tokens",parseInt(tm[1]));
+      if(cardDeck==="peril"&&card.effect) updateQuestPerils([...perils,{card,pid,pname:(allPlayers.find(p=>p.id===pid)||{name:"?"}).name}]);
+      if(drawTreasure){
+        // Show treasure card \u2014 it has its own assign-to-player flow
+        const tc=draw(tD,setTD,TREASURE_CARDS);
+        setCard(tc);setCardDeck("treasure");setCardPhase("read");
+        return;
+      }
+      if(drawBoon){
+        // Draw another boon and show it
+        const bc=draw(bD,setBD,BOON_CARDS);
+        setCard(bc);setCardDeck("boon");setCardPhase("read");
+        return;
+      }
+      setCard(null);setCardDeck(null);
+      return;
+    }
+    if(act==="assignBetween"&&pid!==undefined){
+      adj(pid,"gold",1);
+      adj(pid,"xp",1);
+      return;
+    }
+    if(act==="applyPartyPeril"){
+      const text=(card.effect||"");
+      const lm=text.match(/loses?\s+(\d+)\s*gp/i);
+      if(lm){const n=parseInt(lm[1]);_setAndSavePlayers(ps=>ps.map(p=>questPlayersFromQuest.find(q=>q.id===p.id)?{...p,gold:Math.max(0,p.gold-n)}:p));}
+      // Party perils with ongoing conditions go on the active peril list
+      if(card.effect&&!lm) updateQuestPerils([...perils,{card,pid:null,pname:"Party"}]);
+      setCard(null);setCardDeck(null);
+      return;
+    }
+    if(act==="assignTreasure"&&pid!==undefined){
+      _setAndSavePlayers(ps=>ps.map(p=>p.id===pid?{...p,treasures:[...(p.treasures||[]),card]}:p));
+      setCard(null);setCardDeck(null);
+      return;
+    }
+  }
+
+  const toggleQuest=id=>setQuestPlayerIds(ids=>ids.includes(id)?ids.filter(x=>x!==id):[...ids,id]);
+
+  const hdr=(sub,main)=>(
+    React.createElement('div', { style: {
+      textAlign:"center",padding:"18px 16px 14px",
+      borderBottom:`4px solid ${C.borderBright}`,marginBottom:14,
+      background:C.bgDark,boxShadow:`0 4px 0 ${C.border}`,
+    }, __source: {fileName: _jsxFileName, lineNumber: 909}}
+      , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.parchment,letterSpacing:5}, __source: {fileName: _jsxFileName, lineNumber: 914}}, sub)
+      , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.gold,marginTop:4,letterSpacing:3,textShadow:OLH}, __source: {fileName: _jsxFileName, lineNumber: 915}}, main)
+    )
+  );
+
+  return(
+    React.createElement('div', { style: {minHeight:"100vh",background:C.bg,color:C.white,fontFamily:BF,maxWidth:480,margin:"0 auto",paddingBottom:160,fontSize:22}, __source: {fileName: _jsxFileName, lineNumber: 920}}
+      , React.createElement('style', {__source: {fileName: _jsxFileName, lineNumber: 921}}, `
+        *{box-sizing:border-box;margin:0;padding:0}
+        button:active{filter:brightness(1.3)}
+        input:focus,textarea:focus,button:focus{outline:none}
+        input,textarea{text-shadow:none;font-family:'Courier New',Courier,monospace;font-size:14px}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+        @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+        .fi{animation:fadeIn .2s ease}
+        ::-webkit-scrollbar{width:8px;background:${C.bgDark}}
+        ::-webkit-scrollbar-thumb{background:${C.borderBright};border:0}
+      `)
+
+      , classDetail!==null&&React.createElement(ClassDetail, { cls: CLASSES[classDetail], onBack: ()=>setClassDetail(null), onSelect: ()=>{setECls(classDetail);setClassDetail(null);}, __source: {fileName: _jsxFileName, lineNumber: 934}})
+      , scorecardQuestId&&(()=>{
+        const sq=quests.find(q=>q.id===scorecardQuestId);
+        const sqps=sq?allPlayers.filter(p=>sq.playerIds.includes(p.id)):[];
+        const fmt=n=>n===0?"0":n>0?`+${n}`:`${n}`;
+        const blocks=[[1,2,3,4,5,6,7,8,9],[10,11,12,13,14,15,16,17,18]];
+        const blockLabels=["Front 9","Back 9"];
+        return(
+          React.createElement('div', { style: {position:"fixed",inset:0,background:C.bg,zIndex:1100,overflowY:"auto",padding:"0 0 40px"}, __source: {fileName: _jsxFileName, lineNumber: 942}}
+            , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 16px",borderBottom:`3px solid ${C.borderBright}`,background:C.bgDark}, __source: {fileName: _jsxFileName, lineNumber: 943}}
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:15,color:C.gold,textShadow:OLH}, __source: {fileName: _jsxFileName, lineNumber: 944}}, "SCORECARD")
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:13,color:C.grey}, __source: {fileName: _jsxFileName, lineNumber: 945}}, "Hole " , (sq&&sq.hole)||1, "/18 \u00b7 "  , (sq&&sq.startDate)||"")
+              , React.createElement('button', { onClick: ()=>setScorecardQuestId(null), style: {padding:"6px 12px",background:"transparent",border:`2px solid ${C.borderBright}`,borderRadius:0,color:C.gold,fontFamily:BF,fontSize:14,cursor:"pointer"}, __source: {fileName: _jsxFileName, lineNumber: 946}}, "CLOSE")
+            )
+            , blocks.map((holeNums,bi)=>{
+              const anyPlayed=sqps.some(p=>{
+                const h=(p.scoreHistory||[]).find(r=>r.questId===scorecardQuestId);
+                return h&&h.holes.some(hh=>holeNums.includes(hh.hole));
+              });
+              if(!anyPlayed&&bi>0) return null;
+              return(
+                React.createElement('div', { key: bi, style: {padding:"16px 12px 0"}, __source: {fileName: _jsxFileName, lineNumber: 955}}
+                  , React.createElement('div', { style: {fontFamily:BF,fontSize:13,color:C.greyDim,letterSpacing:2,marginBottom:6}, __source: {fileName: _jsxFileName, lineNumber: 956}}, blockLabels[bi])
+                  , React.createElement('div', { style: {overflowX:"auto"}, __source: {fileName: _jsxFileName, lineNumber: 957}}
+                    , React.createElement('table', { style: {borderCollapse:"collapse",width:"100%"}, __source: {fileName: _jsxFileName, lineNumber: 958}}
+                      , React.createElement('thead', {__source: {fileName: _jsxFileName, lineNumber: 959}}
+                        , React.createElement('tr', {__source: {fileName: _jsxFileName, lineNumber: 960}}
+                          , React.createElement('th', { style: {fontFamily:BF,fontSize:11,color:C.greyDim,textAlign:"left",padding:"4px 8px",minWidth:60,background:C.bgCard,position:"sticky",left:0,zIndex:1}, __source: {fileName: _jsxFileName, lineNumber: 961}}, "PLAYER")
+                          , holeNums.map(n=>(
+                            React.createElement('th', { key: n, style: {fontFamily:BF,fontSize:11,color:n===((sq&&sq.hole)||1)?C.gold:C.greyDim,textAlign:"center",padding:"4px 5px",minWidth:28,background:n===((sq&&sq.hole)||1)?C.bgCardAlt:C.bgCard,borderLeft:`1px solid ${C.border}44`}, __source: {fileName: _jsxFileName, lineNumber: 963}}, n)
+                          ))
+                          , React.createElement('th', { style: {fontFamily:BF,fontSize:11,color:C.greyDim,textAlign:"center",padding:"4px 6px",minWidth:34,background:C.bgCard,borderLeft:`1px solid ${C.border}`}, __source: {fileName: _jsxFileName, lineNumber: 965}}, "TOT")
+                        )
+                      )
+                      , React.createElement('tbody', {__source: {fileName: _jsxFileName, lineNumber: 968}}
+                        , sqps.map(p=>{
+                          const hist=(p.scoreHistory||[]).find(r=>r.questId===scorecardQuestId);
+                          const allScored=(hist&&hist.holes)||[];
+                          const roundTotal=allScored.reduce((a,h)=>a+h.score,0);
+                          return(
+                            React.createElement('tr', { key: p.id, __source: {fileName: _jsxFileName, lineNumber: 974}}
+                              , React.createElement('td', { style: {fontFamily:BF,fontSize:11,color:(p.cls&&p.cls.color)||C.gold,padding:"5px 8px",background:C.bgCard,position:"sticky",left:0,zIndex:1,whiteSpace:"nowrap"}, __source: {fileName: _jsxFileName, lineNumber: 975}}, (p.cls&&p.cls.icon), " " , (p.name&&p.name.substring(0,7)))
+                              , holeNums.map(n=>{
+                                const hd=allScored.find(h=>h.hole===n);
+                                const cl=!hd?C.greyDim:hd.score<0?C.green:hd.score>0?C.red:C.whiteDim;
+                                return React.createElement('td', { key: n, style: {fontFamily:BF,fontSize:12,color:cl,textAlign:"center",padding:"5px 4px",background:n===((sq&&sq.hole)||1)?C.bgCardAlt:C.bgDark,borderLeft:`1px solid ${C.border}33`}, __source: {fileName: _jsxFileName, lineNumber: 979}}, hd?fmt(hd.score):"\u00b7");
+                              })
+                              , React.createElement('td', { style: {fontFamily:BF,fontSize:12,color:roundTotal<0?C.green:roundTotal>0?C.red:C.whiteDim,textAlign:"center",padding:"5px 4px",background:C.bgCard,borderLeft:`1px solid ${C.border}`}, __source: {fileName: _jsxFileName, lineNumber: 981}}, fmt(roundTotal))
+                            )
+                          );
+                        })
+                      )
+                    )
+                  )
+                )
+              );
+            })
+          )
+        );
+      })()
+      , card&&React.createElement(CardOverlay, { card: card, deck: cardDeck, onDismiss: ()=>{setCard(null);setCardDeck(null);setCardMeta({});}, onAction: cardAction, questPlayers: questPlayers, phase: cardPhase, setPhase: setCardPhase, holeScores: holeScores, setHoleScores: (s)=>{setHoleScores(s);if(cardDeck==="adventure")setActiveAdventureCard(prev=>prev?{...prev,scores:typeof s==="function"?s(prev.scores||{}):s}:prev);}, cardMeta: cardMeta, setCardMeta: (s)=>{setCardMeta(s);if(cardDeck==="adventure")setActiveAdventureCard(prev=>prev?{...prev,meta:typeof s==="function"?s(prev.meta||{}):s}:prev);}, __source: {fileName: _jsxFileName, lineNumber: 994}})
+
+      , drawQueue.length>0&&!card&&(()=>{
+        const next=drawQueue[0];
+        const dismiss=()=>setDrawQueue(q=>q.slice(1));
+        const drawAndAdvance=(type)=>{
+          const c=type==="boon"?draw(bD,setBD,BOON_CARDS):draw(pD,setPD,PERIL_CARDS);
+          if(c.xp>0&&type==="peril") adj(next.pid,"xp",c.xp);
+          const perilPhase=type==="peril"?(c.scope==="Party"?"read":"assign"):"read";
+          setCard(c);setCardDeck(type);setCardPhase(perilPhase);
+          setDrawQueue(q=>q.slice(1));
+        };
+        return React.createElement('div', { style: {position:"fixed",inset:0,background:"rgba(0,0,0,0.88)",zIndex:1000,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px 16px",gap:12}, __source: {fileName: _jsxFileName, lineNumber: 1006}}
+          , React.createElement('div', { style: {fontFamily:BF,fontSize:15,color:C.grey,letterSpacing:2}, __source: {fileName: _jsxFileName, lineNumber: 1007}}, drawQueue.length, " DRAW" , drawQueue.length>1?"S":"", " REMAINING" )
+          , React.createElement('div', { style: {background:C.bgCard,border:`4px solid ${next.type==="boon"?C.green:C.red}`,borderRadius:0,padding:"24px 20px",width:"100%",maxWidth:440,boxShadow:bevel(next.type==="boon"?C.green:C.red),textAlign:"center"}, __source: {fileName: _jsxFileName, lineNumber: 1008}}
+            , React.createElement('div', { style: {fontFamily:BF,fontSize:15,color:next.type==="boon"?C.green:C.red,letterSpacing:3,marginBottom:8}, __source: {fileName: _jsxFileName, lineNumber: 1009}}, next.type==="boon"?"BOON":"PERIL")
+            , React.createElement('div', { style: {fontFamily:BF,fontSize:20,color:C.white,marginBottom:4}, __source: {fileName: _jsxFileName, lineNumber: 1010}}, next.pname.toUpperCase())
+            , React.createElement('div', { style: {fontFamily:BF,fontSize:14,color:C.whiteDim,marginBottom:20}, __source: {fileName: _jsxFileName, lineNumber: 1011}}, next.type==="boon"?"birdied this hole":"bogeyed this hole")
+            , React.createElement(Btn, { onClick: ()=>drawAndAdvance(next.type), bg: next.type==="boon"?C.green:C.red, fg: C.bgDark, border: next.type==="boon"?C.green:C.red, __source: {fileName: _jsxFileName, lineNumber: 1012}}, "DRAW "
+               , next.type==="boon"?"BOON":"PERIL"
+            )
+          )
+          , React.createElement('button', { onClick: dismiss, style: {background:"transparent",border:`2px solid ${C.grey}`,borderRadius:0,color:C.grey,fontFamily:BF,fontSize:14,padding:"10px 24px",cursor:"pointer"}, __source: {fileName: _jsxFileName, lineNumber: 1016}}, "SKIP")
+        );
+      })()
+
+      , sheetId!==null&&(()=>{const p=allPlayers.find(x=>x.id===sheetId);return p?React.createElement(PlayerSheet, { player: p, onClose: ()=>setSheetId(null), onAdj: (f,d)=>adj(p.id,f,d), __source: {fileName: _jsxFileName, lineNumber: 1020}}):null;})()
+
+      /* \u2550\u2550\u2550 CODEX \u2550\u2550\u2550 */
+      , tab==="codex"&&React.createElement('div', { className: "fi", __source: {fileName: _jsxFileName, lineNumber: 1023}}
+        , hdr("DISC GOLF DUNGEON","\ud83d\udcdc CODEX")
+        , !docSec?React.createElement('div', { style: {padding:"0 16px"}, __source: {fileName: _jsxFileName, lineNumber: 1025}}
+          , [["rules","\ud83d\udcd6","Rulebook"],["classes","\u2694\ufe0f","Classes"],["prestige","\ud83c\udfb2","Prestige"],["items","\ud83c\udf92","Items"],["treasure","\ud83d\udddd\ufe0f","Treasure"]].map(([id,ic,t])=>(
+            React.createElement('button', { key: id, onClick: ()=>setDocSec(id), style: {width:"100%",background:C.bgCard,border:`4px solid ${C.borderBright}`,borderRadius:0,padding:"14px",marginBottom:8,textAlign:"left",cursor:"pointer",display:"flex",alignItems:"center",gap:12,boxShadow:bevel(C.borderBright)}, __source: {fileName: _jsxFileName, lineNumber: 1027}}
+              , React.createElement('span', { style: {fontSize:26}, __source: {fileName: _jsxFileName, lineNumber: 1028}}, ic)
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.gold,textShadow:OL}, __source: {fileName: _jsxFileName, lineNumber: 1029}}, t)
+            )
+          ))
+          , React.createElement('div', { style: {padding:"16px 0 0",textAlign:"center"}, __source: {fileName: _jsxFileName, lineNumber: 1032}}
+            , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.greyDim,lineHeight:1.8}, __source: {fileName: _jsxFileName, lineNumber: 1033}}, "Tap "
+               , React.createElement('span', { style: {color:C.gold,fontFamily:BF,fontSize:13}, __source: {fileName: _jsxFileName, lineNumber: 1034}}, "\ud83d\udc65 Party" ), " to make and edit characters."     , React.createElement('br', {__source: {fileName: _jsxFileName, lineNumber: 1034}}), "Tap "
+               , React.createElement('span', { style: {color:C.gold,fontFamily:BF,fontSize:13}, __source: {fileName: _jsxFileName, lineNumber: 1035}}, "\u2694\ufe0f Quest" ), " to begin or return to an adventure."
+            )
+          )
+        ):React.createElement('div', { style: {padding:"0 16px"}, __source: {fileName: _jsxFileName, lineNumber: 1038}}
+          , React.createElement('button', { onClick: ()=>setDocSec(null), style: {background:"transparent",border:"none",color:C.gold,fontFamily:BF,fontSize:14,cursor:"pointer",marginBottom:12}, __source: {fileName: _jsxFileName, lineNumber: 1039}}, "\u2190 BACK" )
+          , docSec==="rules"&&RULES.map((r,i)=>React.createElement(Panel, { key: i, __source: {fileName: _jsxFileName, lineNumber: 1040}}, React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.gold,marginBottom:4}, __source: {fileName: _jsxFileName, lineNumber: 1040}}, r.t), React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.whiteDim,lineHeight:1.6}, __source: {fileName: _jsxFileName, lineNumber: 1040}}, r.b)))
+          , docSec==="classes"&&CLASSES.map((c,i)=>React.createElement(Panel, { key: i, __source: {fileName: _jsxFileName, lineNumber: 1041}}, React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:c.color,marginBottom:3}, __source: {fileName: _jsxFileName, lineNumber: 1041}}, c.icon, " " , c.name), React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.parchment,fontStyle:"italic",marginBottom:5}, __source: {fileName: _jsxFileName, lineNumber: 1041}}, c.flavor), React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.whiteDim,lineHeight:1.5}, __source: {fileName: _jsxFileName, lineNumber: 1041}}, React.createElement('span', { style: {color:c.ptype==="behavioral"?C.green:C.blue}, __source: {fileName: _jsxFileName, lineNumber: 1041}}, c.ptype==="behavioral"?"\ud83d\udfe2":"\ud83d\udd35"), " " , c.passive), React.createElement('div', { style: {marginTop:4}, __source: {fileName: _jsxFileName, lineNumber: 1041}}, c.skills.map(s=>React.createElement(Tag, { key: s, text: s, color: C.grey, __source: {fileName: _jsxFileName, lineNumber: 1041}})))))
+          , docSec==="prestige"&&PRESTIGE.map((c,i)=>React.createElement(Panel, { key: i, __source: {fileName: _jsxFileName, lineNumber: 1042}}, React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:c.color,marginBottom:4}, __source: {fileName: _jsxFileName, lineNumber: 1042}}, c.icon, " " , c.name), React.createElement('div', { style: {fontFamily:BF,fontSize:14,color:C.whiteDim,lineHeight:1.5}, __source: {fileName: _jsxFileName, lineNumber: 1042}}, c.passive)))
+          , docSec==="items"&&[{n:"Gold",i:"\ud83d\udcb0",d:"Spend at camp. 10gp per disc."},{n:"XP",i:"\u2726",d:"Level up your class."},{n:"Tokens",i:"\ud83d\udee1",d:"Spend for advantage. Start with 1."}].map((it,i)=>React.createElement(Panel, { key: i, style: {display:"flex",gap:10,alignItems:"center"}, __source: {fileName: _jsxFileName, lineNumber: 1043}}, React.createElement('span', { style: {fontSize:24}, __source: {fileName: _jsxFileName, lineNumber: 1043}}, it.i), React.createElement('div', {__source: {fileName: _jsxFileName, lineNumber: 1043}}, React.createElement('div', { style: {fontFamily:BF,fontSize:14,color:C.gold}, __source: {fileName: _jsxFileName, lineNumber: 1043}}, it.n), React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.whiteDim}, __source: {fileName: _jsxFileName, lineNumber: 1043}}, it.d))))
+          , docSec==="treasure"&&[{label:"CONSUMABLE",cards:TREASURE_CARDS.filter(t=>t.consumable)},{label:"REUSABLE",cards:TREASURE_CARDS.filter(t=>!t.consumable)}].map(({label,cards})=>React.createElement('div', { key: label, __source: {fileName: _jsxFileName, lineNumber: 1044}}, React.createElement('div', { style: {fontFamily:BF,fontSize:13,color:C.grey,letterSpacing:3,marginBottom:6,marginTop:8}, __source: {fileName: _jsxFileName, lineNumber: 1044}}, label), cards.map((t,i)=>React.createElement(Panel, { key: i, __source: {fileName: _jsxFileName, lineNumber: 1044}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}, __source: {fileName: _jsxFileName, lineNumber: 1044}}, React.createElement('div', { style: {fontFamily:BF,fontSize:14,color:C.gold}, __source: {fileName: _jsxFileName, lineNumber: 1044}}, t.title), React.createElement('div', { style: {display:"flex",gap:8,alignItems:"center"}, __source: {fileName: _jsxFileName, lineNumber: 1044}}, React.createElement('div', { style: {fontFamily:BF,fontSize:12,color:t.consumable?C.red:C.teal}, __source: {fileName: _jsxFileName, lineNumber: 1044}}, t.consumable?"USE":"REUSE"), React.createElement('div', { style: {fontFamily:BF,fontSize:14,color:C.goldDim}, __source: {fileName: _jsxFileName, lineNumber: 1044}}, t.value, "gp"))), React.createElement('div', { style: {fontFamily:BF,fontSize:14,color:C.whiteDim}, __source: {fileName: _jsxFileName, lineNumber: 1044}}, t.effect)))))
+        )
+      )
+
+      /* \u2550\u2550\u2550 PARTY \u2550\u2550\u2550 */
+      , tab==="party"&&React.createElement('div', { className: "fi", __source: {fileName: _jsxFileName, lineNumber: 1049}}
+        , hdr("DISC GOLF DUNGEON","\ud83d\udc65 PARTY")
+
+        , partyView==="list"&&React.createElement('div', { style: {padding:"0 16px"}, __source: {fileName: _jsxFileName, lineNumber: 1052}}
+          , allPlayers.map(p=>(
+            React.createElement('button', { key: p.id, onClick: ()=>{setSheetPlayerId(p.id);setPartyView("sheet");}, style: {width:"100%",background:C.bgCard,border:`4px solid ${C.borderBright}`,borderRadius:0,padding:"14px",marginBottom:10,cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:12,boxShadow:bevel(C.borderBright)}, __source: {fileName: _jsxFileName, lineNumber: 1054}}
+              , React.createElement('span', { style: {fontSize:26}, __source: {fileName: _jsxFileName, lineNumber: 1055}}, (p.cls&&p.cls.icon)||"\u2753")
+              , React.createElement('div', { style: {flex:1}, __source: {fileName: _jsxFileName, lineNumber: 1056}}
+                , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:(p.cls&&p.cls.color)||C.grey}, __source: {fileName: _jsxFileName, lineNumber: 1057}}, p.name||"Unnamed")
+                , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.greyDim}, __source: {fileName: _jsxFileName, lineNumber: 1058}}, (p.cls&&p.cls.name)||"No class", " \u00b7 Level "   , p.level||1)
+              )
+              , React.createElement('div', { style: {textAlign:"right",fontSize:13}, __source: {fileName: _jsxFileName, lineNumber: 1060}}
+                , React.createElement('div', { style: {color:C.gold}, __source: {fileName: _jsxFileName, lineNumber: 1061}}, "\ud83d\udcb0", p.gold)
+                , React.createElement('div', { style: {color:C.purple}, __source: {fileName: _jsxFileName, lineNumber: 1062}}, "\u2726", p.xp)
+              )
+            )
+          ))
+          , allPlayers.length<8&&React.createElement(Btn, { onClick: addPlayer, bg: C.gold+"12", fg: C.gold, border: C.gold+"44", style: {borderStyle:"dashed"}, __source: {fileName: _jsxFileName, lineNumber: 1066}}, "+ NEW CHARACTER"  )
+        )
+
+        , partyView==="newchar"&&editIdx!==null&&React.createElement('div', { style: {padding:"0 16px"}, __source: {fileName: _jsxFileName, lineNumber: 1069}}
+          , React.createElement('button', { onClick: ()=>{_setAndSavePlayers(p=>p.filter((_,i)=>i!==editIdx));setEditIdx(null);setPartyView("list");}, style: {background:"transparent",border:"none",color:C.gold,fontFamily:BF,fontSize:14,cursor:"pointer",marginBottom:12}, __source: {fileName: _jsxFileName, lineNumber: 1070}}, "\u2190 CANCEL" )
+          , React.createElement('input', { value: eName, onChange: e=>setEName(e.target.value), placeholder: "Character name..." , style: {width:"100%",padding:"14px",marginBottom:14,background:C.bgDark,border:`2px solid ${C.borderBright}`,borderRadius:0,color:C.white,fontFamily:BF,fontSize:18}, __source: {fileName: _jsxFileName, lineNumber: 1071}})
+          , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.grey,letterSpacing:2,marginBottom:10}, __source: {fileName: _jsxFileName, lineNumber: 1072}}, "TAP CLASS FOR DETAILS"   )
+          , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:6,marginBottom:14}, __source: {fileName: _jsxFileName, lineNumber: 1073}}
+            , CLASSES.map((c,ci)=>(
+              React.createElement('button', { key: c.name, onClick: ()=>setClassDetail(ci), style: {background:eCls===ci?c.color+"22":C.bgDark,border:`2px solid ${eCls===ci?c.color:C.border}`,borderRadius:0,padding:"10px 4px",cursor:"pointer"}, __source: {fileName: _jsxFileName, lineNumber: 1075}}
+                , React.createElement('div', { style: {fontSize:20}, __source: {fileName: _jsxFileName, lineNumber: 1076}}, c.icon)
+                , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:eCls===ci?c.color:C.greyDim}, __source: {fileName: _jsxFileName, lineNumber: 1077}}, c.name)
+                , eCls===ci&&React.createElement('div', { style: {width:6,height:6,borderRadius:0,background:c.color,margin:"3px auto 0"}, __source: {fileName: _jsxFileName, lineNumber: 1078}})
+              )
+            ))
+          )
+          , eName&&eCls!==null&&React.createElement(Btn, { onClick: savePlayer, __source: {fileName: _jsxFileName, lineNumber: 1082}}, "CREATE CHARACTER" )
+        )
+
+        , partyView==="sheet"&&(()=>{
+          const p=allPlayers.find(x=>x.id===sheetPlayerId);
+          if(!p)return null;
+          const xpNeeded=p.level===1?8:p.level===2?9:null;
+          const canLevel=xpNeeded&&p.xp>=xpNeeded;
+          return React.createElement('div', { style: {padding:"0 16px"}, __source: {fileName: _jsxFileName, lineNumber: 1090}}
+            , React.createElement('button', { onClick: ()=>setPartyView("list"), style: {background:"transparent",border:"none",color:C.gold,fontFamily:BF,fontSize:14,cursor:"pointer",marginBottom:12}, __source: {fileName: _jsxFileName, lineNumber: 1091}}, "\u2190 PARTY" )
+            , React.createElement('div', { style: {textAlign:"center",marginBottom:14}, __source: {fileName: _jsxFileName, lineNumber: 1092}}
+              , React.createElement('div', { style: {fontSize:16,marginBottom:4}, __source: {fileName: _jsxFileName, lineNumber: 1093}}, (p.cls&&p.cls.icon)||"\u2753")
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:(p.cls&&p.cls.color)||C.grey,textShadow:OLH}, __source: {fileName: _jsxFileName, lineNumber: 1094}}, p.name)
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.greyDim}, __source: {fileName: _jsxFileName, lineNumber: 1095}}, (p.cls&&p.cls.name)||"No class", " \u00b7 Level "   , p.level||1)
+            )
+            , React.createElement(Panel, {__source: {fileName: _jsxFileName, lineNumber: 1097}}
+              , React.createElement('div', { style: {display:"flex",gap:12,justifyContent:"center"}, __source: {fileName: _jsxFileName, lineNumber: 1098}}
+                , [["\ud83d\udcb0",p.gold,C.gold,"Gold"],["\u2726",p.xp,C.purple,"XP"],["\ud83d\udee1",p.tokens,C.blue,"Tokens"]].map(([ic,v,cl,l])=>(
+                  React.createElement('div', { key: l, style: {textAlign:"center",flex:1}, __source: {fileName: _jsxFileName, lineNumber: 1100}}
+                    , React.createElement('div', { style: {fontFamily:BF,fontSize:15,color:cl}, __source: {fileName: _jsxFileName, lineNumber: 1101}}, ic, v)
+                    , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.greyDim}, __source: {fileName: _jsxFileName, lineNumber: 1102}}, l)
+                  )
+                ))
+              )
+              , xpNeeded&&React.createElement('div', { style: {marginTop:10}, __source: {fileName: _jsxFileName, lineNumber: 1106}}
+                , React.createElement('div', { style: {background:C.bgDark,borderRadius:0,height:7,overflow:"hidden"}, __source: {fileName: _jsxFileName, lineNumber: 1107}}
+                  , React.createElement('div', { style: {height:"100%",background:canLevel?C.green:C.purple,width:`${Math.min(100,(p.xp/xpNeeded)*100)}%`,borderRadius:0}, __source: {fileName: _jsxFileName, lineNumber: 1108}})
+                )
+                , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:canLevel?C.green:C.greyDim,marginTop:3,textAlign:"center"}, __source: {fileName: _jsxFileName, lineNumber: 1110}}, p.xp, "/", xpNeeded, " XP to Level "    , p.level+1)
+              )
+            )
+            , React.createElement(Panel, { style: {display:"flex",alignItems:"center",gap:8}, __source: {fileName: _jsxFileName, lineNumber: 1113}}
+              , React.createElement('div', { style: {width:14,height:14,borderRadius:0,background:TEE[p.tee]}, __source: {fileName: _jsxFileName, lineNumber: 1114}})
+              , React.createElement('span', { style: {fontFamily:BF,fontSize:16,color:C.grey}, __source: {fileName: _jsxFileName, lineNumber: 1115}}, "Tee: " , p.tee)
+            )
+            , React.createElement(Panel, {__source: {fileName: _jsxFileName, lineNumber: 1117}}
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:(p.cls&&p.cls.ptype)==="behavioral"?C.green:C.blue,letterSpacing:2,marginBottom:5}, __source: {fileName: _jsxFileName, lineNumber: 1118}}, (p.cls&&p.cls.ptype)==="behavioral"?"\ud83d\udfe2 ALWAYS ACTIVE":"\ud83d\udd35 TRIGGERED", " PASSIVE" )
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.white,lineHeight:1.6}, __source: {fileName: _jsxFileName, lineNumber: 1119}}, (p.cls&&p.cls.passive)||"No class selected.")
+            )
+            , React.createElement(Panel, {__source: {fileName: _jsxFileName, lineNumber: 1121}}
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:15,color:C.grey,letterSpacing:2,marginBottom:8}, __source: {fileName: _jsxFileName, lineNumber: 1122}}, "SKILLS")
+              , (p.cls&&p.cls.skills)?React.createElement('div', { style: {display:"flex",flexWrap:"wrap",gap:6}, __source: {fileName: _jsxFileName, lineNumber: 1123}}, p.cls.skills.map(s=>{
+                const picked=!!(p.chosenSkills&&p.chosenSkills.includes(s));
+                const skillsAllowed=p.level||1;
+                const hasPick=((p.chosenSkills&&p.chosenSkills.length)||0)<skillsAllowed;
+                const canPick=hasPick&&!picked;
+                return React.createElement('button', { key: s, onClick: ()=>{
+                  if(!canPick)return;
+                  updatePlayerField(p.id,"chosenSkills",[...(p.chosenSkills||[]),s]);
+                }, style: {
+                  padding:"6px 14px",fontFamily:BF,fontSize:14,
+                  background:picked?s==="Combat"?C.red+"33":s==="Nature"?C.green+"33":s==="Social"?C.blue+"33":s==="Stealth"?C.purple+"33":s==="Arcane"?C.cyan+"33":C.gold+"33":C.bgDark,
+                  border:`3px solid ${picked?s==="Combat"?C.red:s==="Nature"?C.green:s==="Social"?C.blue:s==="Stealth"?C.purple:s==="Arcane"?C.cyan:C.gold:canPick?C.borderBright:C.greyDim}`,
+                  borderRadius:0,
+                  color:picked?C.white:canPick?C.white:C.greyDim,
+                  cursor:canPick?"pointer":"default",
+                  boxShadow:canPick?bevel(C.borderBright):picked?bevel(C.borderBright):"none",
+                  animation:canPick?"pulse 2s infinite":"none",
+                }, __source: {fileName: _jsxFileName, lineNumber: 1128}}
+                  , picked?"\u2605 ":canPick?"\u25b6 ":"", s
+                );
+              })):React.createElement('div', { style: {fontFamily:BF,fontSize:15,color:C.greyDim}, __source: {fileName: _jsxFileName, lineNumber: 1143}}, "No class." )
+              , (()=>{
+                const allowed=p.level||1;
+                const chosen=(p.chosenSkills&&p.chosenSkills.length)||0;
+                if(chosen<allowed) return React.createElement('div', { style: {fontFamily:BF,fontSize:13,color:C.gold,marginTop:8,animation:"pulse 2s infinite"}, __source: {fileName: _jsxFileName, lineNumber: 1147}}, "\u25b6 " , allowed-chosen, " skill pick"  , allowed-chosen>1?"s":"", " available" );
+                return null;
+              })()
+            )
+            , React.createElement(Panel, {__source: {fileName: _jsxFileName, lineNumber: 1151}}
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.grey,letterSpacing:2,marginBottom:5}, __source: {fileName: _jsxFileName, lineNumber: 1152}}, "GEAR")
+              , (p.gear&&p.gear.length)>0?p.gear.map((g,i)=>(
+                React.createElement('div', { key: i, style: {fontFamily:BF,fontSize:16,color:C.whiteDim,padding:"4px 0",borderBottom:i<p.gear.length-1?`1px solid ${C.border}`:"none"}, __source: {fileName: _jsxFileName, lineNumber: 1154}}, g)
+              )):React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.greyDim}, __source: {fileName: _jsxFileName, lineNumber: 1155}}, "No gear." )
+            )
+            , (p.treasures&&p.treasures.length)>0&&React.createElement(Panel, {__source: {fileName: _jsxFileName, lineNumber: 1157}}
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.grey,letterSpacing:2,marginBottom:8}, __source: {fileName: _jsxFileName, lineNumber: 1158}}, "HELD TREASURE" )
+              , p.treasures.map((t,i)=>{
+                const title=typeof t==="string"?t:t.title;
+                const effect=typeof t==="object"?t.effect:null;
+                const value=typeof t==="object"?t.value:null;
+                const open=expandedTreasure===`${p.id}-${i}`;
+                return React.createElement('div', { key: i, style: {borderBottom:i<p.treasures.length-1?`1px solid ${C.border}`:"none",paddingBottom:8,marginBottom:8}, __source: {fileName: _jsxFileName, lineNumber: 1164}}
+                  , React.createElement('button', { onClick: ()=>setExpandedTreasure(open?null:`${p.id}-${i}`), style: {width:"100%",background:"transparent",border:"none",cursor:"pointer",textAlign:"left",padding:0}, __source: {fileName: _jsxFileName, lineNumber: 1165}}
+                    , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center"}, __source: {fileName: _jsxFileName, lineNumber: 1166}}
+                      , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.gold}, __source: {fileName: _jsxFileName, lineNumber: 1167}}, title)
+                      , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.greyDim}, __source: {fileName: _jsxFileName, lineNumber: 1168}}, open?"\u25b2":"\u25bc")
+                    )
+                  )
+                  , open&&effect&&React.createElement('div', { style: {marginTop:6,paddingTop:6,borderTop:`1px solid ${C.border}`}, __source: {fileName: _jsxFileName, lineNumber: 1171}}
+                    , React.createElement('div', { style: {fontFamily:BF,fontSize:14,color:C.whiteDim,lineHeight:1.5,marginBottom:6}, __source: {fileName: _jsxFileName, lineNumber: 1172}}, effect)
+                    , value&&React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.goldDim}, __source: {fileName: _jsxFileName, lineNumber: 1173}}, "\ud83d\udcb0 Value: "  , value, "gp")
+                    , typeof t.consumable!=="undefined"&&React.createElement('div', { style: {fontFamily:BF,fontSize:12,color:t.consumable?C.red:C.teal,marginTop:2}, __source: {fileName: _jsxFileName, lineNumber: 1174}}, t.consumable?"CONSUMABLE":"REUSABLE \u2014 recharges at camp")
+                    , React.createElement('button', { onClick: ()=>updatePlayerField(p.id,"treasures",p.treasures.filter((_,j)=>j!==i)), style: {marginTop:8,padding:"6px 14px",background:C.red+"15",border:`1px solid ${C.red}33`,borderRadius:0,color:C.red,fontFamily:BF,fontSize:16,cursor:"pointer"}, __source: {fileName: _jsxFileName, lineNumber: 1175}}, "USE / DISCARD"  )
+                  )
+                );
+              })
+            )
+            , p.notes&&React.createElement(Panel, {__source: {fileName: _jsxFileName, lineNumber: 1180}}, React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.grey,letterSpacing:2,marginBottom:5}, __source: {fileName: _jsxFileName, lineNumber: 1180}}, "NOTES"), React.createElement('div', { style: {fontFamily:BF,fontSize:14,color:C.whiteDim,whiteSpace:"pre-wrap"}, __source: {fileName: _jsxFileName, lineNumber: 1180}}, p.notes))
+            , (p.scoreHistory||[]).length>0&&React.createElement(Panel, {__source: {fileName: _jsxFileName, lineNumber: 1181}}
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.grey,letterSpacing:2,marginBottom:8}, __source: {fileName: _jsxFileName, lineNumber: 1182}}, "SCORE HISTORY" )
+              , [...(p.scoreHistory||[])].reverse().map((r,ri)=>{
+                const fmt=n=>n===0?"0":n>0?`+${n}`:`${n}`;
+                const total=r.total||0;
+                const tcl=total<0?C.green:total>0?C.red:C.whiteDim;
+                // split holes into blocks of 9
+                const front=r.holes.filter(h=>h.hole<=9).sort((a,b)=>a.hole-b.hole);
+                const back=r.holes.filter(h=>h.hole>=10).sort((a,b)=>a.hole-b.hole);
+                const blocks=back.length>0?[front,back]:[front];
+                const blockLabels=["Front 9","Back 9"];
+                return React.createElement('div', { key: ri, style: {marginBottom:12,paddingBottom:12,borderBottom:ri<(p.scoreHistory||[]).length-1?`1px solid ${C.border}`:"none"}, __source: {fileName: _jsxFileName, lineNumber: 1192}}
+                  , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}, __source: {fileName: _jsxFileName, lineNumber: 1193}}
+                    , React.createElement('div', { style: {fontFamily:BF,fontSize:13,color:C.parchment}, __source: {fileName: _jsxFileName, lineNumber: 1194}}, r.date)
+                    , React.createElement('div', { style: {fontFamily:BF,fontSize:13,color:tcl}, __source: {fileName: _jsxFileName, lineNumber: 1195}}, fmt(total), " / "  , r.holes.length, " holes" )
+                  )
+                  , blocks.map((block,bi)=>{
+                    const blockTotal=block.reduce((a,h)=>a+h.score,0);
+                    const btcl=blockTotal<0?C.green:blockTotal>0?C.red:C.whiteDim;
+                    return React.createElement('div', { key: bi, style: {marginBottom:bi<blocks.length-1?8:0}, __source: {fileName: _jsxFileName, lineNumber: 1200}}
+                      , React.createElement('div', { style: {overflowX:"auto"}, __source: {fileName: _jsxFileName, lineNumber: 1201}}
+                        , React.createElement('table', { style: {borderCollapse:"collapse",width:"100%"}, __source: {fileName: _jsxFileName, lineNumber: 1202}}
+                          , React.createElement('thead', {__source: {fileName: _jsxFileName, lineNumber: 1203}}
+                            , React.createElement('tr', {__source: {fileName: _jsxFileName, lineNumber: 1204}}
+                              , React.createElement('th', { style: {fontFamily:BF,fontSize:10,color:C.greyDim,textAlign:"left",padding:"2px 4px",minWidth:48}, __source: {fileName: _jsxFileName, lineNumber: 1205}}, blockLabels[bi])
+                              , block.map(h=>React.createElement('th', { key: h.hole, style: {fontFamily:BF,fontSize:10,color:C.greyDim,textAlign:"center",padding:"2px 3px",minWidth:24}, __source: {fileName: _jsxFileName, lineNumber: 1206}}, h.hole))
+                              , React.createElement('th', { style: {fontFamily:BF,fontSize:10,color:C.greyDim,textAlign:"center",padding:"2px 3px",minWidth:28}, __source: {fileName: _jsxFileName, lineNumber: 1207}}, "TOT")
+                            )
+                          )
+                          , React.createElement('tbody', {__source: {fileName: _jsxFileName, lineNumber: 1210}}
+                            , React.createElement('tr', {__source: {fileName: _jsxFileName, lineNumber: 1211}}
+                              , React.createElement('td', { style: {fontFamily:BF,fontSize:10,color:(p.cls&&p.cls.color)||C.gold,padding:"2px 4px"}, __source: {fileName: _jsxFileName, lineNumber: 1212}}, (p.name&&p.name.substring(0,6)))
+                              , block.map(h=>{
+                                const cl=h.score<0?C.green:h.score>0?C.red:C.whiteDim;
+                                return React.createElement('td', { key: h.hole, style: {fontFamily:BF,fontSize:11,color:cl,textAlign:"center",padding:"2px 3px",background:C.bgDark,border:`1px solid ${C.border}33`}, __source: {fileName: _jsxFileName, lineNumber: 1215}}, fmt(h.score));
+                              })
+                              , React.createElement('td', { style: {fontFamily:BF,fontSize:11,color:btcl,textAlign:"center",padding:"2px 3px",background:C.bgDark,borderLeft:`1px solid ${C.border}`}, __source: {fileName: _jsxFileName, lineNumber: 1217}}, fmt(blockTotal))
+                            )
+                          )
+                        )
+                      )
+                    );
+                  })
+                );
+              })
+            )
+            , React.createElement('div', { style: {display:"flex",gap:8,marginTop:4}, __source: {fileName: _jsxFileName, lineNumber: 1227}}
+              , React.createElement(Btn, { onClick: ()=>setPartyView("edit"), bg: C.bgCard, fg: C.grey, border: C.borderBright, style: {flex:1}, __source: {fileName: _jsxFileName, lineNumber: 1228}}, "\u270f\ufe0f EDIT" )
+              , canLevel&&React.createElement(Btn, { onClick: ()=>setPartyView("levelup"), bg: C.green+"22", fg: C.green, border: C.green+"55", style: {flex:1}, __source: {fileName: _jsxFileName, lineNumber: 1229}}, "\u2b06 LEVEL UP"  )
+            )
+            , React.createElement('button', { onClick: ()=>{_setAndSavePlayers(ps=>ps.filter(x=>x.id!==p.id));setPartyView("list");}, style: {width:"100%",padding:"10px 0",marginTop:8,background:"transparent",border:`2px solid ${C.red}33`,borderRadius:0,color:C.red,fontFamily:BF,fontSize:16,cursor:"pointer"}, __source: {fileName: _jsxFileName, lineNumber: 1231}}, "DELETE CHARACTER" )
+          );
+        })()
+
+        , partyView==="edit"&&(()=>{
+          const p=allPlayers.find(x=>x.id===sheetPlayerId);
+          if(!p)return null;
+          return React.createElement('div', { style: {padding:"0 16px"}, __source: {fileName: _jsxFileName, lineNumber: 1238}}
+            , React.createElement('button', { onClick: ()=>setPartyView("sheet"), style: {background:"transparent",border:"none",color:C.gold,fontFamily:BF,fontSize:14,cursor:"pointer",marginBottom:12}, __source: {fileName: _jsxFileName, lineNumber: 1239}}, "\u2190 BACK" )
+            , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:(p.cls&&p.cls.color)||C.grey,marginBottom:12,textShadow:OLH}, __source: {fileName: _jsxFileName, lineNumber: 1240}}, (p.cls&&p.cls.icon), " Editing "  , p.name)
+            , React.createElement(Panel, {__source: {fileName: _jsxFileName, lineNumber: 1241}}
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.grey,letterSpacing:2,marginBottom:5}, __source: {fileName: _jsxFileName, lineNumber: 1242}}, "NAME")
+              , React.createElement('input', { value: p.name, onChange: e=>updatePlayerField(p.id,"name",e.target.value), style: {width:"100%",padding:"10px 12px",background:C.bgDark,border:`2px solid ${C.borderBright}`,borderRadius:0,color:C.white,fontFamily:BF,fontSize:17}, __source: {fileName: _jsxFileName, lineNumber: 1243}})
+            )
+            , [["\ud83d\udcb0 Gold","gold",C.gold],["\u2726 XP","xp",C.purple],["\ud83d\udee1 Tokens","tokens",C.blue]].map(([label,field,cl])=>(
+              React.createElement(Panel, { key: field, __source: {fileName: _jsxFileName, lineNumber: 1246}}
+                , React.createElement('div', { style: {display:"flex",alignItems:"center",justifyContent:"space-between"}, __source: {fileName: _jsxFileName, lineNumber: 1247}}
+                  , React.createElement('div', { style: {fontFamily:BF,fontSize:14,color:cl}, __source: {fileName: _jsxFileName, lineNumber: 1248}}, label)
+                  , React.createElement('div', { style: {display:"flex",alignItems:"center",gap:10}, __source: {fileName: _jsxFileName, lineNumber: 1249}}
+                    , React.createElement('button', { onClick: ()=>adj(p.id,field,-1), style: {width:38,height:38,background:C.red+"18",border:`2px solid ${C.red}55`,borderRadius:0,color:C.red,fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}, __source: {fileName: _jsxFileName, lineNumber: 1250}}, "\u2212")
+                    , React.createElement('span', { style: {fontFamily:BF,fontSize:16,color:C.white,minWidth:36,textAlign:"center",textShadow:OLH}, __source: {fileName: _jsxFileName, lineNumber: 1251}}, p[field])
+                    , React.createElement('button', { onClick: ()=>adj(p.id,field,1), style: {width:38,height:38,background:C.green+"18",border:`2px solid ${C.green}55`,borderRadius:0,color:C.green,fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}, __source: {fileName: _jsxFileName, lineNumber: 1252}}, "+")
+                  )
+                )
+              )
+            ))
+            , React.createElement(Panel, {__source: {fileName: _jsxFileName, lineNumber: 1257}}
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.grey,letterSpacing:2,marginBottom:8}, __source: {fileName: _jsxFileName, lineNumber: 1258}}, "GEAR")
+              , (p.gear||[]).map((g,i)=>(
+                React.createElement('div', { key: i, style: {display:"flex",alignItems:"center",gap:6,marginBottom:6}, __source: {fileName: _jsxFileName, lineNumber: 1260}}
+                  , React.createElement('input', { value: g, onChange: e=>{const ng=[...(p.gear||[])];ng[i]=e.target.value;updatePlayerField(p.id,"gear",ng);}, style: {flex:1,padding:"8px 10px",background:C.bgDark,border:`1px solid ${C.borderBright}`,borderRadius:0,color:C.white,fontFamily:BF,fontSize:15}, __source: {fileName: _jsxFileName, lineNumber: 1261}})
+                  , React.createElement('button', { onClick: ()=>updatePlayerField(p.id,"gear",(p.gear||[]).filter((_,j)=>j!==i)), style: {width:32,height:32,background:C.red+"15",border:`1px solid ${C.red}33`,borderRadius:0,color:C.red,fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}, __source: {fileName: _jsxFileName, lineNumber: 1262}}, "\u2717")
+                )
+              ))
+              , React.createElement('button', { onClick: ()=>updatePlayerField(p.id,"gear",[...(p.gear||[]),""]), style: {width:"100%",padding:"9px 0",background:C.gold+"10",border:`2px dashed ${C.gold}33`,borderRadius:0,color:C.gold,fontFamily:BF,fontSize:16,cursor:"pointer",marginTop:4}, __source: {fileName: _jsxFileName, lineNumber: 1265}}, "+ ADD DISC"  )
+            )
+            , React.createElement(Panel, {__source: {fileName: _jsxFileName, lineNumber: 1267}}
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.grey,letterSpacing:2,marginBottom:5}, __source: {fileName: _jsxFileName, lineNumber: 1268}}, "NOTES / BACKSTORY"  )
+              , React.createElement('textarea', { value: p.notes||"", onChange: e=>updatePlayerField(p.id,"notes",e.target.value), placeholder: "Write notes, backstory, anything..."   , rows: 4, style: {width:"100%",padding:"10px 12px",background:C.bgDark,border:`2px solid ${C.borderBright}`,borderRadius:0,color:C.white,fontFamily:BF,fontSize:16,resize:"vertical"}, __source: {fileName: _jsxFileName, lineNumber: 1269}})
+            )
+            , React.createElement(Btn, { onClick: ()=>setPartyView("sheet"), style: {marginTop:4}, __source: {fileName: _jsxFileName, lineNumber: 1271}}, "DONE")
+          );
+        })()
+
+        , partyView==="levelup"&&(()=>{
+          const p=allPlayers.find(x=>x.id===sheetPlayerId);
+          if(!p)return null;
+          const need=p.level===1?8:p.level===2?9:null;
+          return React.createElement('div', { style: {padding:"0 16px"}, __source: {fileName: _jsxFileName, lineNumber: 1279}}
+            , React.createElement('button', { onClick: ()=>setPartyView("sheet"), style: {background:"transparent",border:"none",color:C.gold,fontFamily:BF,fontSize:14,cursor:"pointer",marginBottom:12}, __source: {fileName: _jsxFileName, lineNumber: 1280}}, "\u2190 BACK" )
+            , React.createElement('div', { style: {textAlign:"center",marginBottom:14}, __source: {fileName: _jsxFileName, lineNumber: 1281}}
+              , React.createElement('div', { style: {fontSize:16,marginBottom:4}, __source: {fileName: _jsxFileName, lineNumber: 1282}}, (p.cls&&p.cls.icon))
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.gold,textShadow:OLH,marginTop:6}, __source: {fileName: _jsxFileName, lineNumber: 1283}}, "LEVEL UP" )
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:15,color:C.whiteDim}, __source: {fileName: _jsxFileName, lineNumber: 1284}}, "Level " , p.level, " \u2192 "  , p.level+1)
+            )
+            , React.createElement(Panel, {__source: {fileName: _jsxFileName, lineNumber: 1286}}
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:15,color:C.green,marginBottom:6}, __source: {fileName: _jsxFileName, lineNumber: 1287}}, "YOU GAIN:" )
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:15,color:C.white,lineHeight:1.7}, __source: {fileName: _jsxFileName, lineNumber: 1288}}
+                , React.createElement('div', {__source: {fileName: _jsxFileName, lineNumber: 1289}}, "\ud83d\udee1 +1 Advantage Token"   )
+                , p.level+1===2&&React.createElement('div', {__source: {fileName: _jsxFileName, lineNumber: 1290}}, "\u2694\ufe0f 1 new skill pick"    )
+                , p.level+1===3&&React.createElement('div', {__source: {fileName: _jsxFileName, lineNumber: 1291}}, "\u2694\ufe0f 1 new skill pick (or multiclass)"      )
+              )
+            )
+            , React.createElement(Panel, {__source: {fileName: _jsxFileName, lineNumber: 1294}}
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:15,color:C.purple,marginBottom:4}, __source: {fileName: _jsxFileName, lineNumber: 1295}}, "COST: " , need, " XP" )
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:14,color:C.whiteDim}, __source: {fileName: _jsxFileName, lineNumber: 1296}}, p.xp, " XP \u2192 "   , p.xp-need, " after" )
+            )
+            , React.createElement(Btn, { onClick: ()=>{levelUp(p.id);setPartyView("sheet");}, __source: {fileName: _jsxFileName, lineNumber: 1298}}, "CONFIRM \u2014 THEN PICK SKILL"    )
+          );
+        })()
+      )
+
+      /* \u2550\u2550\u2550 QUEST \u2550\u2550\u2550 */
+      , tab==="adventure"&&React.createElement('div', { className: "fi", __source: {fileName: _jsxFileName, lineNumber: 1304}}
+        , questView==="manager"&&React.createElement('div', {__source: {fileName: _jsxFileName, lineNumber: 1305}}
+          , hdr("DISC GOLF","DUNGEON")
+          , React.createElement('div', { style: {padding:"0 16px"}, __source: {fileName: _jsxFileName, lineNumber: 1307}}
+            , allPlayers.length===0?React.createElement('div', { style: {textAlign:"center",padding:"30px 0"}, __source: {fileName: _jsxFileName, lineNumber: 1308}}
+              , React.createElement('div', { style: {fontSize:28,marginBottom:10}, __source: {fileName: _jsxFileName, lineNumber: 1309}}, "\u2694\ufe0f")
+              , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.whiteDim}, __source: {fileName: _jsxFileName, lineNumber: 1310}}, "Add adventurers in the Party tab."     )
+            ):React.createElement(React.Fragment, null
+              , quests.length>0&&React.createElement('div', { style: {marginBottom:14}, __source: {fileName: _jsxFileName, lineNumber: 1312}}
+                , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.grey,letterSpacing:2,marginBottom:10}, __source: {fileName: _jsxFileName, lineNumber: 1313}}, "ACTIVE QUESTS" )
+                , quests.map(q=>{
+                  const qps=allPlayers.filter(p=>q.playerIds.includes(p.id));
+                  return React.createElement(Panel, { key: q.id, __source: {fileName: _jsxFileName, lineNumber: 1316}}
+                    , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"flex-start"}, __source: {fileName: _jsxFileName, lineNumber: 1317}}
+                      , React.createElement('div', { style: {flex:1,cursor:"pointer"}, onClick: ()=>resumeQuest(q), __source: {fileName: _jsxFileName, lineNumber: 1318}}
+                        , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.gold,marginBottom:2}, __source: {fileName: _jsxFileName, lineNumber: 1319}}, "Hole " , q.hole, "/18")
+                        , React.createElement('div', { style: {fontFamily:BF,fontSize:12,color:C.greyDim,marginBottom:4}, __source: {fileName: _jsxFileName, lineNumber: 1320}}, q.startDate||"")
+                        , React.createElement('div', { style: {display:"flex",flexWrap:"wrap",gap:6,marginBottom:6}, __source: {fileName: _jsxFileName, lineNumber: 1321}}
+                          , qps.map(p=>React.createElement('span', { key: p.id, style: {fontFamily:BF,fontSize:16,color:(p.cls&&p.cls.color)||C.grey}, __source: {fileName: _jsxFileName, lineNumber: 1322}}, (p.cls&&p.cls.icon), " " , p.name, " Lv" , p.level||1))
+                        )
+                        , React.createElement('div', { style: {display:"flex",gap:2}, __source: {fileName: _jsxFileName, lineNumber: 1324}}
+                          , Array.from({length:18},(_,i)=>React.createElement('div', { key: i, style: {width:i+1===q.hole?10:7,height:i+1===q.hole?10:7,borderRadius:0,background:i+1<q.hole?C.green+"77":i+1===q.hole?C.gold:C.bgDark,border:`1px solid ${i+1===q.hole?C.gold:C.border}`}, __source: {fileName: _jsxFileName, lineNumber: 1325}}))
+                        )
+                      )
+                      , React.createElement('div', { style: {display:"flex",flexDirection:"column",gap:6,marginLeft:8,flexShrink:0}, __source: {fileName: _jsxFileName, lineNumber: 1328}}
+                        , React.createElement('div', { style: {display:"flex",gap:6}, __source: {fileName: _jsxFileName, lineNumber: 1329}}
+                          , React.createElement('button', { onClick: ()=>resumeQuest(q), style: {padding:"8px 12px",background:C.green+"18",border:`2px solid ${C.green}55`,borderRadius:0,color:C.green,fontFamily:BF,fontSize:16,cursor:"pointer"}, __source: {fileName: _jsxFileName, lineNumber: 1330}}, "RESUME")
+                          , React.createElement('button', { onClick: ()=>deleteQuest(q.id), style: {padding:"8px 10px",background:C.red+"15",border:`2px solid ${C.red}44`,borderRadius:0,color:C.red,fontFamily:BF,fontSize:16,cursor:"pointer"}, __source: {fileName: _jsxFileName, lineNumber: 1331}}, "\u2717")
+                        )
+                        , React.createElement('button', { onClick: ()=>setScorecardQuestId(q.id), style: {padding:"6px 10px",background:C.bgDark,border:`2px solid ${C.borderBright}`,borderRadius:0,color:C.parchment,fontFamily:BF,fontSize:14,cursor:"pointer",letterSpacing:1}, __source: {fileName: _jsxFileName, lineNumber: 1333}}, "\ud83d\udcca SCORECARD" )
+                      )
+                    )
+                  );
+                })
+              )
+              , React.createElement(Btn, { onClick: ()=>{setQuestPlayerIds([]);setQuestView("newquest");}, __source: {fileName: _jsxFileName, lineNumber: 1339}}, "+ NEW QUEST"  )
+            )
+          )
+        )
+
+        , questView==="newquest"&&React.createElement('div', {__source: {fileName: _jsxFileName, lineNumber: 1344}}
+          , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",padding:"20px 16px 14px",borderBottom:`3px solid ${C.borderBright}`,marginBottom:14}, __source: {fileName: _jsxFileName, lineNumber: 1345}}
+            , React.createElement('button', { onClick: ()=>setQuestView("manager"), style: {background:"transparent",border:"none",color:C.gold,fontFamily:BF,fontSize:14,cursor:"pointer"}, __source: {fileName: _jsxFileName, lineNumber: 1346}}, "\u2190 BACK" )
+            , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.gold,textShadow:OLH}, __source: {fileName: _jsxFileName, lineNumber: 1347}}, "NEW QUEST" )
+            , React.createElement('div', { style: {width:50}, __source: {fileName: _jsxFileName, lineNumber: 1348}})
+          )
+          , React.createElement('div', { style: {padding:"0 16px"}, __source: {fileName: _jsxFileName, lineNumber: 1350}}
+            , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.parchment,marginBottom:10}, __source: {fileName: _jsxFileName, lineNumber: 1351}}, "SELECT PARTY" )
+            , allPlayers.map(p=>{
+              const sel=questPlayerIds.includes(p.id);
+              return React.createElement('button', { key: p.id, onClick: ()=>toggleQuest(p.id), style: {width:"100%",padding:"12px 14px",marginBottom:8,background:sel?C.bgCard:C.bgDark,border:`4px solid ${sel?((p.cls&&p.cls.color)||C.gold):C.borderBright}`,borderRadius:0,cursor:"pointer",display:"flex",alignItems:"center",gap:10,textAlign:"left",boxShadow:sel?bevel((p.cls&&p.cls.color)||C.gold):bevel(C.borderBright)}, __source: {fileName: _jsxFileName, lineNumber: 1354}}
+                , React.createElement('div', { style: {width:24,height:24,border:`3px solid ${sel?C.green:C.grey}`,background:sel?C.green:"transparent",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,color:C.bgDark,flexShrink:0,fontFamily:BF}, __source: {fileName: _jsxFileName, lineNumber: 1355}}, sel?"\u2713":"")
+                , React.createElement('span', { style: {fontSize:22}, __source: {fileName: _jsxFileName, lineNumber: 1356}}, (p.cls&&p.cls.icon)||"\u2753")
+                , React.createElement('div', {__source: {fileName: _jsxFileName, lineNumber: 1357}}
+                  , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:(p.cls&&p.cls.color)||C.gold}, __source: {fileName: _jsxFileName, lineNumber: 1358}}, p.name||"Unnamed")
+                  , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.whiteDim}, __source: {fileName: _jsxFileName, lineNumber: 1359}}, (p.cls&&p.cls.name)||"No class", " \u00b7 Lv"  , p.level||1)
+                )
+              );
+            })
+            , questPlayerIds.length>=1&&React.createElement(Btn, { onClick: createQuest, style: {marginTop:10}, __source: {fileName: _jsxFileName, lineNumber: 1363}}, "BEGIN THE QUEST"  )
+          )
+        )
+
+        , questView==="play"&&activeQuest&&React.createElement('div', {__source: {fileName: _jsxFileName, lineNumber: 1367}}
+          /* \u2500\u2500 Hole header \u2500\u2500 */
+          , React.createElement('div', { style: {padding:"12px 16px 10px",borderBottom:`3px solid ${C.borderBright}`}, __source: {fileName: _jsxFileName, lineNumber: 1369}}
+            , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}, __source: {fileName: _jsxFileName, lineNumber: 1370}}
+              , React.createElement('div', { style: {minWidth:60}, __source: {fileName: _jsxFileName, lineNumber: 1371}})
+              , React.createElement('div', { style: {textAlign:"center"}, __source: {fileName: _jsxFileName, lineNumber: 1372}}
+                , React.createElement('div', { style: {fontFamily:BF,fontSize:15,color:C.grey,letterSpacing:3}, __source: {fileName: _jsxFileName, lineNumber: 1373}}, "HOLE")
+                , React.createElement('div', { style: {fontFamily:BF,fontSize:28,color:C.gold,lineHeight:1,textShadow:OLH}, __source: {fileName: _jsxFileName, lineNumber: 1374}}, hole)
+              )
+              , React.createElement('button', { onClick: backToManager, style: {padding:"6px 10px",background:C.bgCard,border:`2px solid ${C.borderBright}`,borderRadius:0,color:C.grey,fontFamily:BF,fontSize:14,cursor:"pointer",letterSpacing:1}, __source: {fileName: _jsxFileName, lineNumber: 1376}}, "QUESTS")
+            )
+            , React.createElement('div', { style: {display:"flex",gap:3,justifyContent:"center",flexWrap:"wrap"}, __source: {fileName: _jsxFileName, lineNumber: 1378}}
+              , Array.from({length:18},(_,i)=>React.createElement('div', { key: i, style: {width:i+1===hole?12:8,height:i+1===hole?12:8,borderRadius:0,background:i+1<hole?C.green+"77":i+1===hole?C.gold:C.bgDark,border:`2px solid ${i+1===hole?C.gold:C.border}`}, __source: {fileName: _jsxFileName, lineNumber: 1379}}))
+            )
+          )
+
+          /* \u2500\u2500 Active perils \u2500\u2500 */
+          , perils.length>0&&React.createElement('div', { style: {padding:"8px 16px 0"}, __source: {fileName: _jsxFileName, lineNumber: 1384}}
+            , perils.map((pr,i)=>React.createElement('div', { key: i, style: {background:C.red+"12",border:`2px solid ${C.red}44`,borderRadius:0,padding:"8px 12px",marginBottom:6,display:"flex",justifyContent:"space-between",alignItems:"center",animation:"pulse 3s infinite"}, __source: {fileName: _jsxFileName, lineNumber: 1385}}
+              , React.createElement('div', { style: {flex:1}, __source: {fileName: _jsxFileName, lineNumber: 1386}}
+                , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.red}, __source: {fileName: _jsxFileName, lineNumber: 1387}}, "\u26a0 " , pr.card.title, " \u2014 "  , pr.pname)
+                , React.createElement('div', { style: {fontFamily:BF,fontSize:16,color:C.whiteDim}, __source: {fileName: _jsxFileName, lineNumber: 1388}}, pr.card.effect)
+              )
+              , React.createElement('button', { onClick: ()=>updateQuestPerils(perils.filter((_,j)=>j!==i)), style: {padding:"5px 8px",background:C.red+"22",border:`1px solid ${C.red}44`,borderRadius:0,color:C.red,fontSize:16,fontFamily:BF,cursor:"pointer",marginLeft:6}, __source: {fileName: _jsxFileName, lineNumber: 1390}}, "\u2713")
+            ))
+          )
+
+          /* \u2500\u2500 Deck buttons \u2500\u2500 */
+          , React.createElement('div', { style: {padding:"12px 16px 180px"}, __source: {fileName: _jsxFileName, lineNumber: 1395}}
+            , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}, __source: {fileName: _jsxFileName, lineNumber: 1396}}
+              , [{t:"adventure",l:"Adventure",c:C.gold,i:"\ud83d\uddfa\ufe0f",n:aD.length},{t:"boon",l:"Boon",c:C.green,i:"\u2728",n:bD.length},{t:"peril",l:"Peril",c:C.red,i:"\ud83d\udc80",n:pD.length},{t:"between",l:"Between Holes",c:C.blue,i:"\ud83d\udeb6",n:bhD.length}].map(d=>(
+                React.createElement('button', { key: d.t, onClick: ()=>tapDeck(d.t), style: {padding:"24px 8px 18px",background:d.t==="adventure"&&activeAdventureCard?C.gold+"18":C.bgCard,border:`4px solid ${d.t==="adventure"&&activeAdventureCard?C.gold:d.c}`,borderRadius:0,cursor:"pointer",textAlign:"center",boxShadow:bevel(d.t==="adventure"&&activeAdventureCard?C.gold:d.c)}, __source: {fileName: _jsxFileName, lineNumber: 1398}}
+                  , React.createElement('div', { style: {fontSize:21,marginBottom:5}, __source: {fileName: _jsxFileName, lineNumber: 1399}}, d.i)
+                  , React.createElement('div', { style: {fontFamily:BF,fontSize:15,color:d.t==="adventure"&&activeAdventureCard?C.gold:d.c}, __source: {fileName: _jsxFileName, lineNumber: 1400}}, d.t==="adventure"&&activeAdventureCard?"ACTIVE CARD":d.l)
+                  , React.createElement('div', { style: {fontFamily:BF,fontSize:13,color:C.greyDim,marginTop:2}, __source: {fileName: _jsxFileName, lineNumber: 1401}}, d.n, " left" )
+                )
+              ))
+            )
+            , React.createElement('button', { onClick: ()=>tapDeck("treasure"), style: {width:"100%",padding:"12px",marginBottom:10,background:C.bgCard,border:`3px solid ${C.gold}`,borderRadius:0,cursor:"pointer",display:"flex",alignItems:"center",gap:10,boxShadow:bevel(C.gold)}, __source: {fileName: _jsxFileName, lineNumber: 1405}}
+              , React.createElement('span', { style: {fontSize:22}, __source: {fileName: _jsxFileName, lineNumber: 1406}}, "\ud83d\udddd\ufe0f")
+              , React.createElement('div', {__source: {fileName: _jsxFileName, lineNumber: 1407}}, React.createElement('div', { style: {fontFamily:BF,fontSize:15,color:C.gold}, __source: {fileName: _jsxFileName, lineNumber: 1407}}, "Treasure Deck" ), React.createElement('div', { style: {fontFamily:BF,fontSize:13,color:C.greyDim}, __source: {fileName: _jsxFileName, lineNumber: 1407}}, tD.length, " left" ))
+            )
+            /* Manual hole advance (fallback if not using adventure card scoring) */
+            , React.createElement('button', { onClick: ()=>{
+              const nh=Math.min(18,hole+1);
+              _setAndSaveQuests(qs=>qs.map(q=>q.id===activeQuestId?{...q,hole:nh,perils,aDeck:aD,bDeck:bD,pDeck:pD,bhDeck:bhD,tDeck:tD}:q));
+              updateQuestHole(nh);
+            }, style: {width:"100%",padding:"13px 0",background:C.bgDark,border:`4px solid ${hole===9?C.cyan:hole>=18?C.gold:C.borderBright}`,borderRadius:0,color:hole===9?C.cyan:hole>=18?C.gold:C.whiteDim,fontFamily:BF,fontSize:15,cursor:"pointer",letterSpacing:1,boxShadow:bevel(hole===9?C.cyan:hole>=18?C.gold:C.borderBright)}, __source: {fileName: _jsxFileName, lineNumber: 1410}}
+              , hole===9?"\u26fa CAMP \u2014 ADVANCE TO HOLE 10":hole>=18?"\ud83c\udfc6 FINISH QUEST":"SKIP TO HOLE "+(hole+1)+" \u2192"
+            )
+          )
+
+          /* \u2500\u2500 Party strip \u2500\u2500 */
+          , React.createElement('div', { style: {position:"fixed",bottom:70,left:0,right:0,maxWidth:480,margin:"0 auto",background:C.bgDark,borderTop:`4px solid ${C.borderBright}`,display:"flex",padding:"5px 6px",gap:4,zIndex:850}, __source: {fileName: _jsxFileName, lineNumber: 1420}}
+            , questPlayers.map(p=>(
+              React.createElement('div', { key: p.id, style: {flex:1,display:"flex",flexDirection:"column",gap:2}, __source: {fileName: _jsxFileName, lineNumber: 1422}}
+                , React.createElement('button', { onClick: ()=>setSheetId(p.id), style: {flex:1,padding:"4px 2px",background:C.bgCard,border:`3px solid ${(p.cls&&p.cls.color)||C.borderBright}`,borderRadius:0,cursor:"pointer",textAlign:"center",boxShadow:bevel((p.cls&&p.cls.color)||C.borderBright)}, __source: {fileName: _jsxFileName, lineNumber: 1423}}
+                  , React.createElement('div', { style: {fontSize:15}, __source: {fileName: _jsxFileName, lineNumber: 1424}}, (p.cls&&p.cls.icon)||"\u2753")
+                  , React.createElement('div', { style: {fontFamily:BF,fontSize:11,color:(p.cls&&p.cls.color)||C.gold,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}, __source: {fileName: _jsxFileName, lineNumber: 1425}}, (p.name&&p.name.substring(0,7)))
+                  , React.createElement('div', { style: {fontFamily:BF,fontSize:11,color:C.gold}, __source: {fileName: _jsxFileName, lineNumber: 1426}}, "\ud83d\udcb0", p.gold)
+                  , React.createElement('div', { style: {fontFamily:BF,fontSize:11,color:C.purple}, __source: {fileName: _jsxFileName, lineNumber: 1427}}, "\u2726", p.xp)
+                  , React.createElement('div', { style: {fontFamily:BF,fontSize:11,color:C.cyan}, __source: {fileName: _jsxFileName, lineNumber: 1428}}, "\ud83d\udee1", p.tokens)
+                  , React.createElement('div', { style: {width:7,height:7,borderRadius:0,background:TEE[p.tee],margin:"2px auto 0",border:`1px solid ${C.borderBright}`}, __source: {fileName: _jsxFileName, lineNumber: 1429}})
+                )
+                , React.createElement('button', { onClick: ()=>{setTab("party");setSheetPlayerId(p.id);setPartyView("sheet");}, style: {width:"100%",padding:"2px 0",background:"transparent",border:`1px solid ${C.greyDim}`,borderRadius:0,color:C.greyDim,fontFamily:BF,fontSize:10,cursor:"pointer",letterSpacing:1}, __source: {fileName: _jsxFileName, lineNumber: 1431}}, "FULL SHEET" )
+              )
+            ))
+          )
+        )
+      )
+
+      /* \u2500\u2500 Tab bar \u2500\u2500 */
+      , React.createElement('div', { style: {position:"fixed",bottom:0,left:0,right:0,background:C.bgDark,borderTop:`4px solid ${C.borderBright}`,display:"flex",zIndex:900,maxWidth:480,margin:"0 auto",height:70,alignItems:"stretch",padding:"6px 6px 4px",gap:4}, __source: {fileName: _jsxFileName, lineNumber: 1439}}
+        , [{id:"codex",icon:"\ud83d\udcdc",label:"CODEX",glow:false},{id:"party",icon:"\ud83d\udc65",label:"PARTY",glow:allPlayers.length===0&&tab!=="party"},{id:"adventure",icon:"\u2694\ufe0f",label:"QUEST",glow:allPlayers.length>0&&quests.length===0&&tab!=="adventure"}].map(t=>(
+          React.createElement('button', { key: t.id, onClick: ()=>setTab(t.id), style: {
+            flex:1,cursor:"pointer",textAlign:"center",
+            background:tab===t.id?C.gold:C.bgCard,
+            border:`4px solid ${tab===t.id?C.gold:t.glow?C.gold:C.borderBright}`,
+            borderRadius:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2,
+            boxShadow:tab===t.id?bevelBtn(C.gold):bevel(C.borderBright),
+            animation:t.glow&&tab!==t.id?"pulse 2s infinite":"none",
+          }, __source: {fileName: _jsxFileName, lineNumber: 1441}}
+            , React.createElement('div', { style: {fontSize:18}, __source: {fileName: _jsxFileName, lineNumber: 1449}}, t.icon)
+            , React.createElement('div', { style: {fontFamily:BF,fontSize:16,letterSpacing:1,color:tab===t.id?C.bgDark:t.glow?C.gold:C.whiteDim}, __source: {fileName: _jsxFileName, lineNumber: 1450}}, t.label)
+          )
+        ))
+      )
+    )
+  );
+}
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(React.createElement(App, null));
+  </script>
+</body>
+</html>
