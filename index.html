@@ -11,6 +11,12 @@
   <link rel="icon" type="image/png" href="icon.png"/>
   <link rel="manifest" href="manifest.json"/>
   <style>
+    @font-face {
+      font-family: 'Press Start 2P';
+      src: url('PressStart2P-Regular.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
     html, body { margin: 0; padding: 0; background: #2a1a0e; height: 100%; }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   </style>
@@ -47,8 +53,8 @@ window.addEventListener('beforeinstallprompt', function(e) {
   e.preventDefault();
   window._installPrompt = e;
 });
+window.onerror=function(msg,url,line,col,err){
   _logError(msg, 'line:'+line+' col:'+col+(err&&err.stack?'\n'+err.stack:''));
-  // Still show red screen in development (desktop), but don't block on mobile
   var d=document.getElementById('error');
   if(d){d.style.display='block';d.textContent='ERROR\n'+msg+'\nline:'+line+' col:'+col+'\n'+(err&&err.stack?err.stack:'')+('\nurl:'+url);}
   return true;
@@ -78,7 +84,7 @@ const bevel=(color="#6a5a3a")=>`inset 2px 2px 0 ${color}cc, inset -2px -2px 0 #0
 const bevelBtn=(color="#c8b060")=>`inset 2px 2px 0 ${color}, inset -2px -2px 0 #00000099, inset -1px -1px 0 #00000055`;
 const OL="1px 1px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,0 2px 0 #000,0 -1px 0 #000";
 const OLH="2px 2px 0 #000,-1px -1px 0 #000,2px -1px 0 #000,-1px 2px 0 #000";
-const BF="'Courier New',Courier,monospace";
+const BF="'Press Start 2P','Courier New',Courier,monospace";
 const TEE={red:C.red,white:C.whiteDim,blue:C.blue};
 
 // ── SKILL TAGS (renamed Physical→Athletics, Combat→Tactics) ─────────────────
