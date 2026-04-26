@@ -1,6 +1,5 @@
-# discgolfdungeon
+# QuestRound
 disc golf adventure companion app
-DISC GOLF DUNGEON — 
 RULES SUMMARY
 
 THE QUEST
