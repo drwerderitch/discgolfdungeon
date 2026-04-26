@@ -42,7 +42,11 @@ function _logError(msg, detail) {
     localStorage.setItem('dgd_errorlog', JSON.stringify(logs));
   } catch(e) {}
 }
-window.onerror=function(msg,url,line,col,err){
+window._installPrompt = null;
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  window._installPrompt = e;
+});
   _logError(msg, 'line:'+line+' col:'+col+(err&&err.stack?'\n'+err.stack:''));
   // Still show red screen in development (desktop), but don't block on mobile
   var d=document.getElementById('error');
@@ -1290,7 +1294,18 @@ function App(){
             React.createElement('div',{style:{fontFamily:BF,fontSize:"16px",color:C.gold,marginBottom:"10px"}},"📱 SHARE THIS APP"),
             React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.whiteDim,marginBottom:"12px"}},"Scan to open on any device:"),
             React.createElement('div',{id:"qrcode-container",style:{background:C.white,padding:"12px",display:"inline-block"},ref:function(el){if(el&&!el.hasChildNodes()&&window.QRCode){new window.QRCode(el,{text:"https://drwerderitch.github.io/QuestRound",width:180,height:180,colorDark:"#000000",colorLight:"#ffffff"});}}}),
-            React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.greyDim,marginTop:"8px"}},"https://drwerderitch.github.io/QuestRound")
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.greyDim,marginTop:"8px",marginBottom:"16px"}},"https://drwerderitch.github.io/QuestRound"),
+            React.createElement('button',{onClick:function(){
+              if(window._installPrompt){
+                window._installPrompt.prompt();
+                window._installPrompt.userChoice.then(function(){window._installPrompt=null;});
+              } else {
+                alert("Install option not available — open this page in Chrome on Android and try again.");
+              }
+            },style:{width:"100%",padding:"14px 0",background:C.blue+"18",border:"3px solid "+C.blue,borderRadius:0,color:C.blue,fontFamily:BF,fontSize:"15px",cursor:"pointer",marginBottom:"10px"}},"📲 INSTALL APP"),
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.greyDim,marginBottom:"16px"}},"Android/Chrome only. On iOS use Share → Add to Home Screen."),
+            React.createElement('button',{onClick:function(){window.location.reload(true);},style:{width:"100%",padding:"14px 0",background:C.green+"18",border:"3px solid "+C.green,borderRadius:0,color:C.green,fontFamily:BF,fontSize:"15px",cursor:"pointer",marginBottom:"6px"}},"🔄 CHECK FOR UPDATES"),
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.greyDim}},"Forces a fresh load from the server. Use this if something seems outdated.")
           )
         )
       )
