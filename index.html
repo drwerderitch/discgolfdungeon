@@ -14,6 +14,7 @@
     html, body { margin: 0; padding: 0; background: #2a1a0e; height: 100%; }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 <div id="root"></div>
@@ -24,7 +25,7 @@ function useState(init){var i=_cursor++;if(_hooks[i]===undefined)_hooks[i]=typeo
 function _scheduleUpdate(){if(_dirty)return;_dirty=true;Promise.resolve().then(function(){_dirty=false;_rerender();});}
 function _rerender(){if(!_renderFn||!_rootEl)return;_cursor=0;var vdom=_renderFn();_rootEl.innerHTML='';var node=_render(vdom);if(node)_rootEl.appendChild(node);}
 function createElement(type,props){var children=[];for(var i=2;i<arguments.length;i++){var c=arguments[i];if(Array.isArray(c))for(var j=0;j<c.length;j++)children.push(c[j]);else children.push(c);}props=props||{};if(children.length)props=Object.assign({},props,{children:children.length===1?children[0]:children});return{type:type,props:props};}
-function _render(v){if(v===null||v===undefined||v===false||v===true)return null;if(typeof v==='string'||typeof v==='number')return document.createTextNode(String(v));if(Array.isArray(v)){var f=document.createDocumentFragment();for(var i=0;i<v.length;i++){var n=_render(v[i]);if(n)f.appendChild(n);}return f;}if(typeof v.type==='function'){var result=v.type(v.props);return _render(result);}if(v.type==='__fragment__'){var f2=document.createDocumentFragment();var kids=v.props&&v.props.children;if(kids!==undefined){var arr=Array.isArray(kids)?kids:[kids];for(var i=0;i<arr.length;i++){var n=_render(arr[i]);if(n)f2.appendChild(n);}}return f2;}var el=document.createElement(v.type);var props=v.props||{};for(var k in props){if(k==='children'||k==='key')continue;var val=props[k];if(k==='style'&&val&&typeof val==='object'){Object.assign(el.style,val);}else if(k==='className'){el.className=val||'';}else if(k==='htmlFor'){el.htmlFor=val;}else if(k==='dangerouslySetInnerHTML'){el.innerHTML=val.__html;}else if(k.startsWith('on')&&typeof val==='function'){el.addEventListener(k.slice(2).toLowerCase(),val);}else if(k==='checked'||k==='disabled'||k==='selected'){if(val)el.setAttribute(k,'');}else if(k==='value'){el.value=val;}else if(val!==null&&val!==undefined&&val!==false){try{el.setAttribute(k,val);}catch(e){}}}var ch=props.children;if(ch!==undefined){var arr2=Array.isArray(ch)?ch:[ch];for(var i=0;i<arr2.length;i++){var n2=_render(arr2[i]);if(n2)el.appendChild(n2);}}return el;}
+function _render(v){if(v===null||v===undefined||v===false||v===true)return null;if(typeof v==='string'||typeof v==='number')return document.createTextNode(String(v));if(Array.isArray(v)){var f=document.createDocumentFragment();for(var i=0;i<v.length;i++){var n=_render(v[i]);if(n)f.appendChild(n);}return f;}if(typeof v.type==='function'){var result=v.type(v.props);return _render(result);}if(v.type==='__fragment__'){var f2=document.createDocumentFragment();var kids=v.props&&v.props.children;if(kids!==undefined){var arr=Array.isArray(kids)?kids:[kids];for(var i=0;i<arr.length;i++){var n=_render(arr[i]);if(n)f2.appendChild(n);}}return f2;}var el=document.createElement(v.type);var props=v.props||{};for(var k in props){if(k==='children'||k==='key')continue;var val=props[k];if(k==='style'&&val&&typeof val==='object'){Object.assign(el.style,val);}else if(k==='className'){el.className=val||'';}else if(k==='htmlFor'){el.htmlFor=val;}else if(k==='dangerouslySetInnerHTML'){el.innerHTML=val.__html;}else if(k.startsWith('on')&&typeof val==='function'){el.addEventListener(k.slice(2).toLowerCase(),val);}else if(k==='ref'){if(typeof val==='function'){setTimeout(function(){val(el);},0);}}else if(k==='value'){el.value=val;}else if(val!==null&&val!==undefined&&val!==false){try{el.setAttribute(k,val);}catch(e){}}}var ch=props.children;if(ch!==undefined){var arr2=Array.isArray(ch)?ch:[ch];for(var i=0;i<arr2.length;i++){var n2=_render(arr2[i]);if(n2)el.appendChild(n2);}}return el;}
 w.React={createElement:createElement,Fragment:'__fragment__',useState:useState};
 w.useState=useState;
 w.ReactDOM={createRoot:function(container){_rootEl=container;return{render:function(el){_renderFn=function(){return el.type(el.props);};_cursor=0;_rerender();}};}};
@@ -33,8 +34,27 @@ w.ReactDOM={createRoot:function(container){_rootEl=container;return{render:funct
 
 <div id="error" style="color:#f83800;background:#0a0a1a;padding:20px;font-family:monospace;font-size:12px;display:none;white-space:pre-wrap;position:fixed;top:0;left:0;right:0;bottom:0;overflow:auto;z-index:9999"></div>
 <script>
-window.onerror=function(msg,url,line,col,err){var d=document.getElementById('error');d.style.display='block';d.textContent='ERROR\n'+msg+'\nline:'+line+' col:'+col+'\n'+(err&&err.stack?err.stack:'')+('\nurl:'+url);return true;};
-window.addEventListener('unhandledrejection',function(e){var d=document.getElementById('error');d.style.display='block';d.textContent+='\nUNHANDLED: '+(e.reason&&e.reason.stack?e.reason.stack:e.reason);});
+function _logError(msg, detail) {
+  try {
+    var logs = JSON.parse(localStorage.getItem('dgd_errorlog')||'[]');
+    logs.push({ts: new Date().toISOString(), msg: String(msg).substring(0,300), detail: String(detail||'').substring(0,500)});
+    if(logs.length > 50) logs = logs.slice(-50); // keep last 50
+    localStorage.setItem('dgd_errorlog', JSON.stringify(logs));
+  } catch(e) {}
+}
+window.onerror=function(msg,url,line,col,err){
+  _logError(msg, 'line:'+line+' col:'+col+(err&&err.stack?'\n'+err.stack:''));
+  // Still show red screen in development (desktop), but don't block on mobile
+  var d=document.getElementById('error');
+  if(d){d.style.display='block';d.textContent='ERROR\n'+msg+'\nline:'+line+' col:'+col+'\n'+(err&&err.stack?err.stack:'')+('\nurl:'+url);}
+  return true;
+};
+window.addEventListener('unhandledrejection',function(e){
+  var reason = e.reason&&e.reason.stack?e.reason.stack:String(e.reason);
+  _logError('Unhandled rejection', reason);
+  var d=document.getElementById('error');
+  if(d){d.style.display='block';d.textContent+='\nUNHANDLED: '+reason;}
+});
 </script>
 
 <script>
@@ -242,7 +262,8 @@ const RULES=[
   {t:"Advantage Tokens",b:"Stored advantage tokens can be spent at any time to take advantage on any single throw or to use a triggered class passive outside of your skill tags. Earn tokens from Boon cards, Adventure card successes, and level ups. Start with one token at character creation. Unspent tokens at the end of a round convert to 1gp each or carry forward to the next session."},
   {t:"Skills and Proficiency",b:"Your class gives you three skills to choose from. Pick one at level 1, a second at level 2, and a third at level 3 (or multiclass/prestige instead). If the Adventure card carries a skill tag matching one of your chosen skills, you are proficient — your class passive fires for free this hole, no token required. Universal tagged cards — all players are considered proficient and both passives fire free."},
   {t:"Experience and Leveling",b:"Drawing a Peril card earns XP immediately as printed on the card. Typically 2 XP. Level 1 to Level 2 — 8 XP. Choose a second skill, gain one advantage token. Level 2 to Level 3 — 9 XP. Choose a third skill or a multiclass passive, gain one advantage token."},
-  {t:"The Camp",b:"After hole nine and after hole eighteen the party returns to camp. Spend gold to unlock new discs at 10gp each. Spend XP to level up and choose a new skill or multiclass passive. Convert unspent advantage tokens to 1gp each or carry them forward. Buy or sell treasure items at face value if a merchant is available. Merchant class players buy at half price. Each player nominates one other player for a roleplay or character moment they enjoyed this round — that player gains 1 XP."},
+  {t:"The Camp",b:"After hole nine and after hole eighteen the party returns to camp — this is the end of a round. Everyone rests and recharges: gain 1 advantage token and recharge reusable treasure items. Spend gold to unlock new discs at 10gp each. Level up if eligible and choose a new skill. Each player nominates one other player for a roleplay or character moment they enjoyed this round — that player gains 1 XP. Buy or sell treasure items at face value if a merchant is available."},
+  {t:"Advantage Tokens",b:"Stored advantage tokens can be spent at any time to take advantage on any single throw or to use a triggered class passive outside of your skill tags. Earn tokens from Boon cards and adventure card successes. Everyone gains 1 token at camp (end of each round of 9 holes). Start with one token at character creation. Unspent tokens carry forward to the next session."},
   {t:"Disc Inventory",b:"You start with a putter and one class appropriate disc. Fighters start with a putter, their chosen weapon, and one additional disc. Marksmen start with two putters and one additional disc. Artificers start with a putter and three gadget discs. New discs are unlocked at camp with gold."},
   {t:"Treasure Items",b:"Treasure cards are holdable magic items. Keep them until you choose to activate them. Each treasure has a printed gold value for buying and selling at merchant encounters. Reusable items recharge at camp after hole nine and after hole eighteen."},
   {t:"Homebrew Classes",b:"Players are encouraged to invent their own class. Every class needs one passive ability and three skills chosen from Tactics, Social, Stealth, Nature, Arcane, Athletics. The group eyeballs whether it feels balanced with existing classes before approving it."},
@@ -751,6 +772,8 @@ function App(){
   // Lingering quest-level boons (green banners, like perils but positive)
   // e.g. {id, title, effect} — free redraw token from Coded Message
   const [questBoons,setQuestBoons]=useState([]);
+  const [showCamp,setShowCamp]=useState(false);
+  const [errorLog,setErrorLog]=useState(function(){try{return JSON.parse(localStorage.getItem('dgd_errorlog')||'[]');}catch(e){return[];}});
 
   // ── Save helpers ──────────────────────────────────────────────────────────
   const _savePlayers=(ps)=>{
@@ -1069,7 +1092,7 @@ function App(){
   // ── Consequence card indicator ────────────────────────────────────────────
   const nextCardQueued=activeQuest&&activeQuest.nextAdventureCard;
 
-  return React.createElement('div',{style:{minHeight:"100vh",background:C.bg,color:C.white,fontFamily:BF,maxWidth:480,margin:"0 auto",paddingBottom:160,fontSize:"16px"}},
+  return React.createElement('div',{style:{minHeight:"100vh",background:C.bg,color:C.white,fontFamily:BF,maxWidth:480,margin:"0 auto",paddingBottom:"220px",fontSize:"16px"}},
     React.createElement('style',null,`
       *{box-sizing:border-box;margin:0;padding:0}
       button:active{filter:brightness(1.3)}
@@ -1176,7 +1199,7 @@ function App(){
     tab==="codex"&&React.createElement('div',{className:"fi"},
       hdr("DISC GOLF DUNGEON","📜 CODEX"),
       !docSec?React.createElement('div',{style:{padding:"0 16px"}},
-        [["rules","📖","Rulebook"],["classes","⚔️","Classes"],["prestige","🎲","Prestige"],["items","🎒","Items"],["treasure","🗝️","Treasure"]].map(([id,ic,t])=>(
+        [["rules","📖","Rulebook"],["classes","⚔️","Classes"],["prestige","🎲","Prestige"],["items","🎒","Items"],["treasure","🗝️","Treasure"],["about","❓","About"]].map(([id,ic,t])=>(
           React.createElement('button',{key:id,onClick:()=>setDocSec(id),style:{width:"100%",background:C.bgCard,border:`4px solid ${C.borderBright}`,borderRadius:0,padding:"14px",marginBottom:"8px",textAlign:"left",cursor:"pointer",display:"flex",alignItems:"center",gap:"12px",boxShadow:bevel(C.borderBright)}},
             React.createElement('span',{style:{fontSize:"24px"}},ic),
             React.createElement('div',{style:{fontFamily:BF,fontSize:"15px",color:C.gold,textShadow:OL}},t)
@@ -1211,11 +1234,67 @@ function App(){
             ),
             React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.whiteDim}},t.effect)
           ))
-        ))
+        )),
+        docSec==="about"&&React.createElement('div',null,
+          React.createElement(Panel,null,
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"18px",color:C.gold,marginBottom:"6px"}},"QUEST ROUND"),
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.parchment,fontStyle:"italic",marginBottom:"10px"}},"A disc golf adventure game for 1–8 players"),
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.whiteDim,lineHeight:1.7}},"Quest Round turns a round of disc golf into a tabletop adventure. Every hole is an encounter. The party succeeds or fails together. Gold, XP, and treasure accumulate across 18 holes.")
+          ),
+          React.createElement(Panel,null,
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"16px",color:C.gold,marginBottom:"10px"}},"THE THREE TABS"),
+            [["📜 Codex","Rules, classes, and reference. Read before your first game."],["👥 Party","Create and manage characters. Set up everyone before you head out."],["⚔️ Quest","Run the game. Draw cards, track scores, manage perils and boons."]].map(function(item,i){
+              return React.createElement('div',{key:i,style:{marginBottom:"10px"}},
+                React.createElement('div',{style:{fontFamily:BF,fontSize:"14px",color:C.cyan,marginBottom:"3px"}},item[0]),
+                React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.whiteDim}},item[1])
+              );
+            })
+          ),
+          React.createElement(Panel,null,
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"16px",color:C.gold,marginBottom:"10px"}},"BEFORE YOU PLAY"),
+            ["Create characters in the Party tab — pick a class, gear up.","Start a new Quest and select your party.","Head to hole 1 — draw an Encounter card before anyone throws.","Play the hole, enter scores, tap Success or Fail.","Draw any Boons or Perils earned, then move to the next hole."].map(function(step,i){
+              return React.createElement('div',{key:i,style:{display:"flex",gap:"10px",marginBottom:"8px"}},
+                React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.gold,flexShrink:0}},i+1+"."),
+                React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.whiteDim}},step)
+              );
+            })
+          ),
+          React.createElement(Panel,null,
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"16px",color:C.gold,marginBottom:"10px"}},"ON THE COURSE"),
+            [["★ next to your name","Your class passive fires free this hole — no token needed."],["★★ next to your name","Both passives fire free — you and your multiclass."],["Red banners","Active perils. Tap ✓ when resolved."],["Green banners","Lingering boons. Tap ✓ USE when spent."],["Orange ⚡ on Encounter","A consequence card is queued for this hole."],["Player strip (bottom)","Tap any player to adjust gold, XP, or tokens on the fly."],["Camp button","Appears after hole 9 and hole 18. End of round — tokens, leveling, gold."],["🔴 dot on Codex tab","An error was logged. Check the Error Log in About when you're back."]].map(function(item,i){
+              return React.createElement('div',{key:i,style:{display:"flex",gap:"10px",marginBottom:"8px"}},
+                React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.cyan,flexShrink:0,minWidth:"120px"}},item[0]),
+                React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.whiteDim}},item[1])
+              );
+            })
+          ),
+          React.createElement(Panel,{style:{borderColor:errorLog.length>0?C.red:C.greyDim}},
+            React.createElement('div',{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"8px"}},
+              React.createElement('div',{style:{fontFamily:BF,fontSize:"16px",color:errorLog.length>0?C.red:C.greyDim}},(errorLog.length>0?"🔴":"⚪")+" ERROR LOG"),
+              errorLog.length>0&&React.createElement('button',{onClick:function(){localStorage.removeItem('dgd_errorlog');setErrorLog([]);},style:{padding:"4px 10px",background:"transparent",border:"1px solid "+C.red+"44",borderRadius:0,color:C.red,fontFamily:BF,fontSize:"11px",cursor:"pointer"}},"CLEAR")
+            ),
+            errorLog.length===0
+              ?React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.greyDim}},"No errors logged. If something breaks on the course the app will silently record it here instead of crashing.")
+              :React.createElement('div',null,
+                React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.whiteDim,marginBottom:"8px"}},"Copy these and send to your developer when you get back:"),
+                errorLog.map(function(e,i){
+                  return React.createElement('div',{key:i,style:{background:C.bgDark,border:"1px solid "+C.red+"33",padding:"8px 10px",marginBottom:"6px",borderRadius:0}},
+                    React.createElement('div',{style:{fontFamily:BF,fontSize:"10px",color:C.greyDim,marginBottom:"3px"}},e.ts),
+                    React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.red,marginBottom:"3px",wordBreak:"break-all"}},e.msg),
+                    e.detail&&React.createElement('div',{style:{fontFamily:BF,fontSize:"10px",color:C.whiteDim,whiteSpace:"pre-wrap",wordBreak:"break-all"}},e.detail)
+                  );
+                })
+              )
+          ),
+          React.createElement(Panel,null,
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"16px",color:C.gold,marginBottom:"10px"}},"📱 SHARE THIS APP"),
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.whiteDim,marginBottom:"12px"}},"Scan to open on any device:"),
+            React.createElement('div',{id:"qrcode-container",style:{background:C.white,padding:"12px",display:"inline-block"},ref:function(el){if(el&&!el.hasChildNodes()&&window.QRCode){new window.QRCode(el,{text:"https://drwerderitch.github.io/QuestRound",width:180,height:180,colorDark:"#000000",colorLight:"#ffffff"});}}}),
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.greyDim,marginTop:"8px"}},"https://drwerderitch.github.io/QuestRound")
+          )
+        )
       )
     ),
-
-    // ── PARTY TAB ──────────────────────────────────────────────────────────
     tab==="party"&&React.createElement('div',{className:"fi"},
       hdr("DISC GOLF DUNGEON","👥 PARTY"),
 
@@ -1454,7 +1533,6 @@ function App(){
             React.createElement(Panel,null,
               React.createElement('div',{style:{fontFamily:BF,fontSize:"14px",color:C.green,marginBottom:"6px"}},"YOU GAIN:"),
               React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.white,lineHeight:1.7}},
-                React.createElement('div',null,"🛡 +1 Advantage Token"),
                 React.createElement('div',null,"⚔️ 1 new skill pick")
               )
             ),
@@ -1625,11 +1703,14 @@ function App(){
             )
           ),
           React.createElement('button',{onClick:()=>{
-            const nh=Math.min(18,hole+1);
-            _setAndSaveQuests(qs=>qs.map(q=>q.id===activeQuestId?{...q,hole:nh,perils,aDeck:aD,bDeck:bD,pDeck:pD,bhDeck:bhD,tDeck:tD}:q));
-            updateQuestHole(nh);
-          },style:{width:"100%",padding:"13px 0",background:C.bgDark,border:`4px solid ${hole===9?C.cyan:hole>=18?C.gold:C.borderBright}`,borderRadius:0,color:hole===9?C.cyan:hole>=18?C.gold:C.whiteDim,fontFamily:BF,fontSize:"13px",cursor:"pointer",letterSpacing:1,boxShadow:bevel(hole===9?C.cyan:hole>=18?C.gold:C.borderBright)}},
-            hole===9?"⛺ CAMP — ADVANCE TO HOLE 10":hole>=18?"🏆 FINISH QUEST":"SKIP TO HOLE "+(hole+1)+" →"
+            if(hole===9||hole>=18){setShowCamp(true);}
+            else{
+              const nh=Math.min(18,hole+1);
+              _setAndSaveQuests(qs=>qs.map(q=>q.id===activeQuestId?{...q,hole:nh,perils,aDeck:aD,bDeck:bD,pDeck:pD,bhDeck:bhD,tDeck:tD}:q));
+              updateQuestHole(nh);
+            }
+          },style:{width:"100%",padding:"13px 0",background:C.bgDark,border:"4px solid "+(hole===9||hole>=18?C.cyan:C.borderBright),borderRadius:0,color:hole===9||hole>=18?C.cyan:C.whiteDim,fontFamily:BF,fontSize:"13px",cursor:"pointer",letterSpacing:1}},
+            hole===9?"⛺ END OF ROUND — CAMP":hole>=18?"⛺ END OF ROUND — CAMP":"SKIP TO HOLE "+(hole+1)+" →"
           )
         ),
 
@@ -1655,6 +1736,70 @@ function App(){
       )
     ),
 
+    // ── CAMP OVERLAY ──────────────────────────────────────────────────────────
+    showCamp&&React.createElement('div',{style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",zIndex:1050,overflowY:"auto",padding:"24px 16px 40px"}},
+      React.createElement('div',{style:{textAlign:"center",marginBottom:"20px"}},
+        React.createElement('div',{style:{fontSize:"40px",marginBottom:"8px"}},"⛺"),
+        React.createElement('div',{style:{fontFamily:BF,fontSize:"22px",color:C.cyan,textShadow:OLH,letterSpacing:3}},"END OF ROUND"),
+        React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.greyDim,marginTop:"4px"}},hole>=18?"Quest complete — final camp":"Holes 1–9 complete — halfway there")
+      ),
+      // Rest and recharge
+      React.createElement('div',{style:{background:C.green+"12",border:"2px solid "+C.green+"44",borderRadius:0,padding:"14px 16px",marginBottom:"10px"}},
+        React.createElement('div',{style:{fontFamily:BF,fontSize:"16px",color:C.green,marginBottom:"6px"}},"🛡 REST AND RECHARGE"),
+        React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.whiteDim,lineHeight:1.6}},"Everyone gains 1 advantage token. Reusable treasure items recharge.")
+      ),
+      // Spend gold
+      React.createElement('div',{style:{background:C.gold+"12",border:"2px solid "+C.gold+"44",borderRadius:0,padding:"14px 16px",marginBottom:"10px"}},
+        React.createElement('div',{style:{fontFamily:BF,fontSize:"16px",color:C.gold,marginBottom:"6px"}},"💰 SPEND GOLD"),
+        React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.whiteDim,lineHeight:1.6}},"Unlock new discs at 10gp each. Buy or sell treasure items at face value. Merchant class buys at half price."),
+        React.createElement('div',{style:{display:"flex",flexWrap:"wrap",gap:"8px",marginTop:"10px"}},
+          questPlayersFromQuest.map(function(p){
+            return React.createElement('div',{key:p.id,style:{background:C.bgCard,border:"2px solid "+((p.cls&&p.cls.color)||C.borderBright),padding:"6px 12px",fontFamily:BF,fontSize:"13px",color:(p.cls&&p.cls.color)||C.gold}},
+              (p.cls&&p.cls.icon)||"❓"," ",p.name," 💰",p.gold
+            );
+          })
+        )
+      ),
+      // Level up
+      React.createElement('div',{style:{background:C.purple+"12",border:"2px solid "+C.purple+"44",borderRadius:0,padding:"14px 16px",marginBottom:"10px"}},
+        React.createElement('div',{style:{fontFamily:BF,fontSize:"16px",color:C.purple,marginBottom:"6px"}},"✦ LEVEL UP"),
+        React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.whiteDim,lineHeight:1.6}},"Spend XP to level up and choose a new skill. Lv1→2 costs 8 XP. Lv2→3 costs 9 XP."),
+        React.createElement('div',{style:{display:"flex",flexWrap:"wrap",gap:"8px",marginTop:"10px"}},
+          questPlayersFromQuest.map(function(p){
+            const need=p.level===1?8:p.level===2?9:null;
+            const canLevel=need&&p.xp>=need;
+            return React.createElement('div',{key:p.id,style:{background:C.bgCard,border:"2px solid "+(canLevel?C.green:C.greyDim),padding:"6px 12px",fontFamily:BF,fontSize:"13px",color:canLevel?C.green:C.greyDim}},
+              (p.cls&&p.cls.icon)||"❓"," ",p.name," ✦",p.xp,canLevel?" — LEVEL UP AVAILABLE":need?" — need "+(need-p.xp)+" more":""
+            );
+          })
+        )
+      ),
+      // Nominate
+      React.createElement('div',{style:{background:C.blue+"12",border:"2px solid "+C.blue+"44",borderRadius:0,padding:"14px 16px",marginBottom:"20px"}},
+        React.createElement('div',{style:{fontFamily:BF,fontSize:"16px",color:C.blue,marginBottom:"6px"}},"🎵 NOMINATE"),
+        React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.whiteDim,lineHeight:1.6}},"Each player nominates one other player for a roleplay or character moment they enjoyed this round. That player gains 1 XP.")
+      ),
+      // Buttons
+      React.createElement('button',{onClick:()=>{
+        // Apply rest token to all players
+        _setAndSavePlayers(function(ps){return ps.map(function(p){
+          if(!questPlayersFromQuest.find(function(q){return q.id===p.id;})) return p;
+          return {...p,tokens:p.tokens+1};
+        });});
+        setShowCamp(false);
+        if(hole===9){
+          const nh=10;
+          _setAndSaveQuests(function(qs){return qs.map(function(q){return q.id===activeQuestId?{...q,hole:nh,perils,aDeck:aD,bDeck:bD,pDeck:pD,bhDeck:bhD,tDeck:tD}:q;});});
+          updateQuestHole(nh);
+        } else {
+          backToManager();
+        }
+      },style:{width:"100%",padding:"16px 0",background:C.cyan,border:"4px solid "+C.cyan,borderRadius:0,color:C.bgDark,fontFamily:BF,fontSize:"15px",cursor:"pointer",letterSpacing:1,marginBottom:"10px"}},
+        hole>=18?"✓ WRAP UP — BACK TO QUESTS":"✓ GRANT TOKENS — ADVANCE TO HOLE 10"
+      ),
+      React.createElement('button',{onClick:()=>setShowCamp(false),style:{width:"100%",padding:"12px 0",background:"transparent",border:"2px solid "+C.greyDim,borderRadius:0,color:C.greyDim,fontFamily:BF,fontSize:"13px",cursor:"pointer"}},"SKIP CAMP — KEEP PLAYING")
+    ),
+
     // ── TAB BAR ──────────────────────────────────────────────────────────────
     React.createElement('div',{style:{position:"fixed",bottom:0,left:0,right:0,background:C.bgDark,borderTop:`4px solid ${C.borderBright}`,display:"flex",zIndex:900,maxWidth:480,margin:"0 auto",height:70,alignItems:"stretch",padding:"6px 6px 4px",gap:"4px"}},
       [{id:"codex",icon:"📜",label:"CODEX",glow:false},{id:"party",icon:"👥",label:"PARTY",glow:allPlayers.length===0&&tab!=="party"},{id:"adventure",icon:"⚔️",label:"QUEST",glow:allPlayers.length>0&&quests.length===0&&tab!=="adventure"}].map(t=>(
@@ -1665,9 +1810,11 @@ function App(){
           borderRadius:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"2px",
           boxShadow:tab===t.id?bevelBtn(C.gold):bevel(C.borderBright),
           animation:t.glow&&tab!==t.id?"pulse 2s infinite":"none",
+          position:"relative",
         }},
           React.createElement('div',{style:{fontSize:"18px"}},t.icon),
-          React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",letterSpacing:1,color:tab===t.id?C.bgDark:t.glow?C.gold:C.whiteDim}},t.label)
+          React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",letterSpacing:1,color:tab===t.id?C.bgDark:t.glow?C.gold:C.whiteDim}},t.label),
+          t.id==="codex"&&errorLog.length>0&&React.createElement('div',{style:{position:"absolute",top:"6px",right:"8px",width:"8px",height:"8px",background:C.red,borderRadius:"50%"}})
         )
       ))
     )
