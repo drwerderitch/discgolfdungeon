@@ -240,13 +240,13 @@ const RULES=[
   {t:"Gold",b:"Every player earns gold individually. Gold rewards on cards pay each player that amount. Spend gold at camp after hole nine or hole eighteen to unlock new discs. A disc costs 10gp."},
   {t:"Advantage and Disadvantage",b:"Advantage — throw twice, play the better lie. Disadvantage — throw twice, play the worse lie. Disadvantage cannot stack with itself. Other conditions can stack alongside it."},
   {t:"Advantage Tokens",b:"Stored advantage tokens can be spent at any time to take advantage on any single throw or to use a triggered class passive outside of your skill tags. Earn tokens from Boon cards, Adventure card successes, and level ups. Start with one token at character creation. Unspent tokens at the end of a round convert to 1gp each or carry forward to the next session."},
-  {t:"Skills and Proficiency",b:"Your class gives you skills. If the Adventure card carries a skill tag matching one of your chosen skills, you are proficient — your class passive fires for free on this hole (no token required). Universal tagged cards — all players are considered proficient."},
+  {t:"Skills and Proficiency",b:"Your class gives you three skills to choose from. Pick one at level 1, a second at level 2, and a third at level 3 (or multiclass/prestige instead). If the Adventure card carries a skill tag matching one of your chosen skills, you are proficient — your class passive fires for free this hole, no token required. Universal tagged cards — all players are considered proficient and both passives fire free."},
   {t:"Experience and Leveling",b:"Drawing a Peril card earns XP immediately as printed on the card. Typically 2 XP. Level 1 to Level 2 — 8 XP. Choose a second skill, gain one advantage token. Level 2 to Level 3 — 9 XP. Choose a third skill or a multiclass passive, gain one advantage token."},
   {t:"The Camp",b:"After hole nine and after hole eighteen the party returns to camp. Spend gold to unlock new discs at 10gp each. Spend XP to level up and choose a new skill or multiclass passive. Convert unspent advantage tokens to 1gp each or carry them forward. Buy or sell treasure items at face value if a merchant is available. Merchant class players buy at half price. Each player nominates one other player for a roleplay or character moment they enjoyed this round — that player gains 1 XP."},
   {t:"Disc Inventory",b:"You start with a putter and one class appropriate disc. Fighters start with a putter, their chosen weapon, and one additional disc. Marksmen start with two putters and one additional disc. Artificers start with a putter and three gadget discs. New discs are unlocked at camp with gold."},
   {t:"Treasure Items",b:"Treasure cards are holdable magic items. Keep them until you choose to activate them. Each treasure has a printed gold value for buying and selling at merchant encounters. Reusable items recharge at camp after hole nine and after hole eighteen."},
   {t:"Homebrew Classes",b:"Players are encouraged to invent their own class. Every class needs one passive ability and three skills chosen from Tactics, Social, Stealth, Nature, Arcane, Athletics. The group eyeballs whether it feels balanced with existing classes before approving it."},
-  {t:"Multiclass & Prestige",b:"At level 3 instead of choosing a third skill you may choose a passive from any other class or prestige class as your multiclass option. Multiclass passives have no associated skills and never fire for free. Behavioral passives are always active at no cost as a multiclass. Triggered passives always cost a token to use as a multiclass. Prestige class passives come with permanent disc speed restrictions."},
+  {t:"Multiclass & Prestige",b:"At level 3 instead of choosing a third skill you may choose a prestige class passive or multiclass into any class that shares at least one skill you have already chosen. You gain only the passive — not the other class's skill list. Your primary passive fires for free on holes tagged with your chosen skills. Your multiclass passive fires for free only on holes tagged with skills shared between both classes. Spending a token lets you use either passive on any other hole. Prestige class passives come with permanent disc speed restrictions and always count as behavioral."},
 ];
 
 const shuffle=a=>{const b=[...a];for(let i=b.length-1;i>0;i--){const j=0|Math.random()*(i+1);[b[i],b[j]]=[b[j],b[i]];}return b;};
@@ -274,14 +274,34 @@ const AdjBtn=function(props){
 };
 
 // ── PROFICIENCY HELPER ────────────────────────────────────────────────────────
+// Returns a map of {playerId: profLevel} where profLevel is 0, 1, or 2
+// 1 = primary class passive fires free, 2 = both primary and multiclass fire free
+function getProficiencyMap(card, questPlayers) {
+  var result = {};
+  if (!card || !card.tags) return result;
+  var cardTags = card.tags.split(/[—,\-]/).map(function(s){return s.trim();}).filter(Boolean);
+  var isUniversal = cardTags.some(function(t){return t==="Universal";});
+  (questPlayers||[]).forEach(function(p) {
+    if (isUniversal) { result[p.id] = 2; return; } // Universal: both passives fire free
+    var primarySkills = p.chosenSkills || [];
+    var primaryMatch = primarySkills.some(function(s){return cardTags.includes(s);});
+    if (!primaryMatch) { result[p.id] = 0; return; }
+    // Primary matches — check multiclass
+    var mc = p.multiclass; // {cls: classObject, sharedSkill: skillName}
+    if (!mc || !mc.cls) { result[p.id] = 1; return; }
+    // Multiclass fires free on skills shared between both classes
+    var sharedSkills = (p.cls ? p.cls.skills : []).filter(function(s){
+      return mc.cls.skills.includes(s);
+    });
+    var multiMatch = sharedSkills.some(function(s){return cardTags.includes(s);});
+    result[p.id] = multiMatch ? 2 : 1;
+  });
+  return result;
+}
+// Legacy helper for non-score uses
 function getProficientPlayers(card, questPlayers) {
-  if (!card || !card.tags) return [];
-  const cardTags = card.tags.split(/[—,\-]/).map(s=>s.trim()).filter(Boolean);
-  const isUniversal = cardTags.some(t=>t==="Universal");
-  if (isUniversal) return questPlayers.map(p=>p.id);
-  return questPlayers
-    .filter(p => p.chosenSkills && p.chosenSkills.some(s => cardTags.includes(s)))
-    .map(p=>p.id);
+  var map = getProficiencyMap(card, questPlayers);
+  return Object.keys(map).filter(function(id){return map[id]>0;}).map(Number);
 }
 
 // ── SKILL TAG DISPLAY ─────────────────────────────────────────────────────────
@@ -338,7 +358,8 @@ function CardOverlay({
 
   const isPersonal=card.scope==="Personal";
   const needsAssign=isPersonal&&(questPlayers&&questPlayers.length>0);
-  const proficientIds = getProficientPlayers(card, questPlayers||[]);
+  const proficiencyMap = getProficiencyMap(card, questPlayers||[]);
+  const proficientIds = Object.keys(proficiencyMap).filter(function(id){return proficiencyMap[id]>0;}).map(Number);
 
   const pBtn=(p)=>({
     width:"100%",padding:"12px 14px",marginBottom:"6px",
@@ -528,7 +549,7 @@ function CardOverlay({
             React.createElement('span',{style:{fontSize:"14px",flexShrink:0}},(p.cls&&p.cls.icon)||"❓"),
             React.createElement('div',{style:{fontFamily:BF,fontSize:"16px",color:(p.cls&&p.cls.color)||C.gold,flex:1,minWidth:0}},
               p.name,
-              isProficient&&React.createElement('span',{style:{color:C.green,fontSize:"13px",marginLeft:4}},"★")
+              isProficient&&React.createElement('span',{style:{color:C.green,fontSize:"13px",marginLeft:"4px"}},proficiencyMap[p.id]===2?"★★":"★")
             ),
             React.createElement('div',{style:{fontFamily:BF,fontSize:"16px",color:cl,minWidth:28,textAlign:"center",flexShrink:0}},label),
             React.createElement('button',{onClick:()=>adj2(p.id,-1),style:{width:"80px",height:"52px",minWidth:"80px",background:C.bgDark,border:"3px solid "+C.green,borderRadius:0,color:C.green,fontFamily:BF,fontSize:"22px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},"-"),
@@ -579,10 +600,13 @@ function CardOverlay({
     ),
 
     // Proficiency notice
-    proficientIds.length>0&&(deck==="adventure"||deck==="consequence")&&React.createElement('div',{style:{background:C.green+"18",border:`2px solid ${C.green}44`,padding:"6px 10px",marginBottom:"8px",fontFamily:BF,fontSize:"11px",color:C.green}},
-      "★ PROFICIENT: ",
-      proficientIds.map(id=>{const p=questPlayers.find(x=>x.id===id);return p?p.name:"";}).filter(Boolean).join(", "),
-      " — class passive fires for free this hole"
+    proficientIds.length>0&&(deck==="adventure"||deck==="consequence")&&React.createElement('div',{style:{background:C.green+"18",border:"2px solid "+C.green+"44",padding:"6px 10px",marginBottom:"8px",fontFamily:BF,fontSize:"11px",color:C.green}},
+      proficientIds.map(function(id){
+        var p=(questPlayers||[]).find(function(x){return x.id===id;});
+        if(!p) return null;
+        var level=proficiencyMap[id];
+        return React.createElement('div',{key:id},level===2?"★★ ":"★ ",p.name," — ",level===2?"both passives fire free":"class passive fires free");
+      })
     ),
 
     // Score section (adventure)
@@ -690,7 +714,7 @@ function App(){
   const [docSec,setDocSec]=useState(null);
 
   const _loadPlayers=()=>{
-    try{const raw=localStorage.getItem("dgd_players");if(raw){const saved=JSON.parse(raw);return saved.map(p=>({...p,cls:CLASSES.find(c=>c.name===p.clsName)||null}));}}catch(e){}
+    try{const raw=localStorage.getItem("dgd_players");if(raw){const saved=JSON.parse(raw);return saved.map(p=>({...p,cls:CLASSES.find(c=>c.name===p.clsName)||null,multiclass:p.multiclassClsName?{cls:CLASSES.find(c=>c.name===p.multiclassClsName)||null}:null}));}}catch(e){}
     return [];
   };
   const [allPlayers,setAllPlayers]=useState(_loadPlayers);
@@ -730,12 +754,12 @@ function App(){
 
   // ── Save helpers ──────────────────────────────────────────────────────────
   const _savePlayers=(ps)=>{
-    try{const toSave=ps.map(p=>({...p,clsName:p.cls?p.cls.name:null,cls:undefined}));localStorage.setItem("dgd_players",JSON.stringify(toSave));}catch(e){}
+    try{const toSave=ps.map(p=>({...p,clsName:p.cls?p.cls.name:null,cls:undefined,multiclassClsName:p.multiclass&&p.multiclass.cls?p.multiclass.cls.name:null,multiclass:undefined}));localStorage.setItem("dgd_players",JSON.stringify(toSave));}catch(e){}
   };
   const _setAndSavePlayers=(updater)=>{
     setAllPlayers(prev=>{
       const next=typeof updater==="function"?updater(prev):updater;
-      try{const toSave=next.map(p=>({...p,clsName:p.cls?p.cls.name:null,cls:undefined}));localStorage.setItem("dgd_players",JSON.stringify(toSave));}catch(e){}
+      try{const toSave=next.map(p=>({...p,clsName:p.cls?p.cls.name:null,cls:undefined,multiclassClsName:p.multiclass&&p.multiclass.cls?p.multiclass.cls.name:null,multiclass:undefined}));localStorage.setItem("dgd_players",JSON.stringify(toSave));}catch(e){}
       return next;
     });
   };
@@ -764,7 +788,7 @@ function App(){
 
   function addPlayer(){
     if(allPlayers.length>=8)return;
-    const p={id:Date.now(),name:"",cls:null,gold:0,xp:0,tokens:1,tee:"white",level:1,notes:"",treasures:[],chosenSkills:[],gear:[],scoreHistory:[]};
+    const p={id:Date.now(),name:"",cls:null,gold:0,xp:0,tokens:1,tee:"white",level:1,notes:"",treasures:[],chosenSkills:[],gear:[],scoreHistory:[],multiclass:null};
     _setAndSavePlayers(prev=>[...prev,p]);setEditIdx(allPlayers.length);setEName("");setECls(null);setPartyView("newchar");
   }
   function savePlayer(){
@@ -1264,6 +1288,14 @@ function App(){
             React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:(p.cls&&p.cls.ptype)==="behavioral"?C.green:C.blue,letterSpacing:2,marginBottom:"5px"}},(p.cls&&p.cls.ptype)==="behavioral"?"🟢 ALWAYS ACTIVE":"🔵 TRIGGERED"," PASSIVE"),
             React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.white,lineHeight:1.6}},(p.cls&&p.cls.passive)||"No class selected.")
           ),
+          p.multiclass&&p.multiclass.cls&&React.createElement(Panel,{style:{borderColor:p.multiclass.cls.color}},
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:p.multiclass.cls.color,letterSpacing:2,marginBottom:"5px"}},p.multiclass.isPrestige?"🏆 PRESTIGE":"⚔️ MULTICLASS"," — ",p.multiclass.cls.icon," ",p.multiclass.cls.name),
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.white,lineHeight:1.6}},p.multiclass.cls.passive),
+            !p.multiclass.isPrestige&&(()=>{
+              const shared=(p.cls?p.cls.skills:[]).filter(function(s){return p.multiclass.cls.skills.includes(s)&&(p.chosenSkills||[]).includes(s);});
+              return shared.length>0?React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.greyDim,marginTop:"5px"}},"Fires free on: ",shared.map(function(s){return React.createElement('span',{key:s,style:{color:SKILL_COLORS[s]||C.grey,marginRight:"4px"}},s);}) ):null;
+            })()
+          ),
           React.createElement(Panel,null,
             React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.grey,letterSpacing:2,marginBottom:"8px"}},"SKILLS"),
             (p.cls&&p.cls.skills)?React.createElement('div',{style:{display:"flex",flexWrap:"wrap",gap:"6px"}},p.cls.skills.map(s=>{
@@ -1400,6 +1432,12 @@ function App(){
         const p=allPlayers.find(x=>x.id===sheetPlayerId);
         if(!p)return null;
         const need=p.level===1?8:p.level===2?9:null;
+        const isLevel3=p.level===2; // leveling to 3
+        // Eligible multiclass options: classes sharing a skill with already-chosen skills
+        const eligibleMulticlass=isLevel3?CLASSES.filter(c=>{
+          if(c.name===(p.cls&&p.cls.name)) return false; // not own class
+          return c.skills.some(s=>(p.chosenSkills||[]).includes(s));
+        }):[];
         return React.createElement('div',{style:{padding:"0 16px"}},
           React.createElement('button',{onClick:()=>setPartyView("sheet"),style:{background:"transparent",border:"none",color:C.gold,fontFamily:BF,fontSize:"13px",cursor:"pointer",marginBottom:"12px"}},"← BACK"),
           React.createElement('div',{style:{textAlign:"center",marginBottom:"14px"}},
@@ -1408,18 +1446,46 @@ function App(){
             React.createElement('div',{style:{fontFamily:BF,fontSize:"14px",color:C.whiteDim}},"Level ",p.level," → ",p.level+1)
           ),
           React.createElement(Panel,null,
-            React.createElement('div',{style:{fontFamily:BF,fontSize:"14px",color:C.green,marginBottom:"6px"}},"YOU GAIN:"),
-            React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.white,lineHeight:1.7}},
-              React.createElement('div',null,"🛡 +1 Advantage Token"),
-              p.level+1===2&&React.createElement('div',null,"⚔️ 1 new skill pick"),
-              p.level+1===3&&React.createElement('div',null,"⚔️ 1 new skill pick (or multiclass)")
-            )
-          ),
-          React.createElement(Panel,null,
             React.createElement('div',{style:{fontFamily:BF,fontSize:"14px",color:C.purple,marginBottom:"4px"}},"COST: ",need," XP"),
             React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.whiteDim}},p.xp," XP → ",p.xp-need," after")
           ),
-          React.createElement(Btn,{onClick:()=>{levelUp(p.id);setPartyView("sheet");}},"CONFIRM — THEN PICK SKILL")
+          // Level 1→2: just confirm, pick skill after
+          !isLevel3&&React.createElement(React.Fragment,null,
+            React.createElement(Panel,null,
+              React.createElement('div',{style:{fontFamily:BF,fontSize:"14px",color:C.green,marginBottom:"6px"}},"YOU GAIN:"),
+              React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.white,lineHeight:1.7}},
+                React.createElement('div',null,"🛡 +1 Advantage Token"),
+                React.createElement('div',null,"⚔️ 1 new skill pick")
+              )
+            ),
+            React.createElement(Btn,{onClick:()=>{levelUp(p.id);setPartyView("sheet");}},"CONFIRM — THEN PICK SKILL")
+          ),
+          // Level 2→3: choose third skill, prestige, or multiclass
+          isLevel3&&React.createElement(React.Fragment,null,
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.grey,letterSpacing:2,marginBottom:"8px"}},"CHOOSE ONE:"),
+            // Third skill option
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.greyDim,marginBottom:"6px"}},"THIRD SKILL — complete your class"),
+            (p.cls&&p.cls.skills||[]).filter(s=>!(p.chosenSkills||[]).includes(s)).map(s=>
+              React.createElement('button',{key:s,onClick:()=>{levelUp(p.id);updatePlayerField(p.id,"chosenSkills",[...(p.chosenSkills||[]),s]);setPartyView("sheet");},style:{width:"100%",padding:"12px 14px",marginBottom:"6px",background:C.bgDark,border:"3px solid "+(SKILL_COLORS[s]||C.gold),borderRadius:0,color:SKILL_COLORS[s]||C.gold,fontFamily:BF,fontSize:"14px",cursor:"pointer",textAlign:"left"}},
+                "★ ",s," — gain +1 token + pick this skill"
+              )
+            ),
+            // Prestige options
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.greyDim,marginBottom:"6px",marginTop:"10px"}},"PRESTIGE CLASS"),
+            PRESTIGE.map(pr=>
+              React.createElement('button',{key:pr.name,onClick:()=>{levelUp(p.id);updatePlayerField(p.id,"multiclass",{cls:pr,isPrestige:true});setPartyView("sheet");},style:{width:"100%",padding:"12px 14px",marginBottom:"6px",background:C.bgDark,border:"3px solid "+pr.color,borderRadius:0,color:pr.color,fontFamily:BF,fontSize:"14px",cursor:"pointer",textAlign:"left"}},
+                pr.icon," ",pr.name," — ",pr.passive.substring(0,60),"..."
+              )
+            ),
+            // Multiclass options
+            eligibleMulticlass.length>0&&React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.greyDim,marginBottom:"6px",marginTop:"10px"}},"MULTICLASS — shares a skill with you"),
+            eligibleMulticlass.map(mc=>{
+              const shared=(p.cls?p.cls.skills:[]).filter(s=>mc.skills.includes(s)&&(p.chosenSkills||[]).includes(s));
+              return React.createElement('button',{key:mc.name,onClick:()=>{levelUp(p.id);updatePlayerField(p.id,"multiclass",{cls:mc,isPrestige:false});setPartyView("sheet");},style:{width:"100%",padding:"12px 14px",marginBottom:"6px",background:mc.color+"11",border:"3px solid "+mc.color,borderRadius:0,color:mc.color,fontFamily:BF,fontSize:"14px",cursor:"pointer",textAlign:"left"}},
+                mc.icon," ",mc.name,React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.greyDim,marginTop:"3px"}},"Shared: ",shared.join(", ")," · passive fires free on those holes")
+              );
+            })
+          )
         );
       })()
     ),
@@ -1613,128 +1679,3 @@ root.render(React.createElement(App, null));
 </script>
 </body>
 </html>
-) return questPlayers.map(p=>p.id);
-  return questPlayers
-    .filter(p => p.chosenSkills && p.chosenSkills.some(s => cardTags.includes(s)))
-    .map(p=>p.id);
-}
-
-// ── SKILL TAG DISPLAY ─────────────────────────────────────────────────────────
-function SkillTags({tags}) {
-  if (!tags) return null;
-  const SKILL_SET = new Set([...ALL_SKILLS, "Universal"]);
-  const parts = tags.split(/[—,\-]/).map(s=>s.trim()).filter(s=>SKILL_SET.has(s));
-  if (!parts.length) return null;
-  return React.createElement('div',{style:{display:"flex",gap:"3px",flexShrink:0,marginLeft:6,flexWrap:"wrap",justifyContent:"flex-end"}},
-    parts.map((t,i)=>React.createElement('span',{key:i,style:{display:"inline-block",padding:"1px 6px",background:C.bgDark,color:SKILL_COLORS[t]||C.grey,fontFamily:BF,fontSize:"11px",border:`1px solid ${(SKILL_COLORS[t]||C.grey)}44`,whiteSpace:"nowrap"}},t))
-  );
-}
-
-// ── CLASS DETAIL OVERLAY ──────────────────────────────────────────────────────
-function ClassDetail({cls,onSelect,onBack}){
-  return React.createElement('div',{style:{position:"fixed",inset:0,background:C.bg,zIndex:1000,overflowY:"auto",padding:"20px 16px 80px"}},
-    React.createElement('div',{style:{fontFamily:BF,fontSize:"18px",color:cls.color,marginBottom:"6px",textShadow:OLH}},cls.icon," ",cls.name),
-    React.createElement('div',{style:{fontFamily:BF,fontSize:"15px",color:C.parchment,marginBottom:"14px",lineHeight:1.4}},cls.flavor),
-    React.createElement(Panel,null,
-      React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:cls.ptype==="behavioral"?C.green:C.blue,marginBottom:"6px"}},cls.ptype==="behavioral"?"🟢 ALWAYS ACTIVE":"🔵 TRIGGERED"),
-      React.createElement('div',{style:{fontFamily:BF,fontSize:"14px",color:C.white,lineHeight:1.5}},cls.passive)
-    ),
-    React.createElement(Panel,null,
-      React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.grey,marginBottom:"6px"}},"SKILLS"),
-      React.createElement('div',null,cls.skills.map(s=>React.createElement(Tag,{key:s,text:s,color:SKILL_COLORS[s]||C.cyan})))
-    ),
-    React.createElement(Panel,null,
-      React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.grey,marginBottom:"6px"}},"STARTING GEAR"),
-      React.createElement('div',{style:{fontFamily:BF,fontSize:"14px",color:C.white}},cls.gear)
-    ),
-    React.createElement('div',{style:{display:"flex",gap:"10px",marginTop:"14px"}},
-      React.createElement(Btn,{onClick:onBack,bg:C.bgCard,fg:C.whiteDim,border:C.borderBright,style:{flex:1}},"← BACK"),
-      React.createElement(Btn,{onClick:onSelect,bg:cls.color,fg:C.bgDark,style:{flex:1}},"SELECT")
-    )
-  );
-}
-
-// ── CARD OVERLAY ──────────────────────────────────────────────────────────────
-function CardOverlay({
-  card,deck,onDismiss,onAction,questPlayers,phase,setPhase,
-  holeScores,setHoleScores,cardMeta,setCardMeta,
-  // props that were previously missing (caused crashes):
-  drawBoon,drawPeril,applyGoldToAll,applyGoldToPlayer,applyTokensToAll,
-  setPlayerField,questPlayersFromQuest,activeQuestId
-}){
-  const ds={
-    adventure:{border:C.gold,accent:C.gold,label:"ENCOUNTER"},
-    boon:{border:C.green,accent:C.green,label:"BOON"},
-    peril:{border:C.red,accent:C.red,label:"PERIL"},
-    between:{border:C.blue,accent:C.blue,label:"BETWEEN HOLES"},
-    treasure:{border:C.gold,accent:C.gold,label:"TREASURE"},
-    consequence:{border:C.orange,accent:C.orange,label:"CONSEQUENCE"},
-  }[deck]||{border:C.gold,accent:C.gold,label:deck?.toUpperCase()||"CARD"};
-
-  const isPersonal=card.scope==="Personal";
-  const needsAssign=isPersonal&&(questPlayers&&questPlayers.length>0);
-  const proficientIds = getProficientPlayers(card, questPlayers||[]);
-
-  const pBtn=(p)=>({
-    width:"100%",padding:"12px 14px",marginBottom:"6px",
-    background:C.bgDark,border:`4px solid ${(p.cls&&p.cls.color)||C.borderBright}`,
-    borderRadius:0,cursor:"pointer",display:"flex",alignItems:"center",gap:"10px",textAlign:"left",
-    boxShadow:bevel((p.cls&&p.cls.color)||C.borderBright),
-  });
-
-  const sectionHdr=(label)=>React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.grey,letterSpacing:2,marginBottom:"8px",marginTop:"4px",borderBottom:`1px solid ${C.border}`,paddingBottom:4}},label);
-  const badge=(txt,color)=>React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color,border:`1px solid ${color}44`,padding:"3px 8px",display:"inline-block",marginBottom:"8px"}},txt);
-  const choiceBtn=(active,color)=>({width:"100%",padding:"11px 12px",marginBottom:"6px",background:active?color+"22":C.bgDark,border:`3px solid ${active?color:C.greyDim}`,borderRadius:0,cursor:"pointer",textAlign:"left",boxShadow:active?bevel(color):"none"});
-
-  // ── per-card pre-play UI ──────────────────────────────────────────────────
-  const t=card.title;
-  const m=cardMeta;
-  const setM=setCardMeta;
-
-  const prePlay=(()=>{
-    if(t==="The Wounded Traveler") return React.createElement(React.Fragment,null,
-      sectionHdr("BEFORE THROWING — PARTY DECIDES"),
-      React.createElement('button',{onClick:()=>setM(p=>({...p,stopped:true})),style:choiceBtn(m.stopped===true,C.green)},
-        React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:m.stopped===true?C.green:C.whiteDim}},"✋ WE STOP TO HELP"),
-        React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.greyDim}},"No gp reward this hole. Draw a Boon immediately below.")
-      ),
-      React.createElement('button',{onClick:()=>setM(p=>({...p,stopped:false})),style:choiceBtn(m.stopped===false,C.red)},
-        React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:m.stopped===false?C.red:C.whiteDim}},"→ WE PRESS ON"),
-        React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.greyDim}},"Play normally. No gp reward even on success.")
-      ),
-      m.stopped===true&&!m.boonDrawn&&React.createElement('button',{onClick:()=>{const bc=drawBoon();setM(p=>({...p,boonDrawn:true,boonCard:bc}));},style:{width:"100%",padding:"10px",marginTop:"4px",background:C.green+"18",border:`3px solid ${C.green}`,borderRadius:0,color:C.green,fontFamily:BF,fontSize:"13px",cursor:"pointer"}},"✨ DRAW BOON NOW"),
-      m.boonCard&&React.createElement('div',{style:{background:C.bgDark,border:`2px solid ${C.green}44`,padding:"8px 10px",marginTop:"4px",fontFamily:BF,fontSize:"12px",color:C.whiteDim}},React.createElement('span',{style:{color:C.green}},"BOON: ",m.boonCard.title)," — ",m.boonCard.effect)
-    );
-
-    if(t==="The Toll Keeper") return React.createElement(React.Fragment,null,
-      sectionHdr("BEFORE THROWING — PARTY DECIDES"),
-      React.createElement('button',{onClick:()=>setM(p=>({...p,paid:true})),style:choiceBtn(m.paid===true,C.green)},
-        React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:m.paid===true?C.green:C.whiteDim}},"💰 PAY 2GP — play normally")
-      ),
-      React.createElement('button',{onClick:()=>setM(p=>({...p,paid:false})),style:choiceBtn(m.paid===false,C.red)},
-        React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:m.paid===false?C.red:C.whiteDim}},"→ PUSH THROUGH — all drives with disadvantage")
-      ),
-      m.paid===true&&React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.gold,marginTop:"4px"}},"💰 2gp deducted from each player on resolve.")
-    );
-
-    if(t==="The Banquet") return React.createElement(React.Fragment,null,
-      sectionHdr("IMPRESSION — HOW MUCH DOES EACH PLAYER SPEND?"),
-      (questPlayers||[]).map(p=>{
-        const spent=(m.banquetSpend&&m.banquetSpend[p.id])||0;
-        return React.createElement('div',{key:p.id,style:{display:"flex",alignItems:"center",gap:"8px",marginBottom:"8px"}},
-          React.createElement('span',{style:{fontSize:"14px"}},(p.cls&&p.cls.icon)||"❓"),
-          React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:(p.cls&&p.cls.color)||C.gold,flex:1}},p.name," ",React.createElement('span',{style:{color:C.greyDim}},"(has 💰",p.gold,")")),
-          [0,1,2,3].map(n=>React.createElement('button',{key:n,onClick:()=>setM(prev=>({...prev,banquetSpend:{...prev.banquetSpend,[p.id]:n}})),style:{width:36,height:36,background:spent===n?C.gold+"33":C.bgDark,border:`2px solid ${spent===n?C.gold:C.greyDim}`,borderRadius:0,color:spent===n?C.gold:C.greyDim,fontFamily:BF,fontSize:"12px",cursor:"pointer"}},n))
-        );
-      }),
-      (()=>{const total=Object.values(m.banquetSpend||{}).reduce((a,v)=>a+v,0);const tier=total>=6?"10gp + treasure":total>=3?"6gp":total>0?"3gp":"no reward";return React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.parchment,marginTop:"4px"}},"Total: ",total,"gp → success pays ",tier);})()
-    );
-
-    if(t==="The Wager") return React.createElement(React.Fragment,null,
-      sectionHdr("WAGER — HOW MUCH DOES EACH PLAYER BET? (0–3gp)"),
-      (questPlayers||[]).map(p=>{
-        const w=(m.wager&&m.wager[p.id])||0;
-        return React.createElement('div',{key:p.id,style:{display:"flex",alignItems:"center",gap:"8px",marginBottom:"8px"}},
-          React.createElement('span',{style:{fontSize:"14px"}},(p.cls&&p.cls.icon)||"❓"),
-          React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:(p.cls&&p.cls.color)||C.gold,flex:1}},p.name," ",React.createElement('span',{style:{color:C.greyDim}},"(💰",p.gold,")")),
-          [0,1,2,3].map(n=>React.createElement('button',{key:n,onClick:()=>setM(prev=>({...prev,wager:{
