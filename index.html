@@ -1295,9 +1295,9 @@ function App(){
           React.createElement(Panel,null,
             React.createElement('div',{style:{fontFamily:BF,fontSize:"16px",color:C.gold,marginBottom:"10px"}},"ON THE COURSE"),
             [["★ next to your name","Your class passive fires free this hole — no token needed."],["★★ next to your name","Both passives fire free — you and your multiclass."],["Red banners","Active perils. Tap ✓ when resolved."],["Green banners","Lingering boons. Tap ✓ USE when spent."],["Orange ⚡ on Encounter","A consequence card is queued for this hole."],["Player strip (bottom)","Tap any player to adjust gold, XP, or tokens on the fly."],["Camp button","Appears after hole 9 and hole 18. End of round — tokens, leveling, gold."],["🔴 dot on Codex tab","An error was logged. Check the Error Log in About when you're back."]].map(function(item,i){
-              return React.createElement('div',{key:i,style:{display:"flex",gap:"10px",marginBottom:"8px"}},
-                React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.cyan,flexShrink:0,minWidth:"120px"}},item[0]),
-                React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.whiteDim}},item[1])
+              return React.createElement('div',{key:i,style:{marginBottom:"12px",paddingBottom:"12px",borderBottom:i<7?"1px solid "+C.border:"none"}},
+                React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.cyan,marginBottom:"4px"}},item[0]),
+                React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.whiteDim,lineHeight:1.5}},item[1])
               );
             })
           ),
