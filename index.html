@@ -260,7 +260,7 @@ const TREASURE_CARDS=[
 ];
 
 const RULES=[
-  {t:"The Quest",b:"You are a party of adventurers on a shared quest across 18 holes. Each hole is an encounter. The party succeeds or fails together based on average score. Par or better is a success. Over par is a failure."},
+  {t:"The Quest",b:"You are a party of 1–4 adventurers on a shared quest across 9 holes. Each hole is an encounter. The party succeeds or fails together based on average score. Par or better is a success. Over par is a failure. A full adventure is two quests — front nine and back nine — with camp in between."},
   {t:"Tee Boxes",b:"Your score on the previous hole determines your tee box. Birdie or better — blue tee. Par — white tee. Bogey or worse — red tee. Everyone starts on white tee for hole one."},
   {t:"The Cards",b:"At each tee box, before anyone throws, draw one Adventure card and read it aloud. Each birdie or better also draws a Boon card. Each bogey or worse also draws a Peril card."},
   {t:"Card Timing",b:"Adventure cards affect this hole. Draw at the tee, resolve before you leave. Boon cards reward you immediately after this hole. Peril cards condition your next hole. XP is earned immediately on draw. Tokens and items carry until spent."},
@@ -1271,8 +1271,8 @@ function App(){
         docSec==="about"&&React.createElement('div',null,
           React.createElement(Panel,null,
             React.createElement('div',{style:{fontFamily:BF,fontSize:"18px",color:C.gold,marginBottom:"6px"}},"QUEST ROUND"),
-            React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.parchment,fontStyle:"italic",marginBottom:"10px"}},"A disc golf adventure game for 1–8 players"),
-            React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.whiteDim,lineHeight:1.7}},"Quest Round turns a round of disc golf into a tabletop adventure. Every hole is an encounter. The party succeeds or fails together. Gold, XP, and treasure accumulate across 18 holes.")
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.parchment,fontStyle:"italic",marginBottom:"10px"}},"A disc golf adventure for 1–4 players"),
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.whiteDim,lineHeight:1.7}},"Quest Round turns a round of disc golf into a tabletop adventure without dice. Every hole is an encounter. The party succeeds or fails together. Gold, XP, and treasure accumulate across 9 hole quests.")
           ),
           React.createElement(Panel,null,
             React.createElement('div',{style:{fontFamily:BF,fontSize:"16px",color:C.gold,marginBottom:"10px"}},"THE THREE TABS"),
