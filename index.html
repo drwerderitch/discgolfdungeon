@@ -841,6 +841,7 @@ function App(){
   const [showCamp,setShowCamp]=useState(false);
   const [endRoundConfirm,setEndRoundConfirm]=useState(false);
   const [deleteConfirm,setDeleteConfirm]=useState(false);
+  const [endSessionConfirm,setEndSessionConfirm]=useState(false);
   const [errorLog,setErrorLog]=useState(function(){try{return JSON.parse(localStorage.getItem('dgd_errorlog')||'[]');}catch(e){return[];}});
 
   // ── Save helpers ──────────────────────────────────────────────────────────
@@ -1409,7 +1410,7 @@ function App(){
           ),
           React.createElement(Panel,null,
             React.createElement('div',{style:{fontFamily:BF,fontSize:"16px",color:C.gold,marginBottom:"10px"}},"ON THE COURSE"),
-            [["★ next to your name","Your class passive fires free this hole — no token needed."],["★★ next to your name","Both passives fire free — you and your multiclass."],["Red banners","Active perils. Tap ✓ when resolved."],["Green banners","Lingering boons. Tap ✓ USE when spent."],["Orange ⚡ on Encounter","A consequence card is queued for this hole."],["Player strip (bottom)","Tap any player to adjust gold, XP, or tokens on the fly."],["Camp button","Appears after hole 9 and hole 18. End of round — tokens, leveling, gold."],["🔴 dot on Codex tab","An error was logged. Check the Error Log in About when you're back."]].map(function(item,i){
+            [["★ next to your name","Your class passive fires free this hole — no token needed."],["★★ next to your name","Both passives fire free — you and your multiclass."],["Red banners","Active perils. Tap ✓ when resolved."],["Green banners","Lingering boons. Tap ✓ USE when spent."],["Orange ⚡ on Encounter","A consequence card is queued for this hole."],["Player strip (bottom)","Tap any player to adjust gold, XP, or tokens on the fly."],["⛺ CAMP button","Opens camp at any time. Use it to end a round, buy discs, level up, or save and exit. No need to tap this just because you're switching apps or taking a break — the game saves automatically."],["END SESSION — SAVE & EXIT","Marks the round incomplete and saves. Next time you play, you start a fresh round from hole 1. Use this when you're done for the day."],["🔴 dot on Codex tab","An error was logged. Check the Error Log in About when you're back."]].map(function(item,i){
               return React.createElement('div',{key:i,style:{marginBottom:"12px",paddingBottom:"12px",borderBottom:i<7?"1px solid "+C.border:"none"}},
                 React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.cyan,marginBottom:"4px"}},item[0]),
                 React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.whiteDim,lineHeight:1.5}},item[1])
@@ -1805,7 +1806,10 @@ function App(){
               React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.grey,letterSpacing:3}},"HOLE"),
               React.createElement('div',{style:{fontFamily:BF,fontSize:"28px",color:C.gold,lineHeight:1,textShadow:OLH}},hole)
             ),
-            React.createElement('button',{onClick:backToManager,style:{padding:"6px 10px",background:C.bgCard,border:`2px solid ${C.borderBright}`,borderRadius:0,color:C.grey,fontFamily:BF,fontSize:"12px",cursor:"pointer",letterSpacing:1}},"QUESTS")
+            React.createElement('div',{style:{display:"flex",gap:"6px"}},
+              React.createElement('button',{onClick:()=>setShowCamp(true),style:{padding:"6px 10px",background:C.bgCard,border:`2px solid ${C.cyan}`,borderRadius:0,color:C.cyan,fontFamily:BF,fontSize:"12px",cursor:"pointer"}},"⛺ CAMP"),
+              React.createElement('button',{onClick:backToManager,style:{padding:"6px 10px",background:C.bgCard,border:`2px solid ${C.borderBright}`,borderRadius:0,color:C.grey,fontFamily:BF,fontSize:"12px",cursor:"pointer",letterSpacing:1}},"QUESTS")
+            )
           ),
           React.createElement('div',{style:{display:"flex",gap:"3px",justifyContent:"center",flexWrap:"wrap"}},
             Array.from({length:9},(_,i)=>React.createElement('div',{key:i,style:{width:i+1===hole?12:8,height:i+1===hole?12:8,background:i+1<hole?C.green+"77":i+1===hole?C.gold:C.bgDark,border:`2px solid ${i+1===hole?C.gold:C.border}`}}))
@@ -1865,23 +1869,6 @@ function App(){
 
             )
           ),
-          React.createElement('button',{onClick:()=>{
-            if(activeAdventureCard) return;
-            const nh=hole+1;
-            _setAndSaveQuests(qs=>qs.map(q=>q.id===activeQuestId?{...q,hole:nh,perils,aDeck:aD,bDeck:bD,pDeck:pD,bhDeck:bhD,tDeck:tD}:q));
-            updateQuestHole(nh);
-          },style:{width:"100%",padding:"13px 0",background:C.bgDark,border:"4px solid "+(activeAdventureCard?C.greyDim:C.borderBright),borderRadius:0,color:activeAdventureCard?C.greyDim:C.whiteDim,fontFamily:BF,fontSize:"13px",cursor:activeAdventureCard?"default":"pointer",letterSpacing:1,opacity:activeAdventureCard?0.4:1}},
-            activeAdventureCard?"RESOLVE ENCOUNTER FIRST":"SKIP TO HOLE "+(hole+1)+" →"
-          ),
-          // End round early — tucked away, small
-          hole<9&&!activeAdventureCard&&!endRoundConfirm&&React.createElement('button',{onClick:function(){setEndRoundConfirm(true);},style:{width:"100%",padding:"8px 0",marginTop:"4px",background:"transparent",border:"1px solid "+C.red+"33",borderRadius:0,color:C.red+"77",fontFamily:BF,fontSize:"11px",cursor:"pointer",letterSpacing:1}},"⚠ END ROUND EARLY — CAMP NOW"),
-          hole<9&&!activeAdventureCard&&endRoundConfirm&&React.createElement('div',{style:{marginTop:"4px",background:C.red+"12",border:"1px solid "+C.red+"44",borderRadius:0,padding:"10px 12px"}},
-            React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.red,marginBottom:"8px"}},"End round early? Remaining holes will be marked incomplete."),
-            React.createElement('div',{style:{display:"flex",gap:"8px"}},
-              React.createElement('button',{onClick:function(){setEndRoundConfirm(false);setShowCamp(true);},style:{flex:1,padding:"8px 0",background:C.red+"22",border:"2px solid "+C.red+"66",borderRadius:0,color:C.red,fontFamily:BF,fontSize:"11px",cursor:"pointer"}},"CONFIRM — END ROUND"),
-              React.createElement('button',{onClick:function(){setEndRoundConfirm(false);},style:{flex:1,padding:"8px 0",background:"transparent",border:"1px solid "+C.greyDim,borderRadius:0,color:C.greyDim,fontFamily:BF,fontSize:"11px",cursor:"pointer"}},"CANCEL")
-            )
-          )
         ),
 
         // Party strip — horizontal 2-column layout
@@ -1956,7 +1943,7 @@ function App(){
         React.createElement('div',{style:{fontFamily:BF,fontSize:"16px",color:C.blue,marginBottom:"6px"}},"🎵 NOMINATE"),
         React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.whiteDim,lineHeight:1.6}},"Each player nominates one other player for a roleplay or character moment they enjoyed this round. That player gains 1 XP.")
       ),
-      React.createElement('button',{onClick:function(){
+      hole===10&&React.createElement('button',{onClick:function(){
         _setAndSavePlayers(function(ps){return ps.map(function(p){
           if(!questPlayersFromQuest.find(function(q){return q.id===p.id;})) return p;
           return {...p,tokens:p.tokens+1};
@@ -1966,16 +1953,25 @@ function App(){
       },style:{width:"100%",padding:"16px 0",background:C.cyan,border:"4px solid "+C.cyan,borderRadius:0,color:C.bgDark,fontFamily:BF,fontSize:"15px",cursor:"pointer",letterSpacing:1,marginBottom:"10px"}},
         "⛺ BEGIN ROUND "+(((activeQuest&&activeQuest.currentRound)||1)+1)
       ),
-      React.createElement('button',{onClick:()=>setShowCamp(false),style:{width:"100%",padding:"12px 0",background:"transparent",border:"2px solid "+C.greyDim,borderRadius:0,color:C.greyDim,fontFamily:BF,fontSize:"13px",cursor:"pointer",marginBottom:"8px"}},"SKIP CAMP — KEEP PLAYING"),
-      React.createElement('button',{onClick:function(){
-        _setAndSavePlayers(function(ps){return ps.map(function(p){
-          if(!questPlayersFromQuest.find(function(q){return q.id===p.id;})) return p;
-          return {...p,tokens:p.tokens+1};
-        });});
-        setShowCamp(false);
-        startNewRound(false);
-        backToManager();
-      },style:{width:"100%",padding:"10px 0",background:"transparent",border:"1px solid "+C.red+"33",borderRadius:0,color:C.red+"88",fontFamily:BF,fontSize:"11px",cursor:"pointer",marginBottom:"6px"}},"END SESSION — SAVE & EXIT")
+      React.createElement('button',{onClick:()=>{setShowCamp(false);setEndSessionConfirm(false);},style:{width:"100%",padding:"12px 0",background:"transparent",border:"2px solid "+C.greyDim,borderRadius:0,color:C.greyDim,fontFamily:BF,fontSize:"13px",cursor:"pointer",marginBottom:"8px"}},"← BACK TO QUEST"),
+      !endSessionConfirm&&React.createElement('button',{onClick:()=>setEndSessionConfirm(true),style:{width:"100%",padding:"10px 0",background:"transparent",border:"1px solid "+C.red+"33",borderRadius:0,color:C.red+"88",fontFamily:BF,fontSize:"11px",cursor:"pointer",marginBottom:"6px"}},"END SESSION — SAVE & EXIT"),
+      endSessionConfirm&&React.createElement('div',{style:{background:C.red+"12",border:"1px solid "+C.red+"44",borderRadius:0,padding:"12px",marginBottom:"6px"}},
+        React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.red,marginBottom:"4px"}},"End session and save?"),
+        React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.greyDim,marginBottom:"10px"}},"Next round starts at hole 1. No need to do this just to take a break — the game saves automatically."),
+        React.createElement('div',{style:{display:"flex",gap:"8px"}},
+          React.createElement('button',{onClick:function(){
+            _setAndSavePlayers(function(ps){return ps.map(function(p){
+              if(!questPlayersFromQuest.find(function(q){return q.id===p.id;})) return p;
+              return {...p,tokens:p.tokens+1};
+            });});
+            setShowCamp(false);
+            setEndSessionConfirm(false);
+            startNewRound(false);
+            backToManager();
+          },style:{flex:1,padding:"10px 0",background:C.red+"22",border:"2px solid "+C.red+"66",borderRadius:0,color:C.red,fontFamily:BF,fontSize:"12px",cursor:"pointer"}},"CONFIRM — SAVE & EXIT"),
+          React.createElement('button',{onClick:()=>setEndSessionConfirm(false),style:{flex:1,padding:"10px 0",background:"transparent",border:"1px solid "+C.greyDim,borderRadius:0,color:C.greyDim,fontFamily:BF,fontSize:"12px",cursor:"pointer"}},"CANCEL")
+        )
+      )
     ),
 
     // ── TAB BAR ──────────────────────────────────────────────────────────────
