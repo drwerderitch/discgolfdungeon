@@ -282,6 +282,14 @@ const RULES=[
 
 const shuffle=a=>{const b=[...a];for(let i=b.length-1;i>0;i--){const j=0|Math.random()*(i+1);[b[i],b[j]]=[b[j],b[i]];}return b;};
 
+// Alchemist bottle display: 🧪 per full bottle (3 drops), 💧 per remaining drop
+const bottleDisplay=(drops)=>{
+  if(!drops||drops<=0) return "";
+  const bottles=Math.floor(drops/3);
+  const rem=drops%3;
+  return "🧪".repeat(bottles)+"💧".repeat(rem);
+};
+
 // ── UI PRIMITIVES ─────────────────────────────────────────────────────────────
 const Btn=function(props){
   var bg=props.bg||C.gold; var fg=props.fg||C.bgDark; var bd=props.border||C.borderBright;
@@ -569,6 +577,27 @@ function CardOverlay({
     const avg=questPlayers.reduce((a,p)=>a+(scores[p.id]||0),0)/questPlayers.length;
     const partySuccess=avg<=0;
     const adj2=(pid,d)=>setHoleScores(prev=>({...prev,[pid]:(parseInt(prev[pid])||0)+d}));
+    // Alchemist helpers
+    const isAlchemist=(p)=>p.cls&&p.cls.name==="Alchemist";
+    const isFavored=(p)=>proficientIds.includes(p.id);
+    const bottleReady=(p)=>(p.bottleDrops||0)>=3;
+    const addDrop=(p,count)=>setPlayerField(p.id,"bottleDrops",Math.min(6,Math.max(0,(p.bottleDrops||0)+count)));
+    const bottleScore=(p)=>{
+      adj2(p.id,1); // score goes from -1 to 0
+      setPlayerField(p.id,"bottleDrops",Math.min(6,(p.bottleDrops||0)+3));
+      // Flag this hole as a bottled birdie for scorecard coloring
+      setHoleScores(prev=>({...prev,[p.id+"_bottled"]:true}));
+    };
+    const uncork=(p)=>{
+      // Use bottle: reduce party avg by 1 for this hole, subtract 3 drops
+      adj2(p.id,-1);
+      addDrop(p,-3);
+    };
+    const spendTokenForDrop=(p)=>{
+      if((p.tokens||0)<1) return;
+      setPlayerField(p.id,"tokens",p.tokens-1);
+      addDrop(p,1);
+    };
 
     return React.createElement(React.Fragment,null,
       prePlay&&React.createElement('div',{style:{marginBottom:"12px"}},prePlay),
@@ -579,15 +608,39 @@ function CardOverlay({
           const cl=n<0?C.green:n>0?C.red:C.whiteDim;
           const label=n===0?"E":n>0?`+${n}`:`${n}`;
           const isProficient=proficientIds.includes(p.id);
-          return React.createElement('div',{key:p.id,style:{display:"flex",alignItems:"center",gap:"6px",marginBottom:"8px"}},
-            React.createElement('span',{style:{fontSize:"14px",flexShrink:0}},(p.cls&&p.cls.icon)||"❓"),
-            React.createElement('div',{style:{fontFamily:BF,fontSize:"16px",color:(p.cls&&p.cls.color)||C.gold,flex:1,minWidth:0}},
-              p.name,
-              isProficient&&React.createElement('span',{style:{color:C.green,fontSize:"13px",marginLeft:"4px"}},proficiencyMap[p.id]===2?"★★":"★")
+          const drops=p.bottleDrops||0;
+          const bottleFull=drops>=3;
+          const showBottle=isAlchemist(p);
+          return React.createElement('div',{key:p.id,style:{marginBottom:"8px"}},
+            // Main score row
+            React.createElement('div',{style:{display:"flex",alignItems:"center",gap:"6px"}},
+              React.createElement('span',{style:{fontSize:"14px",flexShrink:0}},(p.cls&&p.cls.icon)||"❓"),
+              React.createElement('div',{style:{fontFamily:BF,fontSize:"16px",color:(p.cls&&p.cls.color)||C.gold,flex:1,minWidth:0}},
+                p.name,
+                isProficient&&React.createElement('span',{style:{color:C.green,fontSize:"13px",marginLeft:"4px"}},proficiencyMap[p.id]===2?"★★":"★")
+              ),
+              React.createElement('div',{style:{fontFamily:BF,fontSize:"16px",color:cl,minWidth:"28px",textAlign:"center",flexShrink:0}},label),
+              React.createElement('button',{onClick:()=>adj2(p.id,-1),style:{width:"80px",height:"52px",minWidth:"80px",background:C.bgDark,border:"3px solid "+C.green,borderRadius:0,color:C.green,fontFamily:BF,fontSize:"22px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},"-"),
+              React.createElement('button',{onClick:()=>adj2(p.id,1),style:{width:"80px",height:"52px",minWidth:"80px",background:C.bgDark,border:"3px solid "+C.red,borderRadius:0,color:C.red,fontFamily:BF,fontSize:"22px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},"+")
             ),
-            React.createElement('div',{style:{fontFamily:BF,fontSize:"16px",color:cl,minWidth:28,textAlign:"center",flexShrink:0}},label),
-            React.createElement('button',{onClick:()=>adj2(p.id,-1),style:{width:"80px",height:"52px",minWidth:"80px",background:C.bgDark,border:"3px solid "+C.green,borderRadius:0,color:C.green,fontFamily:BF,fontSize:"22px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},"-"),
-            React.createElement('button',{onClick:()=>adj2(p.id,1),style:{width:"80px",height:"52px",minWidth:"80px",background:C.bgDark,border:"3px solid "+C.red,borderRadius:0,color:C.red,fontFamily:BF,fontSize:"22px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},"+")
+            // Alchemist bottle row
+            showBottle&&React.createElement('div',{style:{display:"flex",alignItems:"center",gap:"6px",marginTop:"4px",paddingLeft:"22px"}},
+              // Bottle status
+              React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:bottleFull?C.gold:C.greyDim,flexShrink:0,letterSpacing:"2px"}},
+                bottleDisplay(drops)||(showBottle?"·":"")
+              ),
+              // Birdie: bottle it
+              n<0&&React.createElement('button',{onClick:()=>bottleScore(p),style:{padding:"3px 8px",background:C.green+"18",border:"1px solid "+C.green+"66",borderRadius:0,color:C.green,fontFamily:BF,fontSize:"10px",cursor:"pointer"}},"BOTTLE BIRDIE"),
+              // Par on favored hole: reminder + token spend
+              n===0&&isFavored(p)&&React.createElement('div',{style:{display:"flex",alignItems:"center",gap:"4px"}},
+                React.createElement('div',{style:{fontFamily:BF,fontSize:"10px",color:C.teal}},"FAVORED: +1 drop"),
+                React.createElement('button',{onClick:()=>addDrop(p,1),style:{padding:"3px 8px",background:C.teal+"18",border:"1px solid "+C.teal+"66",borderRadius:0,color:C.teal,fontFamily:BF,fontSize:"10px",cursor:"pointer"}},"CLAIM")
+              ),
+              // Par: spend token for drop
+              n===0&&!isFavored(p)&&(p.tokens||0)>0&&React.createElement('button',{onClick:()=>spendTokenForDrop(p),style:{padding:"3px 8px",background:C.purple+"18",border:"1px solid "+C.purple+"66",borderRadius:0,color:C.purple,fontFamily:BF,fontSize:"10px",cursor:"pointer"}},"🛡 TOKEN → DROP"),
+              // Bottle ready: uncork
+              bottleFull&&React.createElement('button',{onClick:()=>uncork(p),style:{padding:"3px 8px",background:C.gold+"22",border:"2px solid "+C.gold,borderRadius:0,color:C.gold,fontFamily:BF,fontSize:"10px",cursor:"pointer",animation:"pulse 2s infinite"}},"✨ UNCORK")
+            )
           );
         })
       ),
@@ -786,6 +839,7 @@ function App(){
   // e.g. {id, title, effect} — free redraw token from Coded Message
   const [questBoons,setQuestBoons]=useState([]);
   const [showCamp,setShowCamp]=useState(false);
+  const [endRoundConfirm,setEndRoundConfirm]=useState(false);
   const [errorLog,setErrorLog]=useState(function(){try{return JSON.parse(localStorage.getItem('dgd_errorlog')||'[]');}catch(e){return[];}});
 
   // ── Save helpers ──────────────────────────────────────────────────────────
@@ -824,7 +878,7 @@ function App(){
 
   function addPlayer(){
     if(allPlayers.length>=8)return;
-    const p={id:Date.now(),name:"",cls:null,gold:0,xp:0,tokens:1,tee:"white",level:1,notes:"",treasures:[],chosenSkills:[],gear:[],scoreHistory:[],multiclass:null};
+    const p={id:Date.now(),name:"",cls:null,gold:0,xp:0,tokens:1,tee:"white",level:1,notes:"",treasures:[],chosenSkills:[],gear:[],scoreHistory:[],multiclass:null,bottleDrops:0};
     _setAndSavePlayers(prev=>[...prev,p]);setEditIdx(allPlayers.length);setEName("");setECls(null);setPartyView("newchar");
   }
   function savePlayer(){
@@ -845,13 +899,14 @@ function App(){
   }
   function createQuest(){
     const id=Date.now();
-    const nq={id,playerIds:[...questPlayerIds],hole:1,perils:[],
+    const nq={id,playerIds:[...questPlayerIds],hole:1,currentRound:1,perils:[],
       aDeck:shuffle(ADVENTURE_CARDS),bDeck:shuffle(BOON_CARDS),pDeck:shuffle(PERIL_CARDS),
       bhDeck:shuffle(BETWEEN_CARDS),tDeck:shuffle(TREASURE_CARDS),
-      roundScore:0,startDate:new Date().toLocaleDateString(),
+      startDate:new Date().toLocaleDateString(),
       questBoons:[],nextAdventureCard:null};
     _setAndSaveQuests(qs=>[...qs,nq]);
-    _setAndSavePlayers(ps=>ps.map(p=>questPlayerIds.includes(p.id)?{...p,tee:"white",gold:0,xp:0,tokens:1,level:1}:p));
+    // New quest resets characters to fresh state
+    _setAndSavePlayers(ps=>ps.map(p=>questPlayerIds.includes(p.id)?{...p,tee:"white",gold:0,xp:0,tokens:1,level:1,bottleDrops:0,scoreHistory:[]}:p));
     _setAndSaveActiveQuestId(nq.id);
     setAD(nq.aDeck);setBD(nq.bDeck);setPD(nq.pDeck);setBhD(nq.bhDeck);setTD(nq.tDeck);
     setQuestBoons([]);
@@ -866,7 +921,43 @@ function App(){
   function deleteQuest(qid){_setAndSaveQuests(qs=>qs.filter(q=>q.id!==qid));if(activeQuestId===qid){_setAndSaveActiveQuestId(null);setQuestView("manager");}}
   function backToManager(){
     _setAndSaveQuests(qs=>qs.map(q=>q.id===activeQuestId?{...q,hole,perils,aDeck:aD,bDeck:bD,pDeck:pD,bhDeck:bhD,tDeck:tD,questBoons}:q));
+    setEndRoundConfirm(false);
     setQuestView("manager");
+  }
+  function startNewRound(complete){
+    const currentRound=(activeQuest&&activeQuest.currentRound)||1;
+    // Mark any unplayed holes as X for incomplete rounds
+    if(!complete){
+      questPlayersFromQuest.forEach(p=>{
+        _setAndSavePlayers(ps=>ps.map(pl=>{
+          if(pl.id!==p.id) return pl;
+          const hist=[...(pl.scoreHistory||[])];
+          const qi=hist.findIndex(r=>r.questId===activeQuestId&&r.roundNumber===currentRound);
+          const playedHoles=qi>=0?hist[qi].holes.map(h=>h.hole):[];
+          const missingHoles=Array.from({length:9},(_,i)=>i+1).filter(h=>!playedHoles.includes(h));
+          if(missingHoles.length>0&&qi>=0){
+            hist[qi]={...hist[qi],complete:false};
+          }
+          return{...pl,scoreHistory:hist};
+        }));
+      });
+    }
+    // Reset for new round
+    const newRound=currentRound+1;
+    const newDecks={
+      aDeck:shuffle(ADVENTURE_CARDS),bDeck:shuffle(BOON_CARDS),pDeck:shuffle(PERIL_CARDS),
+      bhDeck:shuffle(BETWEEN_CARDS),tDeck:shuffle(TREASURE_CARDS)
+    };
+    _setAndSaveQuests(qs=>qs.map(q=>q.id===activeQuestId?{...q,hole:1,currentRound:newRound,perils:[],
+      aDeck:newDecks.aDeck,bDeck:newDecks.bDeck,pDeck:newDecks.pDeck,
+      bhDeck:newDecks.bhDeck,tDeck:newDecks.tDeck,questBoons:[],nextAdventureCard:null}:q));
+    setAD(newDecks.aDeck);setBD(newDecks.bDeck);setPD(newDecks.pDeck);
+    setBhD(newDecks.bhDeck);setTD(newDecks.tDeck);
+    setQuestBoons([]);
+    setActiveAdventureCard(null);
+    updateQuestHole(1);
+    // Reset tees
+    _setAndSavePlayers(ps=>ps.map(p=>questPlayersFromQuest.find(q=>q.id===p.id)?{...p,tee:"white"}:p));
   }
 
   function draw(dk,setDk,src){let d=dk.length?dk:shuffle(src);if(!dk.length)setDk(d);const c=d[0];setDk(d.slice(1));return c;}
@@ -1047,24 +1138,29 @@ function App(){
 
       // Build draw queue from hole scores
       const queue=[];
+      const currentRound=(activeQuest&&activeQuest.currentRound)||1;
       questPlayersFromQuest.forEach(p=>{
         const n=holeScores[p.id]||0;
         const newTee=n<0?"blue":n===0?"white":"red";
         _setAndSavePlayers(ps=>ps.map(pl=>{
           if(pl.id!==p.id)return pl;
           const hist=[...(pl.scoreHistory||[])];
-          const qi=hist.findIndex(r=>r.questId===activeQuestId);
-          if(qi>=0){const holes=[...hist[qi].holes,{hole,score:n}];const total=holes.reduce((a,h)=>a+h.score,0);hist[qi]={...hist[qi],holes,total};}
-          else{hist.push({questId:activeQuestId,date:new Date().toLocaleDateString(),holes:[{hole,score:n}],total:n});}
+          const qi=hist.findIndex(r=>r.questId===activeQuestId&&r.roundNumber===currentRound);
+          if(qi>=0){
+            const holes=[...hist[qi].holes,{hole,score:n,bottled:!!(holeScores[p.id+"_bottled"])}];
+            const total=holes.reduce((a,h)=>a+h.score,0);
+            hist[qi]={...hist[qi],holes,total,complete:holes.length>=9};
+          } else {
+            hist.push({questId:activeQuestId,roundNumber:currentRound,date:new Date().toLocaleDateString(),holes:[{hole,score:n,bottled:!!(holeScores[p.id+"_bottled"])}],total:n,complete:false});
+          }
           return{...pl,tee:newTee,scoreHistory:hist};
         }));
         if(n<0)queue.push({pid:p.id,pname:p.name,type:"boon"});
         if(n>0)queue.push({pid:p.id,pname:p.name,type:"peril"});
       });
 
-      const holeTotal=Object.values(holeScores).reduce((a,v)=>a+(v||0),0);
-      const nh=Math.min(18,hole+1);
-      _setAndSaveQuests(qs=>qs.map(q=>q.id===activeQuestId?{...q,roundScore:(q.roundScore||0)+holeTotal,hole:nh,perils,aDeck:aD,bDeck:bD,pDeck:pD,bhDeck:bhD,tDeck:tD}:q));
+      const nh=hole+1;
+      _setAndSaveQuests(qs=>qs.map(q=>q.id===activeQuestId?{...q,hole:nh,perils,aDeck:aD,bDeck:bD,pDeck:pD,bhDeck:bhD,tDeck:tD}:q));
       updateQuestHole(nh);
       setActiveAdventureCard(null);
       setCard(null);setCardDeck(null);
@@ -1146,36 +1242,50 @@ function App(){
       const sq=quests.find(q=>q.id===scorecardQuestId);
       const sqps=sq?allPlayers.filter(p=>sq.playerIds.includes(p.id)):[];
       const fmt=n=>n===0?"0":n>0?`+${n}`:`${n}`;
-      const blocks=[[1,2,3,4,5,6,7,8,9],[10,11,12,13,14,15,16,17,18]];
-      const blockLabels=["Front 9","Back 9"];
+      const holeNums=[1,2,3,4,5,6,7,8,9];
+      // Collect all round numbers from any player's history
+      const allRounds=new Set();
+      sqps.forEach(p=>{(p.scoreHistory||[]).filter(r=>r.questId===scorecardQuestId).forEach(r=>allRounds.add(r.roundNumber));});
+      const sortedRounds=[...allRounds].sort((a,b)=>a-b);
       return React.createElement('div',{style:{position:"fixed",inset:0,background:C.bg,zIndex:1100,overflowY:"auto",padding:"0 0 40px"}},
         React.createElement('div',{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 16px",borderBottom:`3px solid ${C.borderBright}`,background:C.bgDark}},
           React.createElement('div',{style:{fontFamily:BF,fontSize:"15px",color:C.gold,textShadow:OLH}},"SCORECARD"),
-          React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.grey}},"Hole ",(sq&&sq.hole)||1,"/18 · ",(sq&&sq.startDate)||""),
+          React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.grey}},"Round ",(sq&&sq.currentRound)||1," · ",(sq&&sq.startDate)||""),
           React.createElement('button',{onClick:()=>setScorecardQuestId(null),style:{padding:"6px 12px",background:"transparent",border:`2px solid ${C.borderBright}`,borderRadius:0,color:C.gold,fontFamily:BF,fontSize:"13px",cursor:"pointer"}},"CLOSE")
         ),
-        blocks.map((holeNums,bi)=>{
-          const anyPlayed=sqps.some(p=>{const h=(p.scoreHistory||[]).find(r=>r.questId===scorecardQuestId);return h&&h.holes.some(hh=>holeNums.includes(hh.hole));});
-          if(!anyPlayed&&bi>0)return null;
-          return React.createElement('div',{key:bi,style:{padding:"16px 12px 0"}},
-            React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.greyDim,letterSpacing:2,marginBottom:"6px"}},blockLabels[bi]),
+        sortedRounds.length===0?React.createElement('div',{style:{padding:"24px",fontFamily:BF,fontSize:"13px",color:C.greyDim,textAlign:"center"}},"No rounds played yet."):
+        sortedRounds.map(function(roundNum){
+          const currentHole=(sq&&sq.currentRound===roundNum)?sq.hole:null;
+          return React.createElement('div',{key:roundNum,style:{padding:"16px 12px 0"}},
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.greyDim,letterSpacing:2,marginBottom:"6px",display:"flex",justifyContent:"space-between",alignItems:"center"}},
+              React.createElement('span',null,"ROUND ",roundNum),
+              (()=>{
+                const r0=sqps[0]&&(sqps[0].scoreHistory||[]).find(r=>r.questId===scorecardQuestId&&r.roundNumber===roundNum);
+                return React.createElement('span',{style:{color:r0&&r0.complete?C.green:C.greyDim}},r0&&r0.date||"",r0&&!r0.complete?" — incomplete":"");
+              })()
+            ),
             React.createElement('div',{style:{overflowX:"auto"}},
               React.createElement('table',{style:{borderCollapse:"collapse",width:"100%"}},
                 React.createElement('thead',null,
                   React.createElement('tr',null,
                     React.createElement('th',{style:{fontFamily:BF,fontSize:"10px",color:C.greyDim,textAlign:"left",padding:"4px 8px",minWidth:60,background:C.bgCard,position:"sticky",left:0,zIndex:1}},"PLAYER"),
-                    holeNums.map(n=>React.createElement('th',{key:n,style:{fontFamily:BF,fontSize:"10px",color:n===((sq&&sq.hole)||1)?C.gold:C.greyDim,textAlign:"center",padding:"4px 5px",minWidth:28,background:n===((sq&&sq.hole)||1)?C.bgCardAlt:C.bgCard,borderLeft:`1px solid ${C.border}44`}},n)),
+                    holeNums.map(n=>React.createElement('th',{key:n,style:{fontFamily:BF,fontSize:"10px",color:currentHole===n?C.gold:C.greyDim,textAlign:"center",padding:"4px 5px",minWidth:28,background:currentHole===n?C.bgCardAlt:C.bgCard,borderLeft:`1px solid ${C.border}44`}},n)),
                     React.createElement('th',{style:{fontFamily:BF,fontSize:"10px",color:C.greyDim,textAlign:"center",padding:"4px 6px",minWidth:34,background:C.bgCard,borderLeft:`1px solid ${C.border}`}},"TOT")
                   )
                 ),
                 React.createElement('tbody',null,
-                  sqps.map(p=>{
-                    const hist=(p.scoreHistory||[]).find(r=>r.questId===scorecardQuestId);
-                    const allScored=(hist&&hist.holes)||[];
-                    const roundTotal=allScored.reduce((a,h)=>a+h.score,0);
+                  sqps.map(function(p){
+                    const roundHist=(p.scoreHistory||[]).find(r=>r.questId===scorecardQuestId&&r.roundNumber===roundNum);
+                    const scored=(roundHist&&roundHist.holes)||[];
+                    const roundTotal=scored.reduce((a,h)=>a+h.score,0);
                     return React.createElement('tr',{key:p.id},
                       React.createElement('td',{style:{fontFamily:BF,fontSize:"10px",color:(p.cls&&p.cls.color)||C.gold,padding:"5px 8px",background:C.bgCard,position:"sticky",left:0,zIndex:1,whiteSpace:"nowrap"}},(p.cls&&p.cls.icon)," ",(p.name&&p.name.substring(0,7))),
-                      holeNums.map(n=>{const hd=allScored.find(h=>h.hole===n);const cl=!hd?C.greyDim:hd.score<0?C.green:hd.score>0?C.red:C.whiteDim;return React.createElement('td',{key:n,style:{fontFamily:BF,fontSize:"11px",color:cl,textAlign:"center",padding:"5px 4px",background:n===((sq&&sq.hole)||1)?C.bgCardAlt:C.bgDark,borderLeft:`1px solid ${C.border}33`}},hd?fmt(hd.score):"·");}),
+                      holeNums.map(function(n){
+                        const hd=scored.find(h=>h.hole===n);
+                        const isCurrentHole=currentHole===n;
+                        const cl=!hd?C.greyDim:hd.bottled?C.teal:hd.score<0?C.green:hd.score>0?C.red:C.whiteDim;
+                        return React.createElement('td',{key:n,style:{fontFamily:BF,fontSize:"11px",color:cl,textAlign:"center",padding:"5px 4px",background:isCurrentHole?C.bgCardAlt:C.bgDark,borderLeft:`1px solid ${C.border}33`}},hd?fmt(hd.score):(roundHist&&!roundHist.complete&&n>scored.length)?"✗":"·");
+                      }),
                       React.createElement('td',{style:{fontFamily:BF,fontSize:"11px",color:roundTotal<0?C.green:roundTotal>0?C.red:C.whiteDim,textAlign:"center",padding:"5px 4px",background:C.bgCard,borderLeft:`1px solid ${C.border}`}},fmt(roundTotal))
                     );
                   })
@@ -1468,38 +1578,35 @@ function App(){
           p.notes&&React.createElement(Panel,null,React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.grey,letterSpacing:2,marginBottom:"5px"}},"NOTES"),React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.whiteDim,whiteSpace:"pre-wrap"}},p.notes)),
           (p.scoreHistory||[]).length>0&&React.createElement(Panel,null,
             React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.grey,letterSpacing:2,marginBottom:"8px"}},"SCORE HISTORY"),
-            [...(p.scoreHistory||[])].reverse().map((r,ri)=>{
+            [...(p.scoreHistory||[])].sort((a,b)=>(b.roundNumber||0)-(a.roundNumber||0)).map((r,ri)=>{
               const fmt=n=>n===0?"0":n>0?`+${n}`:`${n}`;
-              const total=r.total||0;const tcl=total<0?C.green:total>0?C.red:C.whiteDim;
-              const front=r.holes.filter(h=>h.hole<=9).sort((a,b)=>a.hole-b.hole);
-              const back=r.holes.filter(h=>h.hole>=10).sort((a,b)=>a.hole-b.hole);
-              const blocks=back.length>0?[front,back]:[front];
-              const blockLabels=["Front 9","Back 9"];
+              const total=r.total||0;
+              const tcl=total<0?C.green:total>0?C.red:C.whiteDim;
+              const holes=[...(r.holes||[])].sort((a,b)=>a.hole-b.hole);
+              const holeNums=[1,2,3,4,5,6,7,8,9];
               return React.createElement('div',{key:ri,style:{marginBottom:"12px",paddingBottom:12,borderBottom:ri<(p.scoreHistory||[]).length-1?`1px solid ${C.border}`:"none"}},
                 React.createElement('div',{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px"}},
-                  React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.parchment}},r.date),
-                  React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:tcl}},fmt(total)," / ",r.holes.length," holes")
+                  React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.parchment}},"Round ",(r.roundNumber||"?")," · ",r.date),
+                  React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:tcl}},fmt(total)," ",r.complete?"✓":"— incomplete")
                 ),
-                blocks.map((block,bi)=>{
-                  const blockTotal=block.reduce((a,h)=>a+h.score,0);
-                  const btcl=blockTotal<0?C.green:blockTotal>0?C.red:C.whiteDim;
-                  return React.createElement('div',{key:bi,style:{marginBottom:bi<blocks.length-1?8:0}},
-                    React.createElement('div',{style:{overflowX:"auto"}},
-                      React.createElement('table',{style:{borderCollapse:"collapse",width:"100%"}},
-                        React.createElement('thead',null,React.createElement('tr',null,
-                          React.createElement('th',{style:{fontFamily:BF,fontSize:"10px",color:C.greyDim,textAlign:"left",padding:"2px 4px",minWidth:48}},blockLabels[bi]),
-                          block.map(h=>React.createElement('th',{key:h.hole,style:{fontFamily:BF,fontSize:"10px",color:C.greyDim,textAlign:"center",padding:"2px 3px",minWidth:24}},h.hole)),
-                          React.createElement('th',{style:{fontFamily:BF,fontSize:"10px",color:C.greyDim,textAlign:"center",padding:"2px 3px",minWidth:28}},"TOT")
-                        )),
-                        React.createElement('tbody',null,React.createElement('tr',null,
-                          React.createElement('td',{style:{fontFamily:BF,fontSize:"10px",color:(p.cls&&p.cls.color)||C.gold,padding:"2px 4px"}},(p.name&&p.name.substring(0,6))),
-                          block.map(h=>{const cl=h.score<0?C.green:h.score>0?C.red:C.whiteDim;return React.createElement('td',{key:h.hole,style:{fontFamily:BF,fontSize:"11px",color:cl,textAlign:"center",padding:"2px 3px",background:C.bgDark,border:`1px solid ${C.border}33`}},fmt(h.score));}),
-                          React.createElement('td',{style:{fontFamily:BF,fontSize:"11px",color:btcl,textAlign:"center",padding:"2px 3px",background:C.bgDark,borderLeft:`1px solid ${C.border}`}},fmt(blockTotal))
-                        ))
-                      )
-                    )
-                  );
-                })
+                React.createElement('div',{style:{overflowX:"auto"}},
+                  React.createElement('table',{style:{borderCollapse:"collapse",width:"100%"}},
+                    React.createElement('thead',null,React.createElement('tr',null,
+                      React.createElement('th',{style:{fontFamily:BF,fontSize:"10px",color:C.greyDim,textAlign:"left",padding:"2px 4px",minWidth:48}},"Rnd ",(r.roundNumber||"?")),
+                      holeNums.map(h=>React.createElement('th',{key:h,style:{fontFamily:BF,fontSize:"10px",color:C.greyDim,textAlign:"center",padding:"2px 3px",minWidth:24}},h)),
+                      React.createElement('th',{style:{fontFamily:BF,fontSize:"10px",color:C.greyDim,textAlign:"center",padding:"2px 3px",minWidth:28}},"TOT")
+                    )),
+                    React.createElement('tbody',null,React.createElement('tr',null,
+                      React.createElement('td',{style:{fontFamily:BF,fontSize:"10px",color:(p.cls&&p.cls.color)||C.gold,padding:"2px 4px"}},(p.name&&p.name.substring(0,6))),
+                      holeNums.map(function(h){
+                        const hd=holes.find(hh=>hh.hole===h);
+                        const cl=!hd?C.greyDim:hd.bottled?C.teal:hd.score<0?C.green:hd.score>0?C.red:C.whiteDim;
+                        return React.createElement('td',{key:h,style:{fontFamily:BF,fontSize:"11px",color:cl,textAlign:"center",padding:"2px 3px",background:C.bgDark,border:`1px solid ${C.border}33`}},hd?fmt(hd.score):(!r.complete&&h>holes.length)?"✗":"·");
+                      }),
+                      React.createElement('td',{style:{fontFamily:BF,fontSize:"11px",color:tcl,textAlign:"center",padding:"2px 3px",background:C.bgDark,borderLeft:`1px solid ${C.border}`}},fmt(total))
+                    ))
+                  )
+                )
               );
             })
           ),
@@ -1628,14 +1735,14 @@ function App(){
                 return React.createElement(Panel,{key:q.id},
                   React.createElement('div',{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}},
                     React.createElement('div',{style:{flex:1,cursor:"pointer"},onClick:()=>resumeQuest(q)},
-                      React.createElement('div',{style:{fontFamily:BF,fontSize:"15px",color:C.gold,marginBottom:"2px"}},"Hole ",q.hole,"/18"),
+                      React.createElement('div',{style:{fontFamily:BF,fontSize:"15px",color:C.gold,marginBottom:"2px"}},"Round ",(q.currentRound||1)," · Hole ",q.hole,"/9"),
                       React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.greyDim,marginBottom:"4px"}},q.startDate||""),
                       q.nextAdventureCard&&React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.orange,marginBottom:"4px"}},"⚡ Next: ",q.nextAdventureCard.title),
                       React.createElement('div',{style:{display:"flex",flexWrap:"wrap",gap:"6px",marginBottom:"6px"}},
                         qps.map(p=>React.createElement('span',{key:p.id,style:{fontFamily:BF,fontSize:"13px",color:(p.cls&&p.cls.color)||C.grey}},(p.cls&&p.cls.icon)," ",p.name," Lv",p.level||1))
                       ),
                       React.createElement('div',{style:{display:"flex",gap:"2px"}},
-                        Array.from({length:18},(_,i)=>React.createElement('div',{key:i,style:{width:i+1===q.hole?10:7,height:i+1===q.hole?10:7,background:i+1<q.hole?C.green+"77":i+1===q.hole?C.gold:C.bgDark,border:`1px solid ${i+1===q.hole?C.gold:C.border}`}}))
+                        Array.from({length:9},(_,i)=>React.createElement('div',{key:i,style:{width:i+1===q.hole?10:7,height:i+1===q.hole?10:7,background:i+1<q.hole?C.green+"77":i+1===q.hole?C.gold:C.bgDark,border:`1px solid ${i+1===q.hole?C.gold:C.border}`}}))
                       )
                     ),
                     React.createElement('div',{style:{display:"flex",flexDirection:"column",gap:"6px",marginLeft:8,flexShrink:0}},
@@ -1689,7 +1796,7 @@ function App(){
             React.createElement('button',{onClick:backToManager,style:{padding:"6px 10px",background:C.bgCard,border:`2px solid ${C.borderBright}`,borderRadius:0,color:C.grey,fontFamily:BF,fontSize:"12px",cursor:"pointer",letterSpacing:1}},"QUESTS")
           ),
           React.createElement('div',{style:{display:"flex",gap:"3px",justifyContent:"center",flexWrap:"wrap"}},
-            Array.from({length:18},(_,i)=>React.createElement('div',{key:i,style:{width:i+1===hole?12:8,height:i+1===hole?12:8,background:i+1<hole?C.green+"77":i+1===hole?C.gold:C.bgDark,border:`2px solid ${i+1===hole?C.gold:C.border}`}}))
+            Array.from({length:9},(_,i)=>React.createElement('div',{key:i,style:{width:i+1===hole?12:8,height:i+1===hole?12:8,background:i+1<hole?C.green+"77":i+1===hole?C.gold:C.bgDark,border:`2px solid ${i+1===hole?C.gold:C.border}`}}))
           )
         ),
 
@@ -1747,14 +1854,24 @@ function App(){
             )
           ),
           React.createElement('button',{onClick:()=>{
-            if(hole===9||hole>=18){setShowCamp(true);}
+            if(activeAdventureCard) return;
+            if(hole===9){setShowCamp(true);}
             else{
-              const nh=Math.min(18,hole+1);
+              const nh=hole+1;
               _setAndSaveQuests(qs=>qs.map(q=>q.id===activeQuestId?{...q,hole:nh,perils,aDeck:aD,bDeck:bD,pDeck:pD,bhDeck:bhD,tDeck:tD}:q));
               updateQuestHole(nh);
             }
-          },style:{width:"100%",padding:"13px 0",background:C.bgDark,border:"4px solid "+(hole===9||hole>=18?C.cyan:C.borderBright),borderRadius:0,color:hole===9||hole>=18?C.cyan:C.whiteDim,fontFamily:BF,fontSize:"13px",cursor:"pointer",letterSpacing:1}},
-            hole===9?"⛺ END OF ROUND — CAMP":hole>=18?"⛺ END OF ROUND — CAMP":"SKIP TO HOLE "+(hole+1)+" →"
+          },style:{width:"100%",padding:"13px 0",background:C.bgDark,border:"4px solid "+(activeAdventureCard?C.greyDim:hole===9?C.cyan:C.borderBright),borderRadius:0,color:activeAdventureCard?C.greyDim:hole===9?C.cyan:C.whiteDim,fontFamily:BF,fontSize:"13px",cursor:activeAdventureCard?"default":"pointer",letterSpacing:1,opacity:activeAdventureCard?0.4:1}},
+            activeAdventureCard?"RESOLVE ENCOUNTER FIRST":hole===9?"⛺ END OF ROUND — CAMP":"SKIP TO HOLE "+(hole+1)+" →"
+          ),
+          // End round early — tucked away, small
+          hole<9&&!activeAdventureCard&&!endRoundConfirm&&React.createElement('button',{onClick:function(){setEndRoundConfirm(true);},style:{width:"100%",padding:"8px 0",marginTop:"4px",background:"transparent",border:"1px solid "+C.red+"33",borderRadius:0,color:C.red+"77",fontFamily:BF,fontSize:"11px",cursor:"pointer",letterSpacing:1}},"⚠ END ROUND EARLY — CAMP NOW"),
+          hole<9&&!activeAdventureCard&&endRoundConfirm&&React.createElement('div',{style:{marginTop:"4px",background:C.red+"12",border:"1px solid "+C.red+"44",borderRadius:0,padding:"10px 12px"}},
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.red,marginBottom:"8px"}},"End round early? Remaining holes will be marked incomplete."),
+            React.createElement('div',{style:{display:"flex",gap:"8px"}},
+              React.createElement('button',{onClick:function(){setEndRoundConfirm(false);setShowCamp(true);},style:{flex:1,padding:"8px 0",background:C.red+"22",border:"2px solid "+C.red+"66",borderRadius:0,color:C.red,fontFamily:BF,fontSize:"11px",cursor:"pointer"}},"CONFIRM — END ROUND"),
+              React.createElement('button',{onClick:function(){setEndRoundConfirm(false);},style:{flex:1,padding:"8px 0",background:"transparent",border:"1px solid "+C.greyDim,borderRadius:0,color:C.greyDim,fontFamily:BF,fontSize:"11px",cursor:"pointer"}},"CANCEL")
+            )
           )
         ),
 
@@ -1769,7 +1886,8 @@ function App(){
                   React.createElement('div',{style:{display:"flex",gap:"6px",flexWrap:"wrap"}},
                     React.createElement('span',{style:{fontFamily:BF,fontSize:"11px",color:C.gold}},"💰",p.gold),
                     React.createElement('span',{style:{fontFamily:BF,fontSize:"11px",color:C.purple}},"✦",p.xp),
-                    React.createElement('span',{style:{fontFamily:BF,fontSize:"11px",color:C.cyan}},"🛡",p.tokens)
+                    React.createElement('span',{style:{fontFamily:BF,fontSize:"11px",color:C.cyan}},"🛡",p.tokens),
+                    p.cls&&p.cls.name==="Alchemist"&&(p.bottleDrops||0)>0&&React.createElement('span',{style:{fontFamily:BF,fontSize:"11px",color:(p.bottleDrops||0)>=3?C.gold:C.greyDim,animation:(p.bottleDrops||0)>=3?"pulse 2s infinite":"none",letterSpacing:"1px"}},bottleDisplay(p.bottleDrops||0))
                   )
                 ),
                 React.createElement('div',{style:{width:10,height:10,background:TEE[p.tee],border:`1px solid ${C.borderBright}`,flexShrink:0}})
@@ -1785,7 +1903,7 @@ function App(){
       React.createElement('div',{style:{textAlign:"center",marginBottom:"20px"}},
         React.createElement('div',{style:{fontSize:"40px",marginBottom:"8px"}},"⛺"),
         React.createElement('div',{style:{fontFamily:BF,fontSize:"22px",color:C.cyan,textShadow:OLH,letterSpacing:3}},"END OF ROUND"),
-        React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.greyDim,marginTop:"4px"}},hole>=18?"Quest complete — final camp":"Holes 1–9 complete — halfway there")
+        React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.greyDim,marginTop:"4px"}},"Round ",((activeQuest&&activeQuest.currentRound)||1)," complete")
       ),
       // Rest and recharge
       React.createElement('div',{style:{background:C.green+"12",border:"2px solid "+C.green+"44",borderRadius:0,padding:"14px 16px",marginBottom:"10px"}},
@@ -1823,25 +1941,26 @@ function App(){
         React.createElement('div',{style:{fontFamily:BF,fontSize:"16px",color:C.blue,marginBottom:"6px"}},"🎵 NOMINATE"),
         React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.whiteDim,lineHeight:1.6}},"Each player nominates one other player for a roleplay or character moment they enjoyed this round. That player gains 1 XP.")
       ),
-      // Buttons
-      React.createElement('button',{onClick:()=>{
-        // Apply rest token to all players
+      React.createElement('button',{onClick:function(){
         _setAndSavePlayers(function(ps){return ps.map(function(p){
           if(!questPlayersFromQuest.find(function(q){return q.id===p.id;})) return p;
           return {...p,tokens:p.tokens+1};
         });});
         setShowCamp(false);
-        if(hole===9){
-          const nh=10;
-          _setAndSaveQuests(function(qs){return qs.map(function(q){return q.id===activeQuestId?{...q,hole:nh,perils,aDeck:aD,bDeck:bD,pDeck:pD,bhDeck:bhD,tDeck:tD}:q;});});
-          updateQuestHole(nh);
-        } else {
-          backToManager();
-        }
+        startNewRound(true);
       },style:{width:"100%",padding:"16px 0",background:C.cyan,border:"4px solid "+C.cyan,borderRadius:0,color:C.bgDark,fontFamily:BF,fontSize:"15px",cursor:"pointer",letterSpacing:1,marginBottom:"10px"}},
-        hole>=18?"✓ WRAP UP — BACK TO QUESTS":"✓ GRANT TOKENS — ADVANCE TO HOLE 10"
+        "⛺ BEGIN ROUND "+(((activeQuest&&activeQuest.currentRound)||1)+1)
       ),
-      React.createElement('button',{onClick:()=>setShowCamp(false),style:{width:"100%",padding:"12px 0",background:"transparent",border:"2px solid "+C.greyDim,borderRadius:0,color:C.greyDim,fontFamily:BF,fontSize:"13px",cursor:"pointer"}},"SKIP CAMP — KEEP PLAYING")
+      React.createElement('button',{onClick:()=>setShowCamp(false),style:{width:"100%",padding:"12px 0",background:"transparent",border:"2px solid "+C.greyDim,borderRadius:0,color:C.greyDim,fontFamily:BF,fontSize:"13px",cursor:"pointer",marginBottom:"8px"}},"SKIP CAMP — KEEP PLAYING"),
+      React.createElement('button',{onClick:function(){
+        _setAndSavePlayers(function(ps){return ps.map(function(p){
+          if(!questPlayersFromQuest.find(function(q){return q.id===p.id;})) return p;
+          return {...p,tokens:p.tokens+1};
+        });});
+        setShowCamp(false);
+        startNewRound(false);
+        backToManager();
+      },style:{width:"100%",padding:"10px 0",background:"transparent",border:"1px solid "+C.red+"33",borderRadius:0,color:C.red+"88",fontFamily:BF,fontSize:"11px",cursor:"pointer",marginBottom:"6px"}},"END SESSION — SAVE & EXIT")
     ),
 
     // ── TAB BAR ──────────────────────────────────────────────────────────────
