@@ -105,7 +105,7 @@ const CLASSES=[
   {name:"Assassin",icon:"🗡️",passive:"On favored holes, if your approach lands within circle one your putt is automatic — pick up and score. Spend a token to use this on any other hole.",ptype:"triggered",skills:["Tactics","Stealth","Athletics"],flavor:"One clean line. One clean shot. Done.",gear:"Putter + 1 disc",color:C.red},
   {name:"Bard",icon:"🎵",passive:"When you spend a token on yourself, declare one teammate before throwing — they also gain a stored advantage for any single throw this hole at no additional cost.",ptype:"triggered",skills:["Social","Nature","Arcane"],flavor:"Your best moment makes everyone better.",gear:"Putter + 1 disc",color:C.green},
   {name:"Barbarian",icon:"🪓",passive:"Before throwing you may choose to throw from blue tee regardless of your earned position. Par or better from blue tee draws a Boon. On favored holes draw two Boons instead.",ptype:"triggered",skills:["Tactics","Athletics","Social"],flavor:"Glory or nothing. The long road is the only road.",gear:"Putter + 1 disc",color:C.red},
-  {name:"Marksman",icon:"🎯",passive:"When you make a putt from outside circle 2 you may attempt it a second time. If the second putt drops the party score improves by 1 for adventure success this hole. On favored holes this also applies to circle 1 putts.",ptype:"triggered",skills:["Tactics","Athletics","Stealth"],flavor:"One more time. Cleaner.",gear:"Putter + extra putter + 1 disc (3 total)",color:C.blue},
+  {name:"Marksman",icon:"🎯",passive:"A putt made from circle 2 counts as automatic party success for adventure resolution — individual scores, boons, and perils still apply. Hit metal from circle 2 — free rethrow.",ptype:"triggered",skills:["Tactics","Athletics","Stealth"],flavor:"One more time. Cleaner.",gear:"Two putters + 1 disc",color:C.blue},
   {name:"Dragoon",icon:"🐉",passive:"You may jump putt from anywhere outside circle 1. Finish at par or better with a jump putt and draw a Boon. On favored holes jump putts inside circle 1 are also legal. Spend a token for the same on any other hole.",ptype:"behavioral",skills:["Tactics","Athletics","Nature"],flavor:"You leap. You fall. You score.",gear:"Putter + 1 disc",color:C.purple},
   {name:"Artificer",icon:"🔧",passive:"You start with a putter and three gadget discs — your custom built toolkit. On favored holes or by spending a token you may throw any of your gadget discs freely. Otherwise limit one gadget disc per hole.",ptype:"triggered",skills:["Athletics","Stealth","Arcane"],flavor:"You start with a putter and three gadget discs — your custom built toolkit.",gear:"Putter + 3 gadget discs (4 total)",color:C.cyan},
   {name:"Alchemist",icon:"⚗️",passive:"When you birdie, score par instead and bottle the extra stroke. Uncork at any time to reduce the party score by 1 for adventure success. On favored holes or by spending a token, a par earns one luck drop. Three drops fill the bottle.",ptype:"triggered",skills:["Nature","Arcane","Social"],flavor:"Distiller of luck. Every good moment has potential.",gear:"Putter + 1 disc",color:C.green},
@@ -257,6 +257,7 @@ const TREASURE_CARDS=[
   {title:"Thieves Tools",consumable:false,effect:"A worn leather roll of small implements. Activate at any merchant encounter to buy one item without spending gold.",value:7},
   {title:"Bag of Holding",consumable:false,effect:"Larger on the inside than the outside. Nobody questions it. Activate once per round to draw a treasure card and use it immediately for one hole. Return it to the deck after the hole.",value:6},
   {title:"Traveler's Cloak",consumable:false,effect:"Worn and patched. Has seen every kind of weather. Activate to ignore all throw conditions on the current Peril card this hole.",value:5},
+  {title:"Dwarven Anvil Charm",consumable:false,effect:"The ancestors smile at the sound. When you hit metal from outside circle 2, activate to take a free rethrow.",value:10},
 ];
 
 const RULES=[
@@ -575,7 +576,7 @@ function CardOverlay({
     if((deck!=="adventure"&&deck!=="consequence")||phase!=="score"||(!(questPlayers&&questPlayers.length)))return null;
     const scores=holeScores||{};
     const avg=questPlayers.reduce((a,p)=>a+(scores[p.id]||0),0)/questPlayers.length;
-    const partySuccess=avg<=0;
+    const partySuccess=cardMeta.successOverride||avg<=0;
     const adj2=(pid,d)=>setHoleScores(prev=>({...prev,[pid]:(parseInt(prev[pid])||0)+d}));
     // Alchemist helpers
     const isAlchemist=(p)=>p.cls&&p.cls.name==="Alchemist";
@@ -658,6 +659,13 @@ function CardOverlay({
         React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:!partySuccess?C.white:C.greyDim}},card.fail)
       ),
       card.consequenceOnFail&&React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.orange,marginBottom:"6px",border:`1px solid ${C.orange}44`,padding:"4px 8px"}},"⚡ Fail triggers: ",card.consequenceOnFail.title),
+      // Override button — e.g. Marksman circle 2 putt
+      React.createElement('button',{onClick:()=>{
+        const override=!cardMeta.successOverride;
+        setCardMeta(prev=>({...prev,successOverride:override}));
+      },style:{width:"100%",padding:"10px 0",marginBottom:"8px",background:cardMeta.successOverride?C.purple+"22":"transparent",border:`2px solid ${cardMeta.successOverride?C.purple:C.greyDim}`,borderRadius:0,color:cardMeta.successOverride?C.purple:C.greyDim,fontFamily:BF,fontSize:"12px",cursor:"pointer"}},
+        cardMeta.successOverride?"⚡ OVERRIDE ACTIVE — FORCED SUCCESS":"⚡ OVERRIDE SUCCESS (Marksman / House Rule)"
+      ),
       React.createElement('button',{onClick:()=>setPhase("adjust"),style:{width:"100%",padding:"10px 0",marginBottom:"8px",background:"transparent",border:`2px solid ${C.grey}`,borderRadius:0,color:C.grey,fontFamily:BF,fontSize:"13px",cursor:"pointer"}},"ADJUST INDIVIDUAL PLAYER")
     );
   })();
