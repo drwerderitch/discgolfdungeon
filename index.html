@@ -659,14 +659,12 @@ function CardOverlay({
         React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:!partySuccess?C.white:C.greyDim}},card.fail)
       ),
       card.consequenceOnFail&&React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.orange,marginBottom:"6px",border:`1px solid ${C.orange}44`,padding:"4px 8px"}},"⚡ Fail triggers: ",card.consequenceOnFail.title),
-      // Override button — e.g. Marksman circle 2 putt
       React.createElement('button',{onClick:()=>{
         const override=!cardMeta.successOverride;
         setCardMeta(prev=>({...prev,successOverride:override}));
       },style:{width:"100%",padding:"10px 0",marginBottom:"8px",background:cardMeta.successOverride?C.purple+"22":"transparent",border:`2px solid ${cardMeta.successOverride?C.purple:C.greyDim}`,borderRadius:0,color:cardMeta.successOverride?C.purple:C.greyDim,fontFamily:BF,fontSize:"12px",cursor:"pointer"}},
         cardMeta.successOverride?"⚡ OVERRIDE ACTIVE — FORCED SUCCESS":"⚡ OVERRIDE SUCCESS (Marksman / House Rule)"
-      ),
-      React.createElement('button',{onClick:()=>setPhase("adjust"),style:{width:"100%",padding:"10px 0",marginBottom:"8px",background:"transparent",border:`2px solid ${C.grey}`,borderRadius:0,color:C.grey,fontFamily:BF,fontSize:"13px",cursor:"pointer"}},"ADJUST INDIVIDUAL PLAYER")
+      )
     );
   })();
 
@@ -706,19 +704,6 @@ function CardOverlay({
 
     // Score section (adventure)
     scoreSection,
-
-    // Adjust player (adventure)
-    (deck==="adventure"||deck==="consequence")&&phase==="adjust"&&(questPlayers&&questPlayers.length)>0&&React.createElement(React.Fragment,null,
-      React.createElement('div',{style:{fontFamily:BF,fontSize:"14px",color:C.grey,marginBottom:"8px"}},"TAP PLAYER TO ADJUST"),
-      questPlayers.map(p=>React.createElement('button',{key:p.id,onClick:()=>onAction("adjustPlayer",p.id),style:pBtn(p)},
-        React.createElement('span',{style:{fontSize:"22px"}},(p.cls&&p.cls.icon)||"❓"),
-        React.createElement('div',null,
-          React.createElement('div',{style:{fontFamily:BF,fontSize:"14px",color:(p.cls&&p.cls.color)||C.gold}},p.name),
-          React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.whiteDim}},"💰",p.gold," ✦",p.xp," 🛡",p.tokens)
-        )
-      )),
-      React.createElement('button',{onClick:()=>setPhase("score"),style:{width:"100%",padding:"10px 0",background:"transparent",border:`2px solid ${C.grey}`,borderRadius:0,color:C.grey,fontFamily:BF,fontSize:"14px",cursor:"pointer"}},"← BACK")
-    ),
 
     // Assign (personal boon/peril)
     phase==="assign"&&needsAssign&&React.createElement(React.Fragment,null,
@@ -794,6 +779,9 @@ function CardOverlay({
     deck!=="adventure"&&deck!=="between"&&deck!=="peril"&&!needsAssign&&deck!=="treasure"&&phase==="read"&&React.createElement(Btn,{onClick:onDismiss,bg:ds.accent,fg:C.bgDark,border:ds.accent,style:{marginBottom:"8px"}},"DISMISS"),
     deck==="peril"&&card.scope!=="Party"&&!needsAssign&&phase==="read"&&React.createElement(Btn,{onClick:onDismiss,bg:ds.accent,fg:C.bgDark,border:ds.accent,style:{marginBottom:"8px"}},"DISMISS"),
     deck!=="adventure"&&deck!=="between"&&needsAssign&&phase==="read"&&React.createElement(Btn,{onClick:()=>setPhase("assign"),bg:ds.accent,fg:C.bgDark,border:ds.accent,style:{marginBottom:"8px"}},"ASSIGN TO PLAYER"),
+
+    // Redraw — for Smoke Bomb, Compass, Merchant, Free Redraw token
+    (deck==="adventure"||deck==="consequence")&&phase==="score"&&React.createElement('button',{onClick:()=>onAction("redraw"),style:{width:"100%",padding:"11px 0",marginBottom:"8px",background:"transparent",border:`2px solid ${C.greyDim}`,borderRadius:0,color:C.greyDim,fontFamily:BF,fontSize:"12px",cursor:"pointer"}},"🔀 REDRAW ENCOUNTER"),
 
     React.createElement('button',{onClick:onDismiss,style:{width:"100%",padding:"12px 0",background:"transparent",border:`2px solid ${C.grey}`,borderRadius:0,color:C.grey,fontFamily:BF,fontSize:"14px",cursor:"pointer"}},"CLOSE WITHOUT ACTION")
   );
@@ -1214,6 +1202,16 @@ function App(){
     }
 
     if(act==="adjustPlayer"&&pid!==undefined){setSheetId(pid);return;}
+    if(act==="redraw"){
+      // Draw a fresh adventure card, replacing the current one
+      const c=draw(aD,setAD,ADVENTURE_CARDS);
+      const init={};
+      questPlayersFromQuest.forEach(p=>{init[p.id]=0;});
+      setHoleScores(init);
+      setActiveAdventureCard({card:c,meta:{},scores:init,isConsequence:false});
+      setCard(c);setCardDeck("adventure");setCardMeta({});setCardPhase("score");
+      return;
+    }
 
     if(act==="assign"&&pid!==undefined){
       const text=(card.effect||"")+" "+(card.reward||"");
