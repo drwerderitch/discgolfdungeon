@@ -1290,7 +1290,7 @@ function App(){
                         const hd=scored.find(h=>h.hole===n);
                         const isCurrentHole=currentHole===n;
                         const cl=!hd?C.greyDim:hd.bottled?C.teal:hd.score<0?C.green:hd.score>0?C.red:C.whiteDim;
-                        return React.createElement('td',{key:n,style:{fontFamily:BF,fontSize:"11px",color:cl,textAlign:"center",padding:"5px 4px",background:isCurrentHole?C.bgCardAlt:C.bgDark,borderLeft:`1px solid ${C.border}33`,fontWeight:hd&&hd.proficient?"bold":"normal"}},hd?fmt(hd.score):(roundHist&&!roundHist.complete&&n>scored.length)?"✗":"·");
+                        return React.createElement('td',{key:n,style:{fontFamily:BF,fontSize:"11px",color:cl,textAlign:"center",padding:"5px 4px",background:isCurrentHole?C.bgCardAlt:C.bgDark,borderLeft:`1px solid ${C.border}33`,textDecoration:hd&&hd.proficient?"underline":"none"}},hd?fmt(hd.score):(roundHist&&!roundHist.complete&&n>scored.length)?"✗":"·");
                       }),
                       React.createElement('td',{style:{fontFamily:BF,fontSize:"11px",color:roundTotal<0?C.green:roundTotal>0?C.red:C.whiteDim,textAlign:"center",padding:"5px 4px",background:C.bgCard,borderLeft:`1px solid ${C.border}`}},fmt(roundTotal))
                     );
@@ -1607,7 +1607,7 @@ function App(){
                       holeNums.map(function(h){
                         const hd=holes.find(hh=>hh.hole===h);
                         const cl=!hd?C.greyDim:hd.bottled?C.teal:hd.score<0?C.green:hd.score>0?C.red:C.whiteDim;
-                        return React.createElement('td',{key:h,style:{fontFamily:BF,fontSize:"11px",color:cl,textAlign:"center",padding:"2px 3px",background:C.bgDark,border:`1px solid ${C.border}33`,fontWeight:hd&&hd.proficient?"bold":"normal"}},hd?fmt(hd.score):(!r.complete&&h>holes.length)?"✗":"·");
+                        return React.createElement('td',{key:h,style:{fontFamily:BF,fontSize:"11px",color:cl,textAlign:"center",padding:"2px 3px",background:C.bgDark,border:`1px solid ${C.border}33`,textDecoration:hd&&hd.proficient?"underline":"none"}},hd?fmt(hd.score):(!r.complete&&h>holes.length)?"✗":"·");
                       }),
                       React.createElement('td',{style:{fontFamily:BF,fontSize:"11px",color:tcl,textAlign:"center",padding:"2px 3px",background:C.bgDark,borderLeft:`1px solid ${C.border}`}},fmt(total))
                     ))
