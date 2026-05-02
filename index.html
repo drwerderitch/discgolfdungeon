@@ -1175,6 +1175,26 @@ function App(){
         if(gm) applyGoldToAll(parseInt(gm[1]));
         if(lm) applyGoldToAll(-parseInt(lm[1]));
         if(xm) questPlayersFromQuest.forEach(p=>adj(p.id,"xp",parseInt(xm[1])));
+        // Check for boon/treasure draws in success/fail text
+        const drawBoonMatch=/[Dd]raw\s+(a|one\s+additional)\s+[Bb]oon/i.test(text);
+        const drawTreasureMatch=/[Dd]raw\s+a\s+treasure/i.test(text);
+        const tokenMatch=/[Gg]ain\s+a\s+(stored\s+)?advantage\s+token/i.test(text);
+        const tokenCountMatch=text.match(/[Gg]ain\s+(\d+)\s*(stored\s+)?advantage\s+token/i);
+        if(drawBoonMatch){
+          const bc=draw(bD,setBD,BOON_CARDS);
+          setCard(bc);setCardDeck("boon");setCardPhase("read");
+          setActiveAdventureCard(null);
+          // handle consequences before returning
+          if(act==="fail"&&card.consequenceOnFail) _setAndSaveQuests(qs=>qs.map(q=>q.id===activeQuestId?{...q,nextAdventureCard:card.consequenceOnFail}:q));
+          if(act==="success"&&card.consequenceOnSuccess) _setAndSaveQuests(qs=>qs.map(q=>q.id===activeQuestId?{...q,nextAdventureCard:card.consequenceOnSuccess}:q));
+        }
+        if(drawTreasureMatch&&!drawBoonMatch){
+          const tc=draw(tD,setTD,TREASURE_CARDS);
+          setCard(tc);setCardDeck("treasure");setCardPhase("read");
+          setActiveAdventureCard(null);
+        }
+        if(tokenMatch&&!tokenCountMatch) questPlayersFromQuest.forEach(p=>adj(p.id,"tokens",1));
+        else if(tokenCountMatch) questPlayersFromQuest.forEach(p=>adj(p.id,"tokens",parseInt(tokenCountMatch[1])));
         if(act==="fail"&&card.consequenceOnFail){
           _setAndSaveQuests(qs=>qs.map(q=>q.id===activeQuestId?{...q,nextAdventureCard:card.consequenceOnFail}:q));
         }
