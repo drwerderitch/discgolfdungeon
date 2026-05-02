@@ -88,29 +88,33 @@ const BF="'Press Start 2P','Courier New',Courier,monospace";
 const TEE={red:C.red,white:C.whiteDim,blue:C.blue};
 
 // ── SKILL TAGS (renamed Physical→Athletics, Combat→Tactics) ─────────────────
-const ALL_SKILLS=["Tactics","Social","Stealth","Nature","Arcane","Athletics"];
-const SKILL_COLORS={Tactics:C.red,Nature:C.green,Social:C.blue,Stealth:C.purple,Arcane:C.cyan,Athletics:C.orange,Universal:C.gold};
+const ALL_SKILLS=["Tactics","Social","Stealth","Nature","Spirit","Athletics"];
+const SKILL_COLORS={Tactics:C.red,Nature:C.green,Social:C.blue,Stealth:C.purple,Spirit:C.cyan,Athletics:C.orange,Universal:C.gold};
 
 // ── CLASSES ──────────────────────────────────────────────────────────────────
 const CLASSES=[
   {name:"Fighter",icon:"⚔️",passive:"Your chosen weapon cannot be taken away by disc restriction conditions. On favored holes or by spending a token, if your next throw is your chosen weapon improve your current lie up to 3 steps outside circle 2.",ptype:"behavioral",skills:["Tactics","Athletics","Stealth"],flavor:"You've thrown this disc ten thousand times. You know exactly what it does.",gear:"Putter + chosen weapon + 1 additional disc (3 total)",color:C.red},
   {name:"Ranger",icon:"🏹",passive:"Once per hole may choose any tee box regardless of earned position.",ptype:"triggered",skills:["Nature","Tactics","Athletics"],flavor:"You know this terrain. You know which disc to reach for.",gear:"Putter + 1 disc",color:C.green},
-  {name:"Defender",icon:"🛡️",passive:"May declare 'play to mine' — throws a conservative shot and the party may swap to their lie. Both the Defender and any player who swaps throw from that lie.",ptype:"triggered",skills:["Tactics","Social","Athletics"],flavor:"You put yourself between the party and the danger.",gear:"Putter + 1 disc",color:C.blue},
-  {name:"Cleric",icon:"✨",passive:"Grant a teammate advantage on any drive or approach without spending a token. Spending a token extends this to putts.",ptype:"triggered",skills:["Social","Arcane","Nature"],flavor:"You keep the party together when things fall apart.",gear:"Putter + 1 disc",color:C.gold},
+  {name:"Scout",icon:"👁️",passive:"Once per hole after throwing, declare a safe path. Any ally may travel to your lie instead of throwing — they move to your spot and count it as a stroke. On proficient holes free. On all other holes spend a token.",ptype:"triggered",skills:["Tactics","Social","Athletics"],flavor:"You find the line. Others follow.",gear:"Putter + 1 disc",color:C.blue},
+  {name:"Cleric",icon:"✨",passive:"Grant a teammate advantage on any drive or approach without spending a token. Spending a token extends this to putts.",ptype:"triggered",skills:["Social","Spirit","Nature"],flavor:"You keep the party together when things fall apart.",gear:"Putter + 1 disc",color:C.gold},
   {name:"Rogue",icon:"🗡️",passive:"After everyone has thrown their drive the Rogue may move to any other drive lie on the hole. Both the Rogue and the original thrower play from that spot.",ptype:"triggered",skills:["Stealth","Social","Tactics"],flavor:"You wait, you watch, and you take what's there.",gear:"Putter + 1 disc",color:C.greyDim},
-  {name:"Merchant",icon:"💰",passive:"Once per hole after drawing an Adventure card may pay 1gp to redraw it. Active: Spend a token to buy any item or disc at half price at any merchant encounter or at camp.",ptype:"triggered",skills:["Social","Nature","Arcane"],flavor:"Every situation has an angle. You just have to find it.",gear:"Putter + 1 disc",color:C.gold},
-  {name:"Wizard",icon:"🔮",passive:"Once per hole, after a drive or approach lands, may move their lie up to 3 steps in any direction before throwing next.",ptype:"triggered",skills:["Arcane","Stealth","Social"],flavor:"You don't move to the disc. You move the disc to you.",gear:"Putter + 1 disc",color:C.purple},
-  {name:"Seer",icon:"🔭",passive:"Once per hole may rethrow any drive or approach after seeing the result.",ptype:"triggered",skills:["Arcane","Social","Nature"],flavor:"You have been here before. You will be here again.",gear:"Putter + 1 disc",color:C.teal},
-  {name:"Monk",icon:"👊",passive:"Once per hole before your approach declare a landing zone and throw. Play that lie. Throw a second disc from the same spot — land within 10 feet of the first and gain advantage on your putt.",ptype:"triggered",skills:["Athletics","Nature","Arcane"],flavor:"Still mind, still hand. You have thrown this shot before in your mind.",gear:"Putter + 1 disc",color:C.gold},
+  {name:"Merchant",icon:"💰",passive:"Once per hole after drawing an Adventure card may pay 1gp to redraw it. Active: Spend a token to buy any item or disc at half price at any merchant encounter or at camp.",ptype:"triggered",skills:["Social","Nature","Spirit"],flavor:"Every situation has an angle. You just have to find it.",gear:"Putter + 1 disc",color:C.gold},
+  {name:"Wizard",icon:"🔮",passive:"Once per hole, after a drive or approach lands, may move their lie up to 3 steps in any direction before throwing next.",ptype:"triggered",skills:["Spirit","Stealth","Social"],flavor:"You don't move to the disc. You move the disc to you.",gear:"Putter + 1 disc",color:C.purple},
+  {name:"Seer",icon:"🔭",passive:"Once per hole may rethrow any drive or approach after seeing the result.",ptype:"triggered",skills:["Spirit","Social","Nature"],flavor:"You have been here before. You will be here again.",gear:"Putter + 1 disc",color:C.teal},
+  {name:"Monk",icon:"👊",passive:"Once per hole before your approach declare a landing zone and throw. Play that lie. Throw a second disc from the same spot — land within 10 feet of the first and gain advantage on your putt.",ptype:"triggered",skills:["Athletics","Nature","Spirit"],flavor:"Still mind, still hand. You have thrown this shot before in your mind.",gear:"Putter + 1 disc",color:C.gold},
   {name:"Assassin",icon:"🗡️",passive:"On favored holes, if your approach lands within circle one your putt is automatic — pick up and score. Spend a token to use this on any other hole.",ptype:"triggered",skills:["Tactics","Stealth","Athletics"],flavor:"One clean line. One clean shot. Done.",gear:"Putter + 1 disc",color:C.red},
-  {name:"Bard",icon:"🎵",passive:"When you spend a token on yourself, declare one teammate before throwing — they also gain a stored advantage for any single throw this hole at no additional cost.",ptype:"triggered",skills:["Social","Nature","Arcane"],flavor:"Your best moment makes everyone better.",gear:"Putter + 1 disc",color:C.green},
+  {name:"Bard",icon:"🎵",passive:"When you spend a token on yourself, declare one teammate before throwing — they also gain a stored advantage for any single throw this hole at no additional cost.",ptype:"triggered",skills:["Social","Nature","Spirit"],flavor:"Your best moment makes everyone better.",gear:"Putter + 1 disc",color:C.green},
   {name:"Barbarian",icon:"🪓",passive:"Before throwing you may choose to throw from blue tee regardless of your earned position. Par or better from blue tee draws a Boon. On favored holes draw two Boons instead.",ptype:"triggered",skills:["Tactics","Athletics","Social"],flavor:"Glory or nothing. The long road is the only road.",gear:"Putter + 1 disc",color:C.red},
   {name:"Marksman",icon:"🎯",passive:"A putt made from circle 2 counts as automatic party success for adventure resolution — individual scores, boons, and perils still apply. Hit metal from circle 2 — free rethrow.",ptype:"triggered",skills:["Tactics","Athletics","Stealth"],flavor:"One more time. Cleaner.",gear:"Two putters + 1 disc",color:C.blue},
   {name:"Dragoon",icon:"🐉",passive:"You may jump putt from anywhere outside circle 1. Finish at par or better with a jump putt and draw a Boon. On favored holes jump putts inside circle 1 are also legal. Spend a token for the same on any other hole.",ptype:"behavioral",skills:["Tactics","Athletics","Nature"],flavor:"You leap. You fall. You score.",gear:"Putter + 1 disc",color:C.purple},
-  {name:"Artificer",icon:"🔧",passive:"You start with a putter and three gadget discs — your custom built toolkit. On favored holes or by spending a token you may throw any of your gadget discs freely. Otherwise limit one gadget disc per hole.",ptype:"triggered",skills:["Athletics","Stealth","Arcane"],flavor:"You start with a putter and three gadget discs — your custom built toolkit.",gear:"Putter + 3 gadget discs (4 total)",color:C.cyan},
-  {name:"Alchemist",icon:"⚗️",passive:"When you birdie, score par instead and bottle the extra stroke. Uncork at any time to reduce the party score by 1 for adventure success. On favored holes or by spending a token, a par earns one luck drop. Three drops fill the bottle.",ptype:"triggered",skills:["Nature","Arcane","Social"],flavor:"Distiller of luck. Every good moment has potential.",gear:"Putter + 1 disc",color:C.green},
-  {name:"Druid",icon:"🌿",passive:"When your disc lands in the rough, trees, or brush you may throw your scramble shot with advantage on favored holes or by spending a token.",ptype:"triggered",skills:["Nature","Arcane","Athletics"],flavor:"The forest is not your enemy. It is your home.",gear:"Putter + 1 disc",color:C.green},
+  {name:"Artificer",icon:"🔧",passive:"You start with a putter and three gadget discs — your custom built toolkit. On favored holes or by spending a token you may throw any of your gadget discs freely. Otherwise limit one gadget disc per hole.",ptype:"triggered",skills:["Athletics","Stealth","Spirit"],flavor:"You start with a putter and three gadget discs — your custom built toolkit.",gear:"Putter + 3 gadget discs (4 total)",color:C.cyan},
+  {name:"Alchemist",icon:"⚗️",passive:"When you birdie, score par instead and bottle the extra stroke. Uncork at any time to reduce the party score by 1 for adventure success. On favored holes or by spending a token, a par earns one luck drop. Three drops fill the bottle.",ptype:"triggered",skills:["Nature","Spirit","Social"],flavor:"Distiller of luck. Every good moment has potential.",gear:"Putter + 1 disc",color:C.green},
+  {name:"Druid",icon:"🌿",passive:"When your disc lands in the rough, trees, or brush you may throw your scramble shot with advantage on favored holes or by spending a token.",ptype:"triggered",skills:["Nature","Spirit","Athletics"],flavor:"The forest is not your enemy. It is your home.",gear:"Putter + 1 disc",color:C.green},
   {name:"Duelist",icon:"🤺",passive:"You may declare a duel on any hole — alternate forehand and backhand on every throw excluding putts. Par or better on a completed duel earns 1gp. On favored holes earn 2gp instead.",ptype:"triggered",skills:["Tactics","Athletics","Stealth"],flavor:"Steel in both hands. Never the same cut twice.",gear:"Putter + 1 disc",color:C.red},
+  {name:"Berserker",icon:"🪖",passive:"On proficient holes or by spending a token, when a card condition or Peril would restrict or penalize your throw, you may declare The Chop — throw overhand instead of complying with the condition.",ptype:"triggered",skills:["Spirit","Athletics","Nature"],flavor:"The course is not a puzzle. It is an opponent.",gear:"Putter + 1 disc",color:C.red},
+  {name:"Shieldbearer",icon:"🛡️",passive:"When a Peril or negative condition would apply, you may break one of your discs — it becomes unusable for this hole — to ignore the condition entirely. On proficient holes the broken disc shields the whole party, negating the condition for everyone.",ptype:"triggered",skills:["Tactics","Social","Athletics"],flavor:"You put yourself between the party and what's coming.",gear:"Putter + 1 disc",color:C.blue},
+  {name:"Enchanter",icon:"✴️",passive:"Once per hole, enchant any disc — yours or a teammate's. For the duration of that hole the wielder may take one step before any throw with the enchanted disc. Spend tokens to enchant additional discs or upgrade an enchantment for extra steps. On proficient holes enchant one disc for each party member for free.",ptype:"triggered",skills:["Spirit","Social","Nature"],flavor:"Every disc has potential. You just unlock it.",gear:"Putter + 1 disc",color:C.purple},
+  {name:"Spy",icon:"🕵️",passive:"On proficient holes choose any class passive to use this hole. On all other holes the app randomly assigns you a class passive — spend a token to use it. Cannot multiclass.",ptype:"triggered",skills:["Stealth","Social","Tactics"],flavor:"You are whoever the mission needs.",gear:"Putter + 1 disc",color:C.teal,noMulticlass:true},
 ];
 
 const PRESTIGE=[
@@ -128,7 +132,7 @@ const ADVENTURE_CARDS=[
   {tier:1,title:"Quiet Corner",tags:"Social",flavor:"A peaceful stretch of trail.",effect:"No wrinkle this hole.",success:"Gain 2gp.",fail:"Nothing."},
   {tier:1,title:"Solid Ground",tags:"Athletics",flavor:"Firm footing. Good conditions underfoot.",effect:"No wrinkle this hole.",success:"Gain 2gp.",fail:"Nothing."},
   {tier:1,title:"Dark Quiet",tags:"Stealth",flavor:"The woods are still. Nothing stirs.",effect:"No wrinkle this hole.",success:"Gain 2gp.",fail:"Nothing."},
-  {tier:1,title:"Still Air",tags:"Arcane",flavor:"Something ancient and calm settles over the hole.",effect:"No wrinkle this hole.",success:"Gain 2gp.",fail:"Nothing."},
+  {tier:1,title:"Still Air",tags:"Spirit",flavor:"Something ancient and calm settles over the hole.",effect:"No wrinkle this hole.",success:"Gain 2gp.",fail:"Nothing."},
 
   // TIER 2 — LIGHT CONSTRAINT
   {tier:2,title:"Waystation",tags:"Nature",flavor:"A worn campsite at the trail's edge. Someone was here recently.",effect:"No wrinkle during play.",success:"The camp yields supplies. Gain 3gp.",fail:"The camp is empty and cold. Gain 1gp."},
@@ -139,10 +143,10 @@ const ADVENTURE_CARDS=[
   {tier:2,title:"Dragon Sighted",tags:"Universal",flavor:"A shadow passes over the canopy. Enormous. Gone in seconds.",effect:"No wrinkle this hole — nobody can quite focus.",success:"It didn't see you. Gain 2gp.",fail:"It circled back. The party loses 2gp.",consequenceOnFail:{title:"The Dragon Returns",tags:"Universal",flavor:"It came back. It saw you.",effect:"All players throw from blue tee this hole.",success:"You drove it off or fled. Gain 5gp. Everyone narrates their moment.",fail:"It cost you dearly. Lose 4gp. Everyone narrates their moment."}},
   {tier:2,title:"The Goblin Scout",tags:"Stealth — Nature",flavor:"Small tracks in the mud. Fresh. Heading the same direction you are.",effect:"Before throwing the party chooses their approach: move silently (Stealth) or let the forest mask you (Nature).",success:"You avoided detection. Gain 2gp.",fail:"It reported back.",consequenceOnFail:{title:"Goblin Warband",tags:"Universal",flavor:"They found you. Deal with it however you can.",effect:"All players throw drives with disadvantage.",success:"You handled it. Gain 4gp. Everyone narrates their moment.",fail:"It cost you. Lose 3gp. Everyone narrates their moment."}},
   {tier:2,title:"Old Bones",tags:"Nature",flavor:"The remains of a campfire. Gear scattered. Someone left in a hurry.",effect:"No wrinkle during play.",success:"You find what they left behind. Draw a Boon.",fail:"You find what came after them.",consequenceOnFail:{title:"What Came After Them",tags:"Universal",flavor:"You found out the hard way.",effect:"All players throw drives with disadvantage.",success:"You survived. Gain 3gp. Everyone narrates their moment.",fail:"Lose 2gp. Everyone narrates their moment."}},
-  {tier:2,title:"The Offering Stone",tags:"Arcane",flavor:"A flat rock at the trailside. Coins and small tokens left by travelers before you.",effect:"Any player may leave 1gp as an offering before throwing. If at least two players offer the party gains two stored advantage tokens regardless of score.",success:"The offering was worthy. Gain those tokens plus 1gp back each.",fail:"The tokens remain. Something noted your generosity."},
-  {tier:2,title:"The Wrong Path",tags:"Arcane",flavor:"Something redirected you here. You didn't choose this route.",effect:"One player chosen by the group draws a Peril card and reads it aloud but does not apply it yet — it activates only if the party fails this hole.",success:"The path corrects itself. Discard the Peril unresolved.",fail:"It was leading you here all along. Apply the Peril now."},
-  {tier:2,title:"The Fairy Ring",tags:"Arcane",flavor:"Something small and bright darts between the trees. It stops. It noticed something.",effect:"If any player is carrying a treasure item that player throws their drive with disadvantage. If nobody is carrying a treasure item: the fairy leads you somewhere lucky — draw a Boon.",success:"Gain 2gp.",fail:"Gain 1gp."},
-  {tier:2,title:"The Ruins",tags:"Arcane",flavor:"Stone walls half standing, something still inside worth having.",effect:"No wrinkle during play.",success:"You search carefully and find something useful. Draw a treasure card.",fail:"Whatever is inside heard you coming.",consequenceOnFail:{title:"Something Awakened",tags:"Universal",flavor:"You disturbed it. Now it follows.",effect:"All approaches this hole are thrown with disadvantage.",success:"You contained it. Gain 3gp. Everyone narrates their moment.",fail:"It won't stop following."}},
+  {tier:2,title:"The Offering Stone",tags:"Spirit",flavor:"A flat rock at the trailside. Coins and small tokens left by travelers before you.",effect:"Any player may leave 1gp as an offering before throwing. If at least two players offer the party gains two stored advantage tokens regardless of score.",success:"The offering was worthy. Gain those tokens plus 1gp back each.",fail:"The tokens remain. Something noted your generosity."},
+  {tier:2,title:"The Wrong Path",tags:"Spirit",flavor:"Something redirected you here. You didn't choose this route.",effect:"One player chosen by the group draws a Peril card and reads it aloud but does not apply it yet — it activates only if the party fails this hole.",success:"The path corrects itself. Discard the Peril unresolved.",fail:"It was leading you here all along. Apply the Peril now."},
+  {tier:2,title:"The Fairy Ring",tags:"Spirit",flavor:"Something small and bright darts between the trees. It stops. It noticed something.",effect:"If any player is carrying a treasure item that player throws their drive with disadvantage. If nobody is carrying a treasure item: the fairy leads you somewhere lucky — draw a Boon.",success:"Gain 2gp.",fail:"Gain 1gp."},
+  {tier:2,title:"The Ruins",tags:"Spirit",flavor:"Stone walls half standing, something still inside worth having.",effect:"No wrinkle during play.",success:"You search carefully and find something useful. Draw a treasure card.",fail:"Whatever is inside heard you coming.",consequenceOnFail:{title:"Something Awakened",tags:"Universal",flavor:"You disturbed it. Now it follows.",effect:"All approaches this hole are thrown with disadvantage.",success:"You contained it. Gain 3gp. Everyone narrates their moment.",fail:"It won't stop following."}},
   {tier:2,title:"The Watchers",tags:"Stealth",flavor:"Eyes in the treeline. Not animals. Not friendly.",effect:"To avoid detection each player must choose one disc before the hole begins and use it for every throw including putts.",success:"You passed unseen. Gain 1 XP each.",fail:"They saw you. Nothing — but they know you're here."},
   {tier:2,title:"The Decoy",tags:"Stealth",flavor:"One player draws attention so the others can slip through.",effect:"Before throwing one player volunteers as the decoy. They must throw their fastest disc. All other players must throw their slowest.",success:"The distraction worked. Gain 3gp.",fail:"It drew the wrong kind of attention. The decoy player loses 2gp."},
   {tier:2,title:"Through the Shadows",tags:"Stealth",flavor:"The only way through is clean. No crashing through brush, no rattling the trees.",effect:"Any player whose throw hits an obstacle loses 1gp immediately. Any player who lands clean draws a personal Boon at the end of the hole.",success:"Gain 3gp.",fail:"Gain 1gp.",consequenceOnFail:{title:"Detected",tags:"Universal",flavor:"They know exactly where you are now.",effect:"All players throw drives with disadvantage. No Stealth class abilities fire on this hole.",success:"You recovered your position. Gain 2gp. Everyone narrates their moment.",fail:"Lose 2gp. Everyone narrates their moment."}},
@@ -153,9 +157,9 @@ const ADVENTURE_CARDS=[
   {tier:2,title:"Steep Climb",tags:"Athletics",flavor:"The tee box is higher than it should be. Your legs know it.",effect:"All players throw from blue tee this hole regardless of earned position.",success:"The view from up here was worth it. Gain 3gp.",fail:"Gain 2 XP — the climb itself was the lesson."},
   {tier:2,title:"The Guarded Camp",tags:"Social — Stealth",flavor:"Sentries at the perimeter. Two ways in.",effect:"Talk your way past (Social) or slip through unnoticed (Stealth).",success:"Gain 3gp.",fail:"Gain 1 XP each.",consequenceOnFail:{title:"Alarm Raised",tags:"Universal",flavor:"They know someone is here. The whole camp is on alert.",effect:"All players throw from blue tee this hole.",success:"You cleared out before they found you. Gain 3gp. Everyone narrates their moment.",fail:"Lose 2gp. Everyone narrates their moment."}},
   {tier:2,title:"The Border Crossing",tags:"Social — Stealth",flavor:"Guards checking travelers. Papers or no papers.",effect:"Talk your way through (Social) or find another way around (Stealth).",success:"Gain 3gp.",fail:"Gain 1 XP each."},
-  {tier:2,title:"The Ancient Inscription",tags:"Arcane — Nature",flavor:"Writing on a standing stone. Could be a warning. Could be a blessing.",effect:"Decipher the runes (Arcane) or read the land around it (Nature).",success:"Gain 2gp and draw a Boon.",fail:"You misread it. Lose 2gp.",consequenceOnFail:{title:"Misread Omen",tags:"Universal",flavor:"The inscription wasn't a blessing. It was a warning about you.",effect:"All approaches this hole thrown with disadvantage.",success:"The omen passes. Gain 2gp. Everyone narrates their moment.",fail:"Lose 2gp. Everyone narrates their moment."}},
+  {tier:2,title:"The Ancient Inscription",tags:"Spirit — Nature",flavor:"Writing on a standing stone. Could be a warning. Could be a blessing.",effect:"Decipher the runes (Spirit) or read the land around it (Nature).",success:"Gain 2gp and draw a Boon.",fail:"You misread it. Lose 2gp.",consequenceOnFail:{title:"Misread Omen",tags:"Universal",flavor:"The inscription wasn't a blessing. It was a warning about you.",effect:"All approaches this hole thrown with disadvantage.",success:"The omen passes. Gain 2gp. Everyone narrates their moment.",fail:"Lose 2gp. Everyone narrates their moment."}},
   {tier:2,title:"The Wounded Beast",tags:"Nature — Tactics",flavor:"Something large and hurt is blocking the path. Dangerous but maybe not hostile.",effect:"Calm it (Nature) or drive it off together (Tactics).",success:"Calm: Gain 3gp and draw a Boon. Drive off: Gain 2gp.",fail:"It charges.",consequenceOnFail:{title:"The Beast Charges",tags:"Universal",flavor:"It made its decision. Now you make yours.",effect:"Everyone stands their ground — no run ups this hole. All throws must be made from a standstill.",success:"You turned it away. Gain 3gp. Everyone narrates their moment.",fail:"It cost you. Lose 2gp. Everyone narrates their moment."}},
-  {tier:2,title:"The Coded Message",tags:"Arcane — Tactics",flavor:"Someone left information behind. Deliberately hidden.",effect:"Decode the cipher (Arcane) or read the tactical layout (Tactics).",success:"Gain 2gp and bank a free redraw — use it on any Adventure, Boon or Peril card this round.",fail:"The message was a trap. Lose 2gp.",consequenceOnFail:{title:"The Trap Springs",tags:"Universal",flavor:"It was bait. Someone is very pleased with themselves.",effect:"All drives thrown with disadvantage. The player who led the decoding draws a personal Peril.",success:"You fought free. Gain 3gp. Everyone narrates their moment.",fail:"Lose 2gp. Everyone narrates their moment."}},
+  {tier:2,title:"The Coded Message",tags:"Spirit — Tactics",flavor:"Someone left information behind. Deliberately hidden.",effect:"Decode the cipher (Spirit) or read the tactical layout (Tactics).",success:"Gain 2gp and bank a free redraw — use it on any Adventure, Boon or Peril card this round.",fail:"The message was a trap. Lose 2gp.",consequenceOnFail:{title:"The Trap Springs",tags:"Universal",flavor:"It was bait. Someone is very pleased with themselves.",effect:"All drives thrown with disadvantage. The player who led the decoding draws a personal Peril.",success:"You fought free. Gain 3gp. Everyone narrates their moment.",fail:"Lose 2gp. Everyone narrates their moment."}},
   {tier:2,title:"The Locked Gate",tags:"Stealth — Athletics",flavor:"The path forward is blocked. One way or another it opens.",effect:"Pick the lock (Stealth) or break it down (Athletics).",success:"The way is open. Gain 3gp.",fail:"Gain 1 XP each."},
   {tier:2,title:"The River Ambush",tags:"Tactics — Athletics",flavor:"They're waiting at the crossing. You see them first.",effect:"Flank them (Tactics) — everyone throws from one tee box higher than earned. Charge through (Athletics) — everyone throws from blue tee.",success:"Gain 3gp.",fail:"Gain 1 XP each."},
 
@@ -165,7 +169,7 @@ const ADVENTURE_CARDS=[
   {tier:3,title:"Storm Threatening",tags:"Nature",flavor:"The sky has gone the wrong color. The wind is picking up.",effect:"All putts this hole must be made twice consecutively to count. Miss the second and add a stroke.",success:"The storm passes. Gain 3gp.",fail:"Gain 1 XP each."},
   {tier:3,title:"The Rival Party",tags:"Universal",flavor:"Another party on the same course. They've been watching. One steps forward.",effect:"Each player who accepts antes 5gp. White tee for all, no class abilities, no tokens this hole. Par or better — claim a treasure from your rival. Fail — lose your ante.",success:"The party held their ground. Gain 2gp.",fail:"Gain 1 XP each."},
   {tier:3,title:"Plunder",tags:"Universal",flavor:"The monster is down but the treasure is still guarded.",effect:"After all players have holed out each may step back after each make and putt again. Miss and your run ends. Gain 1gp for each made putt.",success:"Gain a bonus 2gp and draw a treasure — the spoils are yours.",fail:"Whatever you plundered is yours to keep regardless."},
-  {tier:3,title:"The Cursed Lie",tags:"Arcane",flavor:"Something about this spot feels wrong. The ground, the air, the light.",effect:"One player volunteers before throwing begins. That player throws their approach twice and plays the worse lie.",success:"They make par anyway. Gain a stored advantage token, 2 XP, and draw a treasure.",fail:"Gain 1 XP each."},
+  {tier:3,title:"The Cursed Lie",tags:"Spirit",flavor:"Something about this spot feels wrong. The ground, the air, the light.",effect:"One player volunteers before throwing begins. That player throws their approach twice and plays the worse lie.",success:"They make par anyway. Gain a stored advantage token, 2 XP, and draw a treasure.",fail:"Gain 1 XP each."},
   {tier:3,title:"Sniper's Perch",tags:"Stealth",flavor:"You've found the perfect position. Don't move from it.",effect:"All throws this hole must be made from a standstill. No run ups, no shuffle steps, no movement before release.",success:"Gain 3gp.",fail:"Gain 1 XP each."},
   {tier:3,title:"Battle Formation",tags:"Tactics",flavor:"The party agrees on an approach before anyone throws.",effect:"Choose forehand or backhand — every throw this hole excluding putts must use that grip. No switching.",success:"Gain 3gp.",fail:"Gain 1 XP each."},
   {tier:3,title:"Forced March",tags:"Tactics",flavor:"No time to think.",effect:"Every player must throw within 10 seconds of the previous player for the entire hole. No waiting, no deliberating.",success:"Gain 3gp.",fail:"Gain 1 XP each."},
@@ -201,11 +205,11 @@ const BOON_CARDS=[
 const PERIL_CARDS=[
   {title:"Cornered",tags:"Tactics",effect:"No cover. No good options. The player who triggered this Peril throws their next drive from blue tee regardless of earned position.",redemption:"Make par anyway. Gain 2 XP.",xp:2,scope:"Personal"},
   {title:"The Debt Collector",tags:"Social",effect:"Someone remembers what you took. The player who triggered this Peril must spend 2gp immediately or throw this hole's drives and approaches with disadvantage.",redemption:"Make par anyway. Gain 2 XP.",xp:2,scope:"Personal"},
-  {title:"Cursed Hands",tags:"Arcane",effect:"The disc feels wrong. Every disc feels wrong. The player who triggered this Peril must use only their putter for the entire hole.",redemption:"Make par anyway. Gain 2 XP.",xp:2,scope:"Personal"},
+  {title:"Cursed Hands",tags:"Spirit",effect:"The disc feels wrong. Every disc feels wrong. The player who triggered this Peril must use only their putter for the entire hole.",redemption:"Make par anyway. Gain 2 XP.",xp:2,scope:"Personal"},
   {title:"Spooked",tags:"Stealth",effect:"A sound in the trees. Close. Wrong. The player who triggered this Peril throws their next approach with disadvantage.",redemption:"Make par anyway. Gain 2 XP.",xp:2,scope:"Personal"},
   {title:"Lost on the Trail",tags:"Nature",effect:"Wrong turn. Wrong hill. Nothing looks familiar. The whole party throws drives with disadvantage this hole.",redemption:"Party average par or better anyway. Gain 2 XP each.",xp:2,scope:"Party"},
   {title:"The Weight of It",tags:"Nature",effect:"Bad decisions compound. The trail gets harder. The whole party throws their approaches with disadvantage this hole.",redemption:"Party average par or better anyway. Gain 2 XP each.",xp:2,scope:"Party"},
-  {title:"Hexed",tags:"Arcane",effect:"Something followed you from the last hole. The player who triggered this Peril must discard one treasure item if they have one, or spend 3gp if they don't.",redemption:"None. The hex takes what it wants.",xp:0,scope:"Personal"},
+  {title:"Hexed",tags:"Spirit",effect:"Something followed you from the last hole. The player who triggered this Peril must discard one treasure item if they have one, or spend 3gp if they don't.",redemption:"None. The hex takes what it wants.",xp:0,scope:"Personal"},
   {title:"Eyes Closed",tags:"Athletics",effect:"The path ahead is unclear. The player who triggered this Peril throws their drive with their eyes closed.",redemption:"Land it in the fairway anyway. Gain 3 XP.",xp:3,scope:"Personal"},
   {title:"Deadweight",tags:"Athletics",effect:"Something is slowing you down. The player who triggered this Peril may only use their two slowest discs this hole.",redemption:"Make par anyway. Gain 2 XP.",xp:2,scope:"Personal"},
   {title:"The Unraveling",tags:"Athletics",effect:"Nothing is working. The player who triggered this Peril must make one throw of their choice this hole with their non-dominant hand. They choose which throw.",redemption:"Make par anyway. Gain 3 XP.",xp:3,scope:"Personal"},
@@ -277,9 +281,11 @@ const RULES=[
   {t:"Advantage Tokens",b:"Stored advantage tokens can be spent at any time to take advantage on any single throw or to use a triggered class passive outside of your skill tags. Earn tokens from Boon cards and adventure card successes. Everyone gains 1 token at camp (end of each round of 9 holes). Start with one token at character creation. Unspent tokens carry forward to the next session."},
   {t:"Disc Inventory",b:"You start with a putter and one class appropriate disc. Fighters start with a putter, their chosen weapon, and one additional disc. Marksmen start with two putters and one additional disc. Artificers start with a putter and three gadget discs. New discs are unlocked at camp with gold."},
   {t:"Treasure Items",b:"Treasure cards are holdable magic items. Keep them until you choose to activate them. Each treasure has a printed gold value for buying and selling at merchant encounters. Reusable items recharge at camp after hole nine and after hole eighteen."},
-  {t:"Homebrew Classes",b:"Players are encouraged to invent their own class. Every class needs one passive ability and three skills chosen from Tactics, Social, Stealth, Nature, Arcane, Athletics. The group eyeballs whether it feels balanced with existing classes before approving it."},
+  {t:"Homebrew Classes",b:"Players are encouraged to invent their own class. Every class needs one passive ability and three skills chosen from Tactics, Social, Stealth, Nature, Spirit, Athletics. The group eyeballs whether it feels balanced with existing classes before approving it."},
   {t:"Multiclass & Prestige",b:"At level 3 instead of choosing a third skill you may choose a prestige class passive or multiclass into any class that shares at least one skill you have already chosen. You gain only the passive — not the other class's skill list. Your primary passive fires for free on holes tagged with your chosen skills. Your multiclass passive fires for free only on holes tagged with skills shared between both classes. Spending a token lets you use either passive on any other hole. Prestige class passives come with permanent disc speed restrictions and always count as behavioral."},
 ];
+
+const SPY_PASSIVE_POOL=["Ranger","Wizard","Assassin","Barbarian","Seer","Dragoon","Marksman","Druid","Monk","Duelist","Berserker","Enchanter","Shieldbearer"];
 
 const shuffle=a=>{const b=[...a];for(let i=b.length-1;i>0;i--){const j=0|Math.random()*(i+1);[b[i],b[j]]=[b[j],b[i]];}return b;};
 
@@ -698,7 +704,18 @@ function CardOverlay({
         var p=(questPlayers||[]).find(function(x){return x.id===id;});
         if(!p) return null;
         var level=proficiencyMap[id];
-        return React.createElement('div',{key:id},level===2?"★★ ":"★ ",p.name," — ",level===2?"both passives fire free":"class passive fires free");
+        var isSpy=p.cls&&p.cls.name==="Spy";
+        var spyPool=isSpy&&!level?(()=>{
+          // assign random passive from pool seeded by hole+questId for consistency
+          var idx=Math.abs((activeQuestId||0)+(hole||0))%SPY_PASSIVE_POOL.length;
+          return SPY_PASSIVE_POOL[idx];
+        })():null;
+        return React.createElement('div',{key:id},
+          level===2?"★★ ":"★ ",p.name,
+          isSpy&&level?" — proficient: choose any passive":
+          isSpy&&spyPool?" — spy passive: "+spyPool+" (spend token)":
+          level===2?" — both passives fire free":" — class passive fires free"
+        );
       })
     ),
 
@@ -869,6 +886,7 @@ function App(){
   const [endRoundConfirm,setEndRoundConfirm]=useState(false);
   const [deleteConfirm,setDeleteConfirm]=useState(false);
   const [endSessionConfirm,setEndSessionConfirm]=useState(false);
+  const [showUse,setShowUse]=useState(false);
   const [errorLog,setErrorLog]=useState(function(){try{return JSON.parse(localStorage.getItem('dgd_errorlog')||'[]');}catch(e){return[];}});
 
   // ── Save helpers ──────────────────────────────────────────────────────────
@@ -1728,7 +1746,7 @@ function App(){
         const need=p.level===1?8:p.level===2?9:null;
         const isLevel3=p.level===2; // leveling to 3
         // Eligible multiclass options: classes sharing a skill with already-chosen skills
-        const eligibleMulticlass=isLevel3?CLASSES.filter(c=>{
+        const eligibleMulticlass=isLevel3&&!(p.cls&&p.cls.noMulticlass)?CLASSES.filter(c=>{
           if(c.name===(p.cls&&p.cls.name)) return false; // not own class
           return c.skills.some(s=>(p.chosenSkills||[]).includes(s));
         }):[];
@@ -1872,17 +1890,6 @@ function App(){
           "⚡ CONSEQUENCE QUEUED: ",nextCardQueued.title," — draws automatically next Adventure tap"
         ),
 
-        // Quest boons (lingering green banners)
-        questBoons.length>0&&React.createElement('div',{style:{padding:"8px 16px 0"}},
-          questBoons.map((qb,i)=>React.createElement('div',{key:qb.id,style:{background:C.green+"12",border:`2px solid ${C.green}44`,borderRadius:0,padding:"8px 12px",marginBottom:"6px",display:"flex",justifyContent:"space-between",alignItems:"center"}},
-            React.createElement('div',{style:{flex:1}},
-              React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.green}},"✨ ",qb.title),
-              React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.whiteDim}},qb.effect)
-            ),
-            React.createElement('button',{onClick:()=>{const nb=questBoons.filter((_,j)=>j!==i);setQuestBoons(nb);_setAndSaveQuests(qs=>qs.map(q=>q.id===activeQuestId?{...q,questBoons:nb}:q));},style:{padding:"5px 8px",background:C.green+"22",border:`1px solid ${C.green}44`,borderRadius:0,color:C.green,fontSize:"14px",fontFamily:BF,cursor:"pointer",marginLeft:6}},"✓ USE")
-          ))
-        ),
-
         // Active perils
         perils.length>0&&React.createElement('div',{style:{padding:"8px 16px 0"}},
           perils.map((pr,i)=>React.createElement('div',{key:i,style:{background:C.red+"12",border:`2px solid ${C.red}44`,borderRadius:0,padding:"8px 12px",marginBottom:"6px",display:"flex",justifyContent:"space-between",alignItems:"center",animation:"pulse 3s infinite"}},
@@ -1894,32 +1901,51 @@ function App(){
           ))
         ),
 
-        // Deck buttons
+        // Deck buttons — new layout
         React.createElement('div',{style:{padding:"12px 16px 180px"}},
-          React.createElement('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px",marginBottom:"10px"}},
-            [{t:"adventure",l:"Encounter",c:C.gold,i:"🗺️",n:aD.length},{t:"boon",l:"Boon",c:C.green,i:"✨",n:bD.length},{t:"peril",l:"Peril",c:C.red,i:"💀",n:pD.length},{t:"between",l:"Trek",c:C.blue,i:"🚶",n:bhD.length}].map(d=>(
-              React.createElement('button',{key:d.t,onClick:()=>tapDeck(d.t),style:{
-                padding:"24px 8px 18px",
-                background:d.t==="adventure"&&activeAdventureCard?C.gold+"18":d.t==="adventure"&&nextCardQueued?C.orange+"18":C.bgCard,
-                border:`4px solid ${d.t==="adventure"&&activeAdventureCard?C.gold:d.t==="adventure"&&nextCardQueued?C.orange:d.c}`,
-                borderRadius:0,cursor:"pointer",textAlign:"center",
-                boxShadow:bevel(d.t==="adventure"&&activeAdventureCard?C.gold:d.t==="adventure"&&nextCardQueued?C.orange:d.c)
-              }},
-                React.createElement('div',{style:{fontSize:"28px",marginBottom:"5px"}},d.i),
-                React.createElement('div',{style:{fontFamily:BF,fontSize:"20px",color:d.t==="adventure"&&activeAdventureCard?C.gold:d.t==="adventure"&&nextCardQueued?C.orange:d.c}},
-                  d.t==="adventure"&&activeAdventureCard?"ACTIVE":d.t==="adventure"&&nextCardQueued?"CONSEQUENCE":d.l
-                ),
-                d.t==="adventure"&&nextCardQueued&&React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.orange,marginTop:"2px"}},nextCardQueued.title)
-              )
-            ))
-          ),
-          React.createElement('button',{onClick:()=>tapDeck("treasure"),style:{width:"100%",padding:"12px",marginBottom:"10px",background:C.bgCard,border:`3px solid ${C.gold}`,borderRadius:0,cursor:"pointer",display:"flex",alignItems:"center",gap:"10px",boxShadow:bevel(C.gold)}},
-            React.createElement('span',{style:{fontSize:"20px"}},"🗝️"),
-            React.createElement('div',null,
-              React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.gold}},"Treasure Deck"),
 
+          // Big two: Encounter and Trek
+          React.createElement('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px",marginBottom:"10px"}},
+            // Encounter
+            React.createElement('button',{onClick:()=>tapDeck("adventure"),style:{
+              padding:"28px 8px 22px",
+              background:activeAdventureCard?C.gold+"18":nextCardQueued?C.orange+"18":C.bgCard,
+              border:`4px solid ${activeAdventureCard?C.gold:nextCardQueued?C.orange:C.gold}`,
+              borderRadius:0,cursor:"pointer",textAlign:"center",
+            }},
+              React.createElement('div',{style:{fontSize:"28px",marginBottom:"5px"}},"🗺️"),
+              React.createElement('div',{style:{fontFamily:BF,fontSize:"20px",color:activeAdventureCard?C.gold:nextCardQueued?C.orange:C.gold}},
+                activeAdventureCard?"ACTIVE":nextCardQueued?"CONSEQUENCE":"Encounter"
+              ),
+              nextCardQueued&&React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.orange,marginTop:"2px"}},nextCardQueued.title)
+            ),
+            // Trek
+            React.createElement('button',{onClick:()=>tapDeck("between"),style:{
+              padding:"28px 8px 22px",background:C.bgCard,
+              border:`4px solid ${C.blue}`,borderRadius:0,cursor:"pointer",textAlign:"center",
+            }},
+              React.createElement('div',{style:{fontSize:"28px",marginBottom:"5px"}},"🚶"),
+              React.createElement('div',{style:{fontFamily:BF,fontSize:"20px",color:C.blue}},"Trek")
             )
           ),
+
+          // Smaller row: Boon, Peril, USE
+          React.createElement('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"8px",marginBottom:"10px"}},
+            React.createElement('button',{onClick:()=>tapDeck("boon"),style:{padding:"14px 4px",background:C.bgCard,border:`3px solid ${C.green}`,borderRadius:0,cursor:"pointer",textAlign:"center"}},
+              React.createElement('div',{style:{fontSize:"20px",marginBottom:"3px"}},"✨"),
+              React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.green}},"Boon")
+            ),
+            React.createElement('button',{onClick:()=>tapDeck("peril"),style:{padding:"14px 4px",background:C.bgCard,border:`3px solid ${C.red}`,borderRadius:0,cursor:"pointer",textAlign:"center"}},
+              React.createElement('div',{style:{fontSize:"20px",marginBottom:"3px"}},"💀"),
+              React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.red}},"Peril")
+            ),
+            React.createElement('button',{onClick:()=>setShowUse(true),style:{padding:"14px 4px",background:C.bgCard,border:`3px solid ${C.parchment}`,borderRadius:0,cursor:"pointer",textAlign:"center",position:"relative"}},
+              React.createElement('div',{style:{fontSize:"20px",marginBottom:"3px"}},"🎒"),
+              React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.parchment}},"Use"),
+              (questBoons.length>0||questPlayersFromQuest.some(function(p){return(p.treasures||[]).length>0;}))&&
+                React.createElement('div',{style:{position:"absolute",top:"6px",right:"6px",width:"8px",height:"8px",background:C.green,borderRadius:"50%"}})
+            )
+          )
         ),
 
         // Party strip — horizontal 2-column layout
@@ -1942,6 +1968,90 @@ function App(){
             ))
           )
         )
+      )
+    ),
+
+    // ── USE OVERLAY ───────────────────────────────────────────────────────────
+    showUse&&React.createElement('div',{style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",zIndex:1050,overflowY:"auto",padding:"16px 16px 40px"}},
+      React.createElement('div',{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"16px"}},
+        React.createElement('div',{style:{fontFamily:BF,fontSize:"16px",color:C.parchment,letterSpacing:2}},"🎒 USE"),
+        React.createElement('button',{onClick:()=>setShowUse(false),style:{padding:"6px 14px",background:"transparent",border:`2px solid ${C.borderBright}`,borderRadius:0,color:C.gold,fontFamily:BF,fontSize:"13px",cursor:"pointer"}},"CLOSE")
+      ),
+
+      // TOKENS — top priority
+      React.createElement('div',{style:{background:C.bgCard,border:`3px solid ${C.cyan}`,borderRadius:0,padding:"12px 14px",marginBottom:"12px"}},
+        React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.cyan,letterSpacing:2,marginBottom:"10px"}},"🛡 TOKENS"),
+        questPlayersFromQuest.map(function(p){
+          return React.createElement('div',{key:p.id,style:{display:"flex",alignItems:"center",gap:"10px",marginBottom:"8px"}},
+            React.createElement('span',{style:{fontSize:"16px"}},(p.cls&&p.cls.icon)||"❓"),
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"14px",color:(p.cls&&p.cls.color)||C.gold,flex:1}},p.name),
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"16px",color:C.cyan,minWidth:"30px",textAlign:"center"}},"🛡",p.tokens),
+            React.createElement('button',{onClick:function(){if(p.tokens>0)adj(p.id,"tokens",-1);},style:{width:"52px",height:"44px",background:p.tokens>0?C.bgDark:"transparent",border:"3px solid "+(p.tokens>0?C.cyan:C.greyDim),borderRadius:0,color:p.tokens>0?C.cyan:C.greyDim,fontFamily:BF,fontSize:"20px",cursor:p.tokens>0?"pointer":"default"}},"-")
+          );
+        })
+      ),
+
+      // TREASURES — per player
+      questPlayersFromQuest.some(function(p){return(p.treasures||[]).length>0;})&&React.createElement('div',{style:{marginBottom:"12px"}},
+        React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.gold,letterSpacing:2,marginBottom:"8px"}},"🗝️ TREASURES"),
+        questPlayersFromQuest.map(function(p){
+          const treasures=p.treasures||[];
+          if(!treasures.length) return null;
+          return React.createElement('div',{key:p.id,style:{background:C.bgCard,border:`2px solid ${(p.cls&&p.cls.color)||C.borderBright}`,borderRadius:0,padding:"10px 12px",marginBottom:"8px"}},
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:(p.cls&&p.cls.color)||C.gold,marginBottom:"8px"}},(p.cls&&p.cls.icon)," ",p.name),
+            treasures.map(function(t,i){
+              const title=typeof t==="string"?t:t.title;
+              const isConsumable=typeof t==="object"?t.consumable:true;
+              const isSpent=typeof t==="object"?t.spent:false;
+              const ready=!isSpent;
+              return React.createElement('div',{key:i,style:{display:"flex",alignItems:"center",gap:"8px",marginBottom:"6px",paddingBottom:"6px",borderBottom:i<treasures.length-1?`1px solid ${C.border}`:"none"}},
+                React.createElement('div',{style:{flex:1,fontFamily:BF,fontSize:"12px",color:ready?C.gold:C.greyDim}},title,!isConsumable&&React.createElement('span',{style:{color:isSpent?C.red:C.teal,fontSize:"10px",marginLeft:"6px"}},isSpent?"SPENT":"READY")),
+                React.createElement('button',{onClick:function(){
+                  if(!ready) return;
+                  _setAndSavePlayers(function(ps){return ps.map(function(pl){
+                    if(pl.id!==p.id) return pl;
+                    const newTreasures=[...(pl.treasures||[])];
+                    if(isConsumable){
+                      newTreasures.splice(i,1);
+                    } else {
+                      newTreasures[i]={...newTreasures[i],spent:true};
+                    }
+                    return{...pl,treasures:newTreasures};
+                  });});
+                },style:{padding:"5px 10px",background:ready?C.gold+"18":"transparent",border:"2px solid "+(ready?C.gold:C.greyDim),borderRadius:0,color:ready?C.gold:C.greyDim,fontFamily:BF,fontSize:"11px",cursor:ready?"pointer":"default"}},
+                  ready?"USE":"—"
+                )
+              );
+            })
+          );
+        })
+      ),
+
+      // MERCHANT passive
+      questPlayersFromQuest.some(function(p){return p.cls&&p.cls.name==="Merchant";})&&React.createElement('div',{style:{background:C.bgCard,border:`2px solid ${C.gold}44`,borderRadius:0,padding:"10px 12px",marginBottom:"12px"}},
+        React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.gold,marginBottom:"6px"}},"💰 MERCHANT PASSIVE"),
+        questPlayersFromQuest.filter(function(p){return p.cls&&p.cls.name==="Merchant";}).map(function(p){
+          return React.createElement('div',{key:p.id,style:{display:"flex",alignItems:"center",gap:"8px"}},
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.whiteDim,flex:1}},p.name," — pay 1gp to redraw encounter"),
+            React.createElement('button',{onClick:function(){
+              if(p.gold<1) return;
+              adj(p.id,"gold",-1);
+              setShowUse(false);
+              tapDeck("adventure");
+            },style:{padding:"5px 10px",background:p.gold>=1?C.gold+"18":"transparent",border:"2px solid "+(p.gold>=1?C.gold:C.greyDim),borderRadius:0,color:p.gold>=1?C.gold:C.greyDim,fontFamily:BF,fontSize:"11px",cursor:p.gold>=1?"pointer":"default"}},"REDRAW (1gp)")
+          );
+        })
+      ),
+
+      // QUEST BOONS
+      questBoons.length>0&&React.createElement('div',{style:{background:C.bgCard,border:`2px solid ${C.green}44`,borderRadius:0,padding:"10px 12px",marginBottom:"12px"}},
+        React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.green,marginBottom:"6px"}},"✨ QUEST BOONS"),
+        questBoons.map(function(qb,i){
+          return React.createElement('div',{key:qb.id,style:{display:"flex",alignItems:"center",gap:"8px",marginBottom:"6px"}},
+            React.createElement('div',{style:{flex:1,fontFamily:BF,fontSize:"12px",color:C.green}},qb.title," — ",qb.effect),
+            React.createElement('button',{onClick:function(){const nb=questBoons.filter(function(_,j){return j!==i;});setQuestBoons(nb);_setAndSaveQuests(function(qs){return qs.map(function(q){return q.id===activeQuestId?{...q,questBoons:nb}:q;});});},style:{padding:"5px 10px",background:C.green+"18",border:"2px solid "+C.green+"44",borderRadius:0,color:C.green,fontFamily:BF,fontSize:"11px",cursor:"pointer"}},"USE")
+          );
+        })
       )
     ),
 
@@ -1997,7 +2107,12 @@ function App(){
       hole===10&&React.createElement('button',{onClick:function(){
         _setAndSavePlayers(function(ps){return ps.map(function(p){
           if(!questPlayersFromQuest.find(function(q){return q.id===p.id;})) return p;
-          return {...p,tokens:p.tokens+1};
+          // Recharge spent reusable treasures
+          const rechargedTreasures=(p.treasures||[]).map(function(t){
+            if(typeof t==="object"&&!t.consumable&&t.spent) return{...t,spent:false};
+            return t;
+          });
+          return {...p,tokens:p.tokens+1,treasures:rechargedTreasures};
         });});
         setShowCamp(false);
         startNewRound(true);
@@ -2013,7 +2128,11 @@ function App(){
           React.createElement('button',{onClick:function(){
             _setAndSavePlayers(function(ps){return ps.map(function(p){
               if(!questPlayersFromQuest.find(function(q){return q.id===p.id;})) return p;
-              return {...p,tokens:p.tokens+1};
+              const rechargedTreasures=(p.treasures||[]).map(function(t){
+                if(typeof t==="object"&&!t.consumable&&t.spent) return{...t,spent:false};
+                return t;
+              });
+              return {...p,tokens:p.tokens+1,treasures:rechargedTreasures};
             });});
             setShowCamp(false);
             setEndSessionConfirm(false);
