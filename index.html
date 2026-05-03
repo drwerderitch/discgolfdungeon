@@ -238,6 +238,8 @@ const BETWEEN_CARDS=[
   {title:"Closest to the Pin — Forehand",effect:"Find a natural target and mark a throwing line. Forehand only. Everyone throws forehand.",reward:"Closest gains 1gp.",scope:"Personal"},
   {title:"Swooping Attack",effect:"Something large descends from above. Drive it back. Take turns — one player launches a disc straight up while one other player tries to hit it before it lands. Rotate until everyone has had a turn throwing.",reward:"Each successful hit earns that player 1gp.",scope:"Personal"},
   {title:"Perilous Terrain",effect:"The path ahead is treacherous. Keep your gear steady. Each player balances a disc on one fingertip for the walk to the next tee.",reward:"Drop it and lose 1gp. Make it and your gear arrives unscathed.",scope:"Personal"},
+  {title:"Enchanted Dew",effect:"The dew in this valley glimmers with something ancient. Find it before the next tee. Any player who wets a disc before the next hole begins plays that disc enchanted for the hole — take one step before any throw with it.",reward:"Each player who enchants a disc gains the movement benefit for that hole.",scope:"Personal"},
+  {title:"The Anointing",effect:"Something on this stretch of trail calls to you. Before the next tee, anoint one disc — let your class and your instincts guide what that means. That disc is enchanted for the next hole — take one step before you throw it.",reward:"The enchanted disc grants one step before any throw this hole.",scope:"Personal"},
 ];
 
 const TREASURE_CARDS=[
@@ -893,6 +895,7 @@ function App(){
   const [card,setCard]=useState(null);
   const [activeAdventureCard,setActiveAdventureCard]=useState(null);
   const [scorecardQuestId,setScorecardQuestId]=useState(null);
+  const [exportText,setExportText]=useState(null);
   const [cardDeck,setCardDeck]=useState(null);
   const [cardPhase,setCardPhase]=useState("read");
   const [cardMeta,setCardMeta]=useState({});
@@ -1238,9 +1241,13 @@ function App(){
           if(qi>=0){
             const holes=[...hist[qi].holes,{hole,score:n,bottled:!!(holeScores[p.id+"_bottled"]),proficient:isProficient}];
             const total=holes.reduce((a,h)=>a+h.score,0);
-            hist[qi]={...hist[qi],holes,total,complete:holes.length>=9};
+            const encounters=[...(hist[qi].encounters||[])];
+            if(!encounters.includes(card.title)) encounters.push(card.title);
+            hist[qi]={...hist[qi],holes,total,complete:holes.length>=9,encounters};
           } else {
-            hist.push({questId:activeQuestId,roundNumber:currentRound,date:new Date().toLocaleDateString(),holes:[{hole,score:n,bottled:!!(holeScores[p.id+"_bottled"]),proficient:isProficient}],total:n,complete:false});
+            // First hole of round — snapshot player state
+            const snapshot={name:p.name,clsName:p.cls?p.cls.name:null,clsIcon:p.cls?p.cls.icon:null,clsColor:p.cls?p.cls.color:null,level:p.level||1,chosenSkills:p.chosenSkills||[],multiclassName:p.multiclass&&p.multiclass.cls?p.multiclass.cls.name:null,multiclassIcon:p.multiclass&&p.multiclass.cls?p.multiclass.cls.icon:null};
+            hist.push({questId:activeQuestId,roundNumber:currentRound,date:new Date().toLocaleDateString(),holes:[{hole,score:n,bottled:!!(holeScores[p.id+"_bottled"]),proficient:isProficient}],total:n,complete:false,encounters:[card.title],snapshot});
           }
           return{...pl,tee:newTee,scoreHistory:hist};
         }));
@@ -1362,41 +1369,115 @@ function App(){
       const allRounds=new Set();
       sqps.forEach(p=>{(p.scoreHistory||[]).filter(r=>r.questId===scorecardQuestId).forEach(r=>allRounds.add(r.roundNumber));});
       const sortedRounds=[...allRounds].sort((a,b)=>a-b);
+
+      // Export function
+      const exportScorecard=function(){
+        const fmt=function(n){return n===0?"E":n>0?"+"+n:""+n;};
+        const pad=function(s,len){s=String(s);while(s.length<len)s=" "+s;return s;};
+        const playerNames=sqps.map(function(p){return(p.name||"?").substring(0,8);});
+        var lines=[];
+        lines.push("QUEST ROUND · "+playerNames.join(" · "));
+        lines.push("");
+        sortedRounds.forEach(function(roundNum){
+          const r0=sqps[0]&&(sqps[0].scoreHistory||[]).find(function(r){return r.questId===scorecardQuestId&&r.roundNumber===roundNum;});
+          lines.push("Round "+roundNum+" · "+(r0&&r0.date||"")+(r0&&!r0.complete?" (incomplete)":""));
+          // Player snapshots
+          sqps.forEach(function(p){
+            const hist=(p.scoreHistory||[]).find(function(r){return r.questId===scorecardQuestId&&r.roundNumber===roundNum;});
+            const snap=hist&&hist.snapshot;
+            if(!snap) return;
+            const skills=(snap.chosenSkills||[]).join(", ");
+            var line="  "+(snap.clsIcon||"")+" "+snap.name+" · "+(snap.clsName||"?")+" Lv"+snap.level+" · "+skills;
+            if(snap.multiclassName) line+=" / "+snap.multiclassName;
+            lines.push(line);
+          });
+          lines.push("");
+          // Header row
+          var header="          "+sqps.map(function(p){return pad(p.name?p.name.substring(0,5):"?",6);}).join(" ");
+          lines.push(header);
+          // Hole rows
+          var holeNums=[1,2,3,4,5,6,7,8,9];
+          const enc=(r0&&r0.encounters)||[];
+          holeNums.forEach(function(h){
+            const encName=enc[h-1]||"—";
+            var row=pad(h+".",3)+" "+pad(encName.substring(0,18),18)+" ";
+            sqps.forEach(function(p){
+              const hist=(p.scoreHistory||[]).find(function(r){return r.questId===scorecardQuestId&&r.roundNumber===roundNum;});
+              const hd=hist&&hist.holes&&hist.holes.find(function(hh){return hh.hole===h;});
+              var score=hd?fmt(hd.score):(h>((hist&&hist.holes&&hist.holes.length)||0)?"✗":"·");
+              if(hd&&hd.proficient) score=score+"*";
+              if(hd&&hd.bottled) score="~"+score;
+              row+=pad(score,6)+" ";
+            });
+            lines.push(row);
+          });
+          // Totals
+          var totRow=pad("TOT",22)+" ";
+          sqps.forEach(function(p){
+            const hist=(p.scoreHistory||[]).find(function(r){return r.questId===scorecardQuestId&&r.roundNumber===roundNum;});
+            const total=(hist&&hist.holes||[]).reduce(function(a,h){return a+h.score;},0);
+            totRow+=pad(fmt(total),6)+" ";
+          });
+          lines.push(totRow);
+          lines.push("");
+        });
+        lines.push("* proficient hole  ~ bottled birdie");
+        const text=lines.join("\n");
+        setExportText(text);
+      };
+
       return React.createElement('div',{style:{position:"fixed",inset:0,background:C.bg,zIndex:1100,overflowY:"auto",padding:"0 0 40px"}},
         React.createElement('div',{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 16px",borderBottom:`3px solid ${C.borderBright}`,background:C.bgDark}},
           React.createElement('div',{style:{fontFamily:BF,fontSize:"15px",color:C.gold,textShadow:OLH}},"SCORECARD"),
-          React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.grey}},"Round ",(sq&&sq.currentRound)||1," · ",(sq&&sq.startDate)||""),
-          React.createElement('button',{onClick:()=>setScorecardQuestId(null),style:{padding:"6px 12px",background:"transparent",border:`2px solid ${C.borderBright}`,borderRadius:0,color:C.gold,fontFamily:BF,fontSize:"13px",cursor:"pointer"}},"CLOSE")
+          React.createElement('div',{style:{display:"flex",gap:"8px",alignItems:"center"}},
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.grey}},"Round ",(sq&&sq.currentRound)||1," · ",(sq&&sq.startDate)||""),
+            React.createElement('button',{onClick:exportScorecard,style:{padding:"6px 12px",background:"transparent",border:`2px solid ${C.teal}`,borderRadius:0,color:C.teal,fontFamily:BF,fontSize:"13px",cursor:"pointer"}},"📋 EXPORT"),
+            React.createElement('button',{onClick:()=>setScorecardQuestId(null),style:{padding:"6px 12px",background:"transparent",border:`2px solid ${C.borderBright}`,borderRadius:0,color:C.gold,fontFamily:BF,fontSize:"13px",cursor:"pointer"}},"CLOSE")
+          )
         ),
         sortedRounds.length===0?React.createElement('div',{style:{padding:"24px",fontFamily:BF,fontSize:"13px",color:C.greyDim,textAlign:"center"}},"No rounds played yet."):
         sortedRounds.map(function(roundNum){
           const currentHole=(sq&&sq.currentRound===roundNum)?sq.hole:null;
+          const r0=sqps[0]&&(sqps[0].scoreHistory||[]).find(function(r){return r.questId===scorecardQuestId&&r.roundNumber===roundNum;});
+          const enc=(r0&&r0.encounters)||[];
           return React.createElement('div',{key:roundNum,style:{padding:"16px 12px 0"}},
             React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.greyDim,letterSpacing:2,marginBottom:"6px",display:"flex",justifyContent:"space-between",alignItems:"center"}},
               React.createElement('span',null,"ROUND ",roundNum),
-              (()=>{
-                const r0=sqps[0]&&(sqps[0].scoreHistory||[]).find(r=>r.questId===scorecardQuestId&&r.roundNumber===roundNum);
-                return React.createElement('span',{style:{color:r0&&r0.complete?C.green:C.greyDim}},r0&&r0.date||"",r0&&!r0.complete?" — incomplete":"");
-              })()
+              React.createElement('span',{style:{color:r0&&r0.complete?C.green:C.greyDim}},r0&&r0.date||"",r0&&!r0.complete?" — incomplete":"")
+            ),
+            // Player snapshots
+            React.createElement('div',{style:{marginBottom:"8px"}},
+              sqps.map(function(p){
+                const hist=(p.scoreHistory||[]).find(function(r){return r.questId===scorecardQuestId&&r.roundNumber===roundNum;});
+                const snap=hist&&hist.snapshot;
+                if(!snap) return null;
+                const skills=(snap.chosenSkills||[]).map(function(s){return React.createElement('span',{key:s,style:{color:SKILL_COLORS[s]||C.grey,marginLeft:"4px"}},s);});
+                return React.createElement('div',{key:p.id,style:{fontFamily:BF,fontSize:"10px",marginBottom:"3px",display:"flex",alignItems:"center",gap:"4px",flexWrap:"wrap"}},
+                  React.createElement('span',null,snap.clsIcon||"❓"),
+                  React.createElement('span',{style:{color:snap.clsColor||C.gold}},snap.name," · ",snap.clsName||"?","  Lv",snap.level),
+                  skills,
+                  snap.multiclassName&&React.createElement('span',{style:{color:C.greyDim,marginLeft:"4px"}},"/ ",snap.multiclassIcon," ",snap.multiclassName)
+                );
+              })
             ),
             React.createElement('div',{style:{overflowX:"auto"}},
               React.createElement('table',{style:{borderCollapse:"collapse",width:"100%"}},
                 React.createElement('thead',null,
                   React.createElement('tr',null,
                     React.createElement('th',{style:{fontFamily:BF,fontSize:"10px",color:C.greyDim,textAlign:"left",padding:"4px 8px",minWidth:60,background:C.bgCard,position:"sticky",left:0,zIndex:1}},"PLAYER"),
-                    holeNums.map(n=>React.createElement('th',{key:n,style:{fontFamily:BF,fontSize:"10px",color:currentHole===n?C.gold:C.greyDim,textAlign:"center",padding:"4px 5px",minWidth:28,background:currentHole===n?C.bgCardAlt:C.bgCard,borderLeft:`1px solid ${C.border}44`}},n)),
+                    holeNums.map(function(n){return React.createElement('th',{key:n,style:{fontFamily:BF,fontSize:"10px",color:currentHole===n?C.gold:C.greyDim,textAlign:"center",padding:"4px 5px",minWidth:28,background:currentHole===n?C.bgCardAlt:C.bgCard,borderLeft:`1px solid ${C.border}44`}},n);}),
                     React.createElement('th',{style:{fontFamily:BF,fontSize:"10px",color:C.greyDim,textAlign:"center",padding:"4px 6px",minWidth:34,background:C.bgCard,borderLeft:`1px solid ${C.border}`}},"TOT")
                   )
                 ),
                 React.createElement('tbody',null,
                   sqps.map(function(p){
-                    const roundHist=(p.scoreHistory||[]).find(r=>r.questId===scorecardQuestId&&r.roundNumber===roundNum);
+                    const roundHist=(p.scoreHistory||[]).find(function(r){return r.questId===scorecardQuestId&&r.roundNumber===roundNum;});
                     const scored=(roundHist&&roundHist.holes)||[];
-                    const roundTotal=scored.reduce((a,h)=>a+h.score,0);
+                    const roundTotal=scored.reduce(function(a,h){return a+h.score;},0);
                     return React.createElement('tr',{key:p.id},
                       React.createElement('td',{style:{fontFamily:BF,fontSize:"10px",color:(p.cls&&p.cls.color)||C.gold,padding:"5px 8px",background:C.bgCard,position:"sticky",left:0,zIndex:1,whiteSpace:"nowrap"}},(p.cls&&p.cls.icon)," ",(p.name&&p.name.substring(0,7))),
                       holeNums.map(function(n){
-                        const hd=scored.find(h=>h.hole===n);
+                        const hd=scored.find(function(h){return h.hole===n;});
                         const isCurrentHole=currentHole===n;
                         const cl=!hd?C.greyDim:hd.bottled?C.teal:hd.score<0?C.green:hd.score>0?C.red:C.whiteDim;
                         return React.createElement('td',{key:n,style:{fontFamily:BF,fontSize:"11px",color:cl,textAlign:"center",padding:"5px 4px",background:isCurrentHole?C.bgCardAlt:C.bgDark,borderLeft:`1px solid ${C.border}33`,textDecoration:hd&&hd.proficient?"underline":"none"}},hd?fmt(hd.score):(roundHist&&!roundHist.complete&&n>scored.length)?"✗":"·");
@@ -1406,6 +1487,14 @@ function App(){
                   })
                 )
               )
+            ),
+            enc.length>0&&React.createElement('div',{style:{marginTop:"10px",paddingLeft:"4px",paddingBottom:"8px"}},
+              enc.map(function(name,i){
+                return React.createElement('div',{key:i,style:{fontFamily:BF,fontSize:"10px",color:C.greyDim,marginBottom:"3px"}},
+                  React.createElement('span',{style:{color:C.border,marginRight:"6px"}},i+1+"."),
+                  name
+                );
+              })
             )
           );
         })
@@ -1721,6 +1810,14 @@ function App(){
                       React.createElement('td',{style:{fontFamily:BF,fontSize:"11px",color:tcl,textAlign:"center",padding:"2px 3px",background:C.bgDark,borderLeft:`1px solid ${C.border}`}},fmt(total))
                     ))
                   )
+                ),
+                r.encounters&&r.encounters.length>0&&React.createElement('div',{style:{marginTop:"8px",paddingLeft:"2px"}},
+                  r.encounters.map(function(name,i){
+                    return React.createElement('div',{key:i,style:{fontFamily:BF,fontSize:"10px",color:C.greyDim,marginBottom:"3px"}},
+                      React.createElement('span',{style:{color:C.border,marginRight:"6px"}},i+1+"."),
+                      name
+                    );
+                  })
                 )
               );
             })
@@ -2182,6 +2279,16 @@ function App(){
           React.createElement('button',{onClick:()=>setEndSessionConfirm(false),style:{flex:1,padding:"10px 0",background:"transparent",border:"1px solid "+C.greyDim,borderRadius:0,color:C.greyDim,fontFamily:BF,fontSize:"12px",cursor:"pointer"}},"CANCEL")
         )
       )
+    ),
+
+    // ── EXPORT MODAL ─────────────────────────────────────────────────────────
+    exportText&&React.createElement('div',{style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",zIndex:1200,display:"flex",flexDirection:"column",padding:"20px 16px",gap:"12px"}},
+      React.createElement('div',{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}},
+        React.createElement('div',{style:{fontFamily:BF,fontSize:"14px",color:C.teal}},"SELECT ALL · COPY · PASTE"),
+        React.createElement('button',{onClick:()=>setExportText(null),style:{padding:"6px 14px",background:"transparent",border:`2px solid ${C.borderBright}`,borderRadius:0,color:C.gold,fontFamily:BF,fontSize:"13px",cursor:"pointer"}},"CLOSE")
+      ),
+      React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.greyDim}},"Long press the text below to select all, then copy."),
+      React.createElement('textarea',{readOnly:true,value:exportText,onClick:function(e){e.target.select();},style:{flex:1,background:C.bgDark,border:`2px solid ${C.borderBright}`,borderRadius:0,color:C.whiteDim,fontFamily:"'Courier New',monospace",fontSize:"11px",padding:"12px",resize:"none",lineHeight:1.6}})
     ),
 
     // ── TAB BAR ──────────────────────────────────────────────────────────────
