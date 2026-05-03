@@ -102,7 +102,7 @@ const CLASSES=[
   {name:"Wizard",icon:"🔮",passive:"Once per hole, after a drive or approach lands, may move their lie up to 3 steps in any direction before throwing next.",ptype:"triggered",skills:["Spirit","Stealth","Social"],flavor:"You don't move to the disc. You move the disc to you.",gear:"Putter + 1 disc",color:C.purple},
   {name:"Seer",icon:"🔭",passive:"Once per hole may rethrow any drive or approach after seeing the result.",ptype:"triggered",skills:["Spirit","Social","Nature"],flavor:"You have been here before. You will be here again.",gear:"Putter + 1 disc",color:C.teal},
   {name:"Monk",icon:"👊",passive:"Once per hole before your approach declare a landing zone and throw. Play that lie. Throw a second disc from the same spot — land within 10 feet of the first and gain advantage on your putt.",ptype:"triggered",skills:["Athletics","Nature","Spirit"],flavor:"Still mind, still hand. You have thrown this shot before in your mind.",gear:"Putter + 1 disc",color:C.gold},
-  {name:"Assassin",icon:"🗡️",passive:"On favored holes, if your approach lands within circle one your putt is automatic — pick up and score. Spend a token to use this on any other hole.",ptype:"triggered",skills:["Tactics","Stealth","Athletics"],flavor:"One clean line. One clean shot. Done.",gear:"Putter + 1 disc",color:C.red},
+  {name:"Assassin",icon:"🗡️",passive:"On favored holes, if your approach lands as a tap-in — within a foot or two, a putt anyone would concede — pick up and score. Spend a token to use this on any other hole.",ptype:"triggered",skills:["Tactics","Stealth","Athletics"],flavor:"One clean line. One clean shot. Done.",gear:"Putter + 1 disc",color:C.red},
   {name:"Bard",icon:"🎵",passive:"When you spend a token on yourself, declare one teammate before throwing — they also gain a stored advantage for any single throw this hole at no additional cost.",ptype:"triggered",skills:["Social","Nature","Spirit"],flavor:"Your best moment makes everyone better.",gear:"Putter + 1 disc",color:C.green},
   {name:"Barbarian",icon:"🪓",passive:"Before throwing you may choose to throw from blue tee regardless of your earned position. Par or better from blue tee draws a Boon. On favored holes draw two Boons instead.",ptype:"triggered",skills:["Tactics","Athletics","Social"],flavor:"Glory or nothing. The long road is the only road.",gear:"Putter + 1 disc",color:C.red},
   {name:"Marksman",icon:"🎯",passive:"A putt made from circle 2 counts as automatic party success for adventure resolution — individual scores, boons, and perils still apply. Hit metal from circle 2 — free rethrow.",ptype:"triggered",skills:["Tactics","Athletics","Stealth"],flavor:"One more time. Cleaner.",gear:"Two putters + 1 disc",color:C.blue},
@@ -956,7 +956,10 @@ function App(){
     const cls=eCls!==null?CLASSES[eCls]:null;
     const startGear=cls?cls.gear.split(/[,+]/).map(s=>s.trim()).filter(Boolean):[];
     _setAndSavePlayers(p=>{const n=[...p];n[editIdx]={...n[editIdx],name:eName,cls,gear:startGear};return n;});
-    setEditIdx(null);setPartyView("list");
+    const savedId=allPlayers[editIdx]&&allPlayers[editIdx].id;
+    setEditIdx(null);
+    if(savedId&&cls){setSheetPlayerId(savedId);setPartyView("startskill");}
+    else setPartyView("list");
   }
   function updatePlayerField(pid,field,val){_setAndSavePlayers(ps=>ps.map(p=>p.id===pid?{...p,[field]:val}:p));}
   function levelUp(pid){
@@ -1215,6 +1218,9 @@ function App(){
           const tc=draw(tD,setTD,TREASURE_CARDS);
           setCard(tc);setCardDeck("treasure");setCardPhase("read");
           setActiveAdventureCard(null);
+          if(act==="fail"&&card.consequenceOnFail) _setAndSaveQuests(qs=>qs.map(q=>q.id===activeQuestId?{...q,nextAdventureCard:card.consequenceOnFail}:q));
+          if(act==="success"&&card.consequenceOnSuccess) _setAndSaveQuests(qs=>qs.map(q=>q.id===activeQuestId?{...q,nextAdventureCard:card.consequenceOnSuccess}:q));
+          return;
         }
         if(tokenMatch&&!tokenCountMatch) questPlayersFromQuest.forEach(p=>adj(p.id,"tokens",1));
         else if(tokenCountMatch) questPlayersFromQuest.forEach(p=>adj(p.id,"tokens",parseInt(tokenCountMatch[1])));
@@ -1313,8 +1319,16 @@ function App(){
       return;
     }
     if(act==="assignBetween"&&pid!==undefined){
-      adj(pid,"gold",1);
-      adj(pid,"xp",1);
+      const rewardText=(card.reward||card.effect||"");
+      const gpMatch=rewardText.match(/(?:gains?|earns?)\s+(\d+)\s*gp/i);
+      const xpMatch=rewardText.match(/(?:gains?|earns?)\s+(\d+)\s*xp/i);
+      const loseGpMatch=rewardText.match(/(?:lose|drop)[^.]*(\d+)\s*gp/i);
+      const tokenMatch=rewardText.match(/(?:gains?|earns?)\s+(\d+\s+)?advantage\s+token/i);
+      if(gpMatch) adj(pid,"gold",parseInt(gpMatch[1]));
+      if(xpMatch) adj(pid,"xp",parseInt(xpMatch[1]));
+      if(loseGpMatch) adj(pid,"gold",-parseInt(loseGpMatch[1]));
+      if(tokenMatch) adj(pid,"tokens",1);
+      if(!gpMatch&&!xpMatch&&!loseGpMatch&&!tokenMatch){adj(pid,"gold",1);adj(pid,"xp",1);}
       return;
     }
     if(act==="applyPartyPeril"){
@@ -1695,8 +1709,13 @@ function App(){
         if(!p)return null;
         const xpNeeded=p.level===1?8:p.level===2?9:null;
         const canLevel=xpNeeded&&p.xp>=xpNeeded;
+        const needsStartingSkill=p.cls&&(!p.chosenSkills||p.chosenSkills.length===0);
         return React.createElement('div',{style:{padding:"0 16px"}},
           React.createElement('button',{onClick:()=>{setDeleteConfirm(false);setPartyView("list");},style:{background:"transparent",border:"none",color:C.gold,fontFamily:BF,fontSize:"13px",cursor:"pointer",marginBottom:"12px"}},"← PARTY"),
+          needsStartingSkill&&React.createElement('div',{style:{background:C.gold+"18",border:"3px solid "+C.gold,borderRadius:0,padding:"12px 14px",marginBottom:"12px",cursor:"pointer"},onClick:()=>setPartyView("startskill")},
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.gold,marginBottom:"4px"}},"⚠ CHOOSE YOUR STARTING SKILL"),
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.whiteDim}},"Tap to pick your Level 1 skill from your class list.")
+          ),
           React.createElement('div',{style:{textAlign:"center",marginBottom:"14px"}},
             React.createElement('div',{style:{fontSize:"16px",marginBottom:"4px"}},(p.cls&&p.cls.icon)||"❓"),
             React.createElement('div',{style:{fontFamily:BF,fontSize:"16px",color:(p.cls&&p.cls.color)||C.grey,textShadow:OLH}},p.name),
@@ -1875,6 +1894,30 @@ function App(){
             React.createElement('textarea',{value:p.notes||"",onChange:e=>updatePlayerField(p.id,"notes",e.target.value),placeholder:"Write notes, backstory, anything...",rows:4,style:{width:"100%",padding:"10px 12px",background:C.bgDark,border:`2px solid ${C.borderBright}`,borderRadius:0,color:C.white,fontFamily:BF,fontSize:"13px",resize:"vertical"}})
           ),
           React.createElement(Btn,{onClick:()=>setPartyView("sheet"),style:{marginTop:"4px"}},"DONE")
+        );
+      })(),
+
+      partyView==="startskill"&&(()=>{
+        const p=allPlayers.find(x=>x.id===sheetPlayerId);
+        if(!p||!p.cls)return null;
+        return React.createElement('div',{style:{padding:"0 16px"}},
+          React.createElement('button',{onClick:()=>setPartyView("sheet"),style:{background:"transparent",border:"none",color:C.gold,fontFamily:BF,fontSize:"13px",cursor:"pointer",marginBottom:"12px"}},"← BACK"),
+          React.createElement('div',{style:{textAlign:"center",marginBottom:"14px"}},
+            React.createElement('div',{style:{fontSize:"16px",marginBottom:"4px"}},(p.cls&&p.cls.icon)),
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"16px",color:C.gold,textShadow:OLH,marginTop:"6px"}},"STARTING SKILL"),
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.whiteDim}},"Choose your Level 1 skill")
+          ),
+          React.createElement(Panel,null,
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.whiteDim,marginBottom:"10px"}},"Your class passive fires for free on holes tagged with your chosen skill."),
+            (p.cls.skills||[]).map(function(s){
+              return React.createElement('button',{key:s,onClick:function(){
+                updatePlayerField(p.id,"chosenSkills",[s]);
+                setPartyView("sheet");
+              },style:{width:"100%",padding:"14px",marginBottom:"8px",background:C.bgDark,border:"3px solid "+(SKILL_COLORS[s]||C.gold),borderRadius:0,color:SKILL_COLORS[s]||C.gold,fontFamily:BF,fontSize:"14px",cursor:"pointer",textAlign:"left"}},
+                "★ ",s
+              );
+            })
+          )
         );
       })(),
 
@@ -2067,19 +2110,23 @@ function App(){
             )
           ),
 
-          // Smaller row: Boon, Peril, USE
-          React.createElement('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"8px",marginBottom:"10px"}},
+          // Smaller row: Boon, Peril, Treasure, USE
+          React.createElement('div',{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:"8px",marginBottom:"10px"}},
             React.createElement('button',{onClick:()=>tapDeck("boon"),style:{padding:"14px 4px",background:C.bgCard,border:`3px solid ${C.green}`,borderRadius:0,cursor:"pointer",textAlign:"center"}},
               React.createElement('div',{style:{fontSize:"20px",marginBottom:"3px"}},"✨"),
-              React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.green}},"Boon")
+              React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.green}},"Boon")
             ),
             React.createElement('button',{onClick:()=>tapDeck("peril"),style:{padding:"14px 4px",background:C.bgCard,border:`3px solid ${C.red}`,borderRadius:0,cursor:"pointer",textAlign:"center"}},
               React.createElement('div',{style:{fontSize:"20px",marginBottom:"3px"}},"💀"),
-              React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.red}},"Peril")
+              React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.red}},"Peril")
+            ),
+            React.createElement('button',{onClick:()=>tapDeck("treasure"),style:{padding:"14px 4px",background:C.bgCard,border:`3px solid ${C.gold}`,borderRadius:0,cursor:"pointer",textAlign:"center"}},
+              React.createElement('div',{style:{fontSize:"20px",marginBottom:"3px"}},"🗝️"),
+              React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.gold}},"Treasure")
             ),
             React.createElement('button',{onClick:()=>setShowUse(true),style:{padding:"14px 4px",background:C.bgCard,border:`3px solid ${C.parchment}`,borderRadius:0,cursor:"pointer",textAlign:"center",position:"relative"}},
               React.createElement('div',{style:{fontSize:"20px",marginBottom:"3px"}},"🎒"),
-              React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.parchment}},"Use"),
+              React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.parchment}},"Use"),
               (questBoons.length>0||questPlayersFromQuest.some(function(p){return(p.treasures||[]).length>0;}))&&
                 React.createElement('div',{style:{position:"absolute",top:"6px",right:"6px",width:"8px",height:"8px",background:C.green,borderRadius:"50%"}})
             )
@@ -2227,12 +2274,19 @@ function App(){
       React.createElement('div',{style:{background:C.purple+"12",border:"2px solid "+C.purple+"44",borderRadius:0,padding:"14px 16px",marginBottom:"10px"}},
         React.createElement('div',{style:{fontFamily:BF,fontSize:"16px",color:C.purple,marginBottom:"6px"}},"✦ LEVEL UP"),
         React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.whiteDim,lineHeight:1.6}},"Spend XP to level up and choose a new skill. Lv1→2 costs 8 XP. Lv2→3 costs 9 XP."),
-        React.createElement('div',{style:{display:"flex",flexWrap:"wrap",gap:"8px",marginTop:"10px"}},
+        React.createElement('div',{style:{display:"flex",flexDirection:"column",gap:"8px",marginTop:"10px"}},
           questPlayersFromQuest.map(function(p){
             const need=p.level===1?8:p.level===2?9:null;
             const canLevel=need&&p.xp>=need;
-            return React.createElement('div',{key:p.id,style:{background:C.bgCard,border:"2px solid "+(canLevel?C.green:C.greyDim),padding:"6px 12px",fontFamily:BF,fontSize:"13px",color:canLevel?C.green:C.greyDim}},
-              (p.cls&&p.cls.icon)||"❓"," ",p.name," ✦",p.xp,canLevel?" — LEVEL UP AVAILABLE":need?" — need "+(need-p.xp)+" more":""
+            return React.createElement('div',{key:p.id,style:{display:"flex",alignItems:"center",gap:"8px"}},
+              React.createElement('div',{style:{background:C.bgCard,border:"2px solid "+(canLevel?C.green:C.greyDim),padding:"6px 12px",fontFamily:BF,fontSize:"13px",color:canLevel?C.green:C.greyDim,flex:1}},
+                (p.cls&&p.cls.icon)||"❓"," ",p.name," ✦",p.xp,canLevel?" — READY":need?" — need "+(need-p.xp)+" more":""
+              ),
+              canLevel&&React.createElement('button',{onClick:function(){
+                setTab("party");
+                setSheetId(p.id);
+                setPartyView("levelup");
+              },style:{padding:"8px 12px",background:C.green+"22",border:"2px solid "+C.green,borderRadius:0,color:C.green,fontFamily:BF,fontSize:"12px",cursor:"pointer",whiteSpace:"nowrap"}},"⬆ LEVEL UP")
             );
           })
         )
