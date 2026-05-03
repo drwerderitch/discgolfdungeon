@@ -1241,13 +1241,12 @@ function App(){
           if(qi>=0){
             const holes=[...hist[qi].holes,{hole,score:n,bottled:!!(holeScores[p.id+"_bottled"]),proficient:isProficient}];
             const total=holes.reduce((a,h)=>a+h.score,0);
-            const encounters=[...(hist[qi].encounters||[])];
-            if(!encounters.includes(card.title)) encounters.push(card.title);
+            const encounters={...(hist[qi].encounters||{}),[hole]:card.title};
             hist[qi]={...hist[qi],holes,total,complete:holes.length>=9,encounters};
           } else {
             // First hole of round — snapshot player state
             const snapshot={name:p.name,clsName:p.cls?p.cls.name:null,clsIcon:p.cls?p.cls.icon:null,clsColor:p.cls?p.cls.color:null,level:p.level||1,chosenSkills:p.chosenSkills||[],multiclassName:p.multiclass&&p.multiclass.cls?p.multiclass.cls.name:null,multiclassIcon:p.multiclass&&p.multiclass.cls?p.multiclass.cls.icon:null};
-            hist.push({questId:activeQuestId,roundNumber:currentRound,date:new Date().toLocaleDateString(),holes:[{hole,score:n,bottled:!!(holeScores[p.id+"_bottled"]),proficient:isProficient}],total:n,complete:false,encounters:[card.title],snapshot});
+            hist.push({questId:activeQuestId,roundNumber:currentRound,date:new Date().toLocaleDateString(),holes:[{hole,score:n,bottled:!!(holeScores[p.id+"_bottled"]),proficient:isProficient}],total:n,complete:false,encounters:{[hole]:card.title},snapshot});
           }
           return{...pl,tee:newTee,scoreHistory:hist};
         }));
@@ -1373,10 +1372,8 @@ function App(){
       // Export function
       const exportScorecard=function(){
         const fmt=function(n){return n===0?"E":n>0?"+"+n:""+n;};
-        const pad=function(s,len){s=String(s);while(s.length<len)s=" "+s;return s;};
-        const playerNames=sqps.map(function(p){return(p.name||"?").substring(0,8);});
         var lines=[];
-        lines.push("QUEST ROUND · "+playerNames.join(" · "));
+        lines.push("QUEST ROUND");
         lines.push("");
         sortedRounds.forEach(function(roundNum){
           const r0=sqps[0]&&(sqps[0].scoreHistory||[]).find(function(r){return r.questId===scorecardQuestId&&r.roundNumber===roundNum;});
@@ -1386,38 +1383,42 @@ function App(){
             const hist=(p.scoreHistory||[]).find(function(r){return r.questId===scorecardQuestId&&r.roundNumber===roundNum;});
             const snap=hist&&hist.snapshot;
             if(!snap) return;
-            const skills=(snap.chosenSkills||[]).join(", ");
-            var line="  "+(snap.clsIcon||"")+" "+snap.name+" · "+(snap.clsName||"?")+" Lv"+snap.level+" · "+skills;
+            var line="  "+(snap.clsName||"?")+" Lv"+snap.level;
+            if(snap.chosenSkills&&snap.chosenSkills.length) line+=" · "+(snap.chosenSkills||[]).join(", ");
             if(snap.multiclassName) line+=" / "+snap.multiclassName;
-            lines.push(line);
+            lines.push("  "+snap.name+" — "+line.trim());
           });
           lines.push("");
-          // Header row
-          var header="          "+sqps.map(function(p){return pad(p.name?p.name.substring(0,5):"?",6);}).join(" ");
+          // Column header
+          var header="Hole | Encounter              |"+sqps.map(function(p){var n=(p.name||"?").substring(0,6);while(n.length<6)n+=" ";return n;}).join("|");
           lines.push(header);
-          // Hole rows
-          var holeNums=[1,2,3,4,5,6,7,8,9];
-          const enc=(r0&&r0.encounters)||[];
+          lines.push("-----|------------------------|"+sqps.map(function(){return "------";}).join("|"));
+          // Build encounter map from hole-keyed object
+          const enc=(r0&&r0.encounters)||{};
           holeNums.forEach(function(h){
-            const encName=enc[h-1]||"—";
-            var row=pad(h+".",3)+" "+pad(encName.substring(0,18),18)+" ";
+            var encName=(enc[h]||"—").substring(0,22);
+            while(encName.length<22) encName+=" ";
+            var row=" "+h+"   | "+encName+" |";
             sqps.forEach(function(p){
               const hist=(p.scoreHistory||[]).find(function(r){return r.questId===scorecardQuestId&&r.roundNumber===roundNum;});
               const hd=hist&&hist.holes&&hist.holes.find(function(hh){return hh.hole===h;});
-              var score=hd?fmt(hd.score):(h>((hist&&hist.holes&&hist.holes.length)||0)?"✗":"·");
+              var score=hd?fmt(hd.score):(h>((hist&&hist.holes&&hist.holes.length)||0)?"X":".");
               if(hd&&hd.proficient) score=score+"*";
               if(hd&&hd.bottled) score="~"+score;
-              row+=pad(score,6)+" ";
+              while(score.length<6) score=" "+score;
+              row+=score+"|";
             });
             lines.push(row);
           });
           // Totals
-          var totRow=pad("TOT",22)+" ";
+          var totRow=" TOT | "+" ".repeat(22)+" |";
           sqps.forEach(function(p){
             const hist=(p.scoreHistory||[]).find(function(r){return r.questId===scorecardQuestId&&r.roundNumber===roundNum;});
             const total=(hist&&hist.holes||[]).reduce(function(a,h){return a+h.score;},0);
-            totRow+=pad(fmt(total),6)+" ";
+            var t=fmt(total);while(t.length<6)t=" "+t;
+            totRow+=t+"|";
           });
+          lines.push("-----|------------------------|"+sqps.map(function(){return "------";}).join("|"));
           lines.push(totRow);
           lines.push("");
         });
@@ -1439,7 +1440,7 @@ function App(){
         sortedRounds.map(function(roundNum){
           const currentHole=(sq&&sq.currentRound===roundNum)?sq.hole:null;
           const r0=sqps[0]&&(sqps[0].scoreHistory||[]).find(function(r){return r.questId===scorecardQuestId&&r.roundNumber===roundNum;});
-          const enc=(r0&&r0.encounters)||[];
+          const enc=(r0&&r0.encounters)||{};
           return React.createElement('div',{key:roundNum,style:{padding:"16px 12px 0"}},
             React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.greyDim,letterSpacing:2,marginBottom:"6px",display:"flex",justifyContent:"space-between",alignItems:"center"}},
               React.createElement('span',null,"ROUND ",roundNum),
@@ -1488,11 +1489,11 @@ function App(){
                 )
               )
             ),
-            enc.length>0&&React.createElement('div',{style:{marginTop:"10px",paddingLeft:"4px",paddingBottom:"8px"}},
-              enc.map(function(name,i){
-                return React.createElement('div',{key:i,style:{fontFamily:BF,fontSize:"10px",color:C.greyDim,marginBottom:"3px"}},
-                  React.createElement('span',{style:{color:C.border,marginRight:"6px"}},i+1+"."),
-                  name
+            Object.keys(enc).length>0&&React.createElement('div',{style:{marginTop:"10px",paddingLeft:"4px",paddingBottom:"8px"}},
+              [1,2,3,4,5,6,7,8,9].filter(function(h){return enc[h];}).map(function(h){
+                return React.createElement('div',{key:h,style:{fontFamily:BF,fontSize:"10px",color:C.greyDim,marginBottom:"3px"}},
+                  React.createElement('span',{style:{color:C.border,marginRight:"6px"}},h+"."),
+                  enc[h]
                 );
               })
             )
@@ -1811,11 +1812,11 @@ function App(){
                     ))
                   )
                 ),
-                r.encounters&&r.encounters.length>0&&React.createElement('div',{style:{marginTop:"8px",paddingLeft:"2px"}},
-                  r.encounters.map(function(name,i){
-                    return React.createElement('div',{key:i,style:{fontFamily:BF,fontSize:"10px",color:C.greyDim,marginBottom:"3px"}},
-                      React.createElement('span',{style:{color:C.border,marginRight:"6px"}},i+1+"."),
-                      name
+                r.encounters&&Object.keys(r.encounters).length>0&&React.createElement('div',{style:{marginTop:"8px",paddingLeft:"2px"}},
+                  [1,2,3,4,5,6,7,8,9].filter(function(h){return r.encounters[h];}).map(function(h){
+                    return React.createElement('div',{key:h,style:{fontFamily:BF,fontSize:"10px",color:C.greyDim,marginBottom:"3px"}},
+                      React.createElement('span',{style:{color:C.border,marginRight:"6px"}},h+"."),
+                      r.encounters[h]
                     );
                   })
                 )
