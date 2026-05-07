@@ -799,9 +799,7 @@ function PlayerSheet({ p, onClose, updateField, adj }) {
 // ── QR ────────────────────────────────────────────────────────────────────────
 function QRImage({ text, size = 220 }) {
   const ref = useCallback((node) => {
-    if (!node || !text) return;
-    console.log("QRImage mount — window.QRCode:", typeof window.QRCode, "text:", text.substring(0, 30));
-    if (!window.QRCode) { logError("QRCode not available", "window.QRCode is undefined"); return; }
+    if (!node || !text || typeof window.QRCode !== "function") return;
     node.innerHTML = "";
     try {
       new window.QRCode(node, {
@@ -809,8 +807,7 @@ function QRImage({ text, size = 220 }) {
         colorDark: "#000000", colorLight: "#ffffff",
         correctLevel: window.QRCode.CorrectLevel.M,
       });
-      console.log("QRCode rendered, node children:", node.children.length);
-    } catch (e) { logError("QRCode failed", e.message); console.error("QRCode error:", e); }
+    } catch (e) { logError("QRCode failed", e.message); }
   }, [text, size]);
   return <div ref={ref} style={{ background: "#fff", padding: 8, display: "inline-block", minWidth: size, minHeight: size }} />;
 }
