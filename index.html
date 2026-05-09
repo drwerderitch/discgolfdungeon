@@ -141,12 +141,28 @@ const ADVENTURE_CARDS=[
   {tier:2,title:"The Traveling Merchant",tags:"Social",flavor:"A trader with a full pack, heading the other direction.",effect:"Before throwing any player may buy or sell treasures at face value. Any player may also purchase advantage tokens at 2gp each. No wrinkle during play.",success:"He throws in a bonus. Gain 2gp.",fail:"He packed up quickly. No bonus."},
   {tier:2,title:"Healing Spring",tags:"Nature",flavor:"A clear pool catches the light strangely. The water here is different.",effect:"No wrinkle during play. If any player's disc lands in water this hole they draw no Peril on a bogey — the spring absorbs the misfortune.",success:"Gain 2gp.",fail:"Gain 1gp."},
   {tier:2,title:"Dragon Sighted",tags:"Universal",flavor:"A shadow passes over the canopy. Enormous. Gone in seconds.",effect:"No wrinkle this hole — nobody can quite focus.",success:"It didn't see you. Gain 2gp.",fail:"It circled back. The party loses 2gp.",consequenceOnFail:{title:"The Dragon Returns",tags:"Universal",flavor:"It came back. It saw you.",effect:"All players throw from blue tee this hole.",success:"You drove it off or fled. Gain 5gp. Everyone narrates their moment.",fail:"It cost you dearly. Lose 4gp. Everyone narrates their moment."}},
-  {tier:2,title:"The Goblin Scout",tags:"Stealth — Nature",flavor:"Small tracks in the mud. Fresh. Heading the same direction you are.",effect:"Before throwing the party chooses their approach: move silently (Stealth) or let the forest mask you (Nature).",success:"You avoided detection. Gain 2gp.",fail:"It reported back.",consequenceOnFail:{title:"Goblin Warband",tags:"Universal",flavor:"They found you. Deal with it however you can.",effect:"All players throw drives with disadvantage.",success:"You handled it. Gain 4gp. Everyone narrates their moment.",fail:"It cost you. Lose 3gp. Everyone narrates their moment."}},
-  {tier:2,title:"Old Bones",tags:"Nature",flavor:"The remains of a campfire. Gear scattered. Someone left in a hurry.",effect:"No wrinkle during play.",success:"You find what they left behind. Draw a Boon.",fail:"You find what came after them.",consequenceOnFail:{title:"What Came After Them",tags:"Universal",flavor:"You found out the hard way.",effect:"All players throw drives with disadvantage.",success:"You survived. Gain 3gp. Everyone narrates their moment.",fail:"Lose 2gp. Everyone narrates their moment."}},
+  {tier:2,title:"The Goblin Scout",tags:"Stealth — Nature",variants:[
+    {title:"The Goblin Scout",flavor:"Small tracks in the mud. Fresh. Heading the same direction you are.",effect:"Before throwing the party chooses their approach: move silently (Stealth) or let the forest mask you (Nature).",success:"You avoided detection. Gain 2gp.",fail:"It reported back.",consequenceOnFail:{title:"Goblin Warband",tags:"Universal",flavor:"They found you. Deal with it however you can.",effect:"All players throw drives with disadvantage.",success:"You handled it. Gain 4gp. Everyone narrates their moment.",fail:"It cost you. Lose 3gp. Everyone narrates their moment."}},
+    {title:"Bandit Outrider",flavor:"A rider on the ridge, watching the trail below. They haven't seen you yet.",effect:"Before throwing the party chooses their approach: move unseen through the low ground (Stealth) or use the terrain to mask your movement (Nature).",success:"You slipped past. Gain 2gp.",fail:"They reported back.",consequenceOnFail:{title:"Bandit Ambush",tags:"Universal",flavor:"The outrider brought friends. They were waiting.",effect:"All players throw drives with disadvantage.",success:"You fought them off. Gain 4gp. Everyone narrates their moment.",fail:"It cost you. Lose 3gp. Everyone narrates their moment."}},
+    {title:"Cult Patrol",flavor:"Robed figures moving through the trees in formation. Torches. Wrong direction for a campsite.",effect:"Before throwing the party chooses their approach: stay hidden and silent (Stealth) or let the forest swallow you (Nature).",success:"They passed without noticing. Gain 2gp.",fail:"One of them spotted something.",consequenceOnFail:{title:"The Summoning",tags:"Universal",flavor:"They're calling something. You can hear the chanting.",effect:"All players throw drives with disadvantage.",success:"You disrupted it in time. Gain 4gp. Everyone narrates their moment.",fail:"It answered. Lose 3gp. Everyone narrates their moment."}},
+  ]},
+  {tier:2,title:"Old Bones",tags:"Nature",variants:[
+    {title:"Old Bones",flavor:"The remains of a campfire. Gear scattered. Someone left in a hurry.",effect:"No wrinkle during play.",success:"You find what they left behind. Draw a Boon.",fail:"You find what came after them.",consequenceOnFail:{title:"What Came After Them",tags:"Universal",flavor:"You found out the hard way.",effect:"All players throw drives with disadvantage.",success:"You survived. Gain 3gp. Everyone narrates their moment.",fail:"Lose 2gp. Everyone narrates their moment."}},
+    {title:"Abandoned Camp",flavor:"A bedroll, a cold pot, boots still laced. Nobody packed to leave.",effect:"No wrinkle during play.",success:"You find what they left behind. Draw a Boon.",fail:"You find what came after them.",consequenceOnFail:{title:"What Came After Them",tags:"Universal",flavor:"You found out the hard way.",effect:"All players throw drives with disadvantage.",success:"You survived. Gain 3gp. Everyone narrates their moment.",fail:"Lose 2gp. Everyone narrates their moment."}},
+    {title:"Burnt Wagon",flavor:"Axles sunk in the mud. Whatever was inside is long gone.",effect:"No wrinkle during play.",success:"You find what they left behind. Draw a Boon.",fail:"You find what came after them.",consequenceOnFail:{title:"What Came After Them",tags:"Universal",flavor:"You found out the hard way.",effect:"All players throw drives with disadvantage.",success:"You survived. Gain 3gp. Everyone narrates their moment.",fail:"Lose 2gp. Everyone narrates their moment."}},
+    {title:"Collapsed Shelter",flavor:"Branches and rope, half standing. Someone slept here recently.",effect:"No wrinkle during play.",success:"You find what they left behind. Draw a Boon.",fail:"You find what came after them.",consequenceOnFail:{title:"What Came After Them",tags:"Universal",flavor:"You found out the hard way.",effect:"All players throw drives with disadvantage.",success:"You survived. Gain 3gp. Everyone narrates their moment.",fail:"Lose 2gp. Everyone narrates their moment."}},
+    {title:"Scattered Gear",flavor:"Packs split open along the trail. The contents tell a story nobody finished.",effect:"No wrinkle during play.",success:"You find what they left behind. Draw a Boon.",fail:"You find what came after them.",consequenceOnFail:{title:"What Came After Them",tags:"Universal",flavor:"You found out the hard way.",effect:"All players throw drives with disadvantage.",success:"You survived. Gain 3gp. Everyone narrates their moment.",fail:"Lose 2gp. Everyone narrates their moment."}},
+  ]},
   {tier:2,title:"The Offering Stone",tags:"Spirit",flavor:"A flat rock at the trailside. Coins and small tokens left by travelers before you.",effect:"Any player may leave 1gp as an offering before throwing. If at least two players offer the party gains two stored advantage tokens regardless of score.",success:"The offering was worthy. Gain those tokens plus 1gp back each.",fail:"The tokens remain. Something noted your generosity."},
   {tier:2,title:"The Wrong Path",tags:"Spirit",flavor:"Something redirected you here. You didn't choose this route.",effect:"One player chosen by the group draws a Peril card and reads it aloud but does not apply it yet — it activates only if the party fails this hole.",success:"The path corrects itself. Discard the Peril unresolved.",fail:"It was leading you here all along. Apply the Peril now."},
   {tier:2,title:"The Fairy Ring",tags:"Spirit",flavor:"Something small and bright darts between the trees. It stops. It noticed something.",effect:"If any player is carrying a treasure item that player throws their drive with disadvantage. If nobody is carrying a treasure item: the fairy leads you somewhere lucky — draw a Boon.",success:"Gain 2gp.",fail:"Gain 1gp."},
-  {tier:2,title:"The Ruins",tags:"Spirit",flavor:"Stone walls half standing, something still inside worth having.",effect:"No wrinkle during play.",success:"You search carefully and find something useful. Draw a treasure card.",fail:"Whatever is inside heard you coming.",consequenceOnFail:{title:"Something Awakened",tags:"Universal",flavor:"You disturbed it. Now it follows.",effect:"All approaches this hole are thrown with disadvantage.",success:"You contained it. Gain 3gp. Everyone narrates their moment.",fail:"It won't stop following."}},
+  {tier:2,title:"The Ruins",tags:"Spirit",effect:"No wrinkle during play.",success:"You search carefully and find something useful. Draw a treasure card.",fail:"Whatever is inside heard you coming.",variants:[
+    {title:"The Ruins",flavor:"Stone walls half standing, something still inside worth having.",consequenceOnFail:{title:"Something Awakened",tags:"Universal",flavor:"You disturbed it. Now it follows.",effect:"All approaches this hole are thrown with disadvantage.",success:"You contained it. Gain 3gp. Everyone narrates their moment.",fail:"It won't stop following.",consequenceOnFail:{title:"Still Haunted",tags:"Universal",flavor:"It's still here. It learned your patterns.",effect:"All putts this hole must be made twice to count. Miss the second and add a stroke.",success:"It finally dissipates. Gain 2gp. Everyone narrates their moment.",fail:"Lose 2gp. Everyone narrates their moment."}}},
+    {title:"Sunken Temple",flavor:"Steps descending into shadow. The door is still open.",consequenceOnFail:{title:"Something Awakened",tags:"Universal",flavor:"The water stirs. Something beneath remembers being worshipped.",effect:"All approaches this hole are thrown with disadvantage.",success:"You contained it. Gain 3gp. Everyone narrates their moment.",fail:"It won't stop following.",consequenceOnFail:{title:"Still Haunted",tags:"Universal",flavor:"The tide doesn't forget.",effect:"All putts this hole must be made twice to count. Miss the second and add a stroke.",success:"It finally dissipates. Gain 2gp. Everyone narrates their moment.",fail:"Lose 2gp. Everyone narrates their moment."}}},
+    {title:"Collapsed Tower",flavor:"One wall remains. Something carved into it at eye level.",consequenceOnFail:{title:"Something Awakened",tags:"Universal",flavor:"The stones shift. Whatever was sealed inside is no longer sealed.",effect:"All approaches this hole are thrown with disadvantage.",success:"You contained it. Gain 3gp. Everyone narrates their moment.",fail:"It won't stop following.",consequenceOnFail:{title:"Still Haunted",tags:"Universal",flavor:"The echo follows you.",effect:"All putts this hole must be made twice to count. Miss the second and add a stroke.",success:"It finally dissipates. Gain 2gp. Everyone narrates their moment.",fail:"Lose 2gp. Everyone narrates their moment."}}},
+    {title:"Ancient Marker",flavor:"A standing stone, older than the trail around it. Someone left an offering recently.",consequenceOnFail:{title:"Something Awakened",tags:"Universal",flavor:"You moved something you shouldn't have. The marker noticed.",effect:"All approaches this hole are thrown with disadvantage.",success:"You contained it. Gain 3gp. Everyone narrates their moment.",fail:"It won't stop following.",consequenceOnFail:{title:"Still Haunted",tags:"Universal",flavor:"The old debt isn't settled.",effect:"All putts this hole must be made twice to count. Miss the second and add a stroke.",success:"It finally dissipates. Gain 2gp. Everyone narrates their moment.",fail:"Lose 2gp. Everyone narrates their moment."}}},
+    {title:"Overgrown Archway",flavor:"Vines through the stonework, roots through the floor. Something on the other side caught the light.",consequenceOnFail:{title:"Something Awakened",tags:"Universal",flavor:"You crossed the threshold. It counted.",effect:"All approaches this hole are thrown with disadvantage.",success:"You contained it. Gain 3gp. Everyone narrates their moment.",fail:"It won't stop following.",consequenceOnFail:{title:"Still Haunted",tags:"Universal",flavor:"You're still on the other side.",effect:"All putts this hole must be made twice to count. Miss the second and add a stroke.",success:"It finally dissipates. Gain 2gp. Everyone narrates their moment.",fail:"Lose 2gp. Everyone narrates their moment."}}},
+  ]},
   {tier:2,title:"The Watchers",tags:"Stealth",flavor:"Eyes in the treeline. Not animals. Not friendly.",effect:"To avoid detection each player must choose one disc before the hole begins and use it for every throw including putts.",success:"You passed unseen. Gain 1 XP each.",fail:"They saw you. Nothing — but they know you're here."},
   {tier:2,title:"The Decoy",tags:"Stealth",flavor:"One player draws attention so the others can slip through.",effect:"Before throwing one player volunteers as the decoy. They must throw their fastest disc. All other players must throw their slowest.",success:"The distraction worked. Gain 3gp.",fail:"It drew the wrong kind of attention. The decoy player loses 2gp."},
   {tier:2,title:"Through the Shadows",tags:"Stealth",flavor:"The only way through is clean. No crashing through brush, no rattling the trees.",effect:"Any player whose throw hits an obstacle loses 1gp immediately. Any player who lands clean draws a personal Boon at the end of the hole.",success:"Gain 3gp.",fail:"Gain 1gp.",consequenceOnFail:{title:"Detected",tags:"Universal",flavor:"They know exactly where you are now.",effect:"All players throw drives with disadvantage. No Stealth class abilities fire on this hole.",success:"You recovered your position. Gain 2gp. Everyone narrates their moment.",fail:"Lose 2gp. Everyone narrates their moment."}},
@@ -201,6 +217,86 @@ const BOON_CARDS=[
   {title:"Lucky Break",effect:"Gain a stored advantage token.",scope:"Personal"},
   {title:"Lucky Break",effect:"Gain a stored advantage token.",scope:"Personal"},
 ];
+
+const BOSS_TABLE=[
+  {id:"grak",nameVariants:["Grak, Goblin Chieftain","Skrix, The Warband Leader","Nix, First Blade of the Warrens","Rotfang, Keeper of the Pack","Skitter, The One They Follow"],icon:"👺",color:"#f86820",
+   trigger:["Tactics","Stealth"],
+   flavor:"He's been watching since hole one. He knows your patterns. He knows your pace.",
+   mechanic:"SPEEDSTER — every player must throw within 10 seconds of the previous player. No waiting, no deliberating.",
+   hitBackTitle:"Rattled by Goblins",
+   hitBackEffect:"Disadvantage on your next Stealth or Tactics tagged encounter.",
+   hitBackWounded:"Disadvantage on your next Stealth or Tactics tagged encounter. Also lose 1gp.",
+   woundedMechanic:"SPEEDSTER — 10 second rule. Grak is desperate now. Hit back also costs 1gp.",
+   woundedFlavor:"He's bleeding but screaming louder.",
+  },
+  {id:"thornwall",nameVariants:["Thornwall, The Ancient Ent","Greyroot, The Unmoving","Barkwhisper, The Old Growth","Mossheart, The Warden","Splittrunk, The Awakened"],icon:"🌳",color:"#00c050",
+   trigger:["Nature"],
+   flavor:"It remembers every disc that ever hit its bark. It has been keeping count.",
+   mechanic:"ENT ASSAULT — any throw that hits a tree must be rethrown from the original lie.",
+   hitBackTitle:"Root Cursed",
+   hitBackEffect:"Disadvantage on your next approach regardless of hole type.",
+   hitBackWounded:"Disadvantage on your next two approaches.",
+   woundedMechanic:"ENT ASSAULT — tree hits rethrown. Wounded: roots spread. Hit back affects two future approaches.",
+   woundedFlavor:"The roots reach further than they should.",
+  },
+  {id:"watcher",nameVariants:["The Pale Watcher","The Hollow Archivist","The Dim Librarian","Vestis, The Cataloguer","The Grey Witness"],icon:"👁️",color:"#00e8d8",
+   trigger:["Spirit"],
+   flavor:"It doesn't move. It doesn't speak. It simply watches, and the discs do strange things.",
+   mechanic:"OBSERVED — no disc may be thrown twice this hole. If you run out, borrow from teammates. If the party pool is exhausted, pay 2gp or take a stroke penalty per additional throw.",
+   hitBackTitle:"Marked",
+   hitBackEffect:"One disc of the app's choosing is unavailable on your next Spirit tagged encounter.",
+   hitBackWounded:"One disc unavailable for you and one disc unavailable for a teammate of the app's choosing.",
+   woundedMechanic:"OBSERVED — no disc thrown twice. Wounded: The Watcher marks two players.",
+   woundedFlavor:"It has seen enough to know which disc you trust most.",
+  },
+  {id:"ironclad",nameVariants:["Ironclad, The Debt Collector","Harrow, The Ledger Keeper","Tollus, The Unbribed","Graven, The Tax Man","The Brass Collector"],icon:"💀",color:"#f8d030",
+   trigger:["Social"],
+   flavor:"Everyone owes something. He just came to collect.",
+   mechanic:"TOLL — every player must pay 1gp before each throw or take a stroke penalty instead.",
+   hitBackTitle:"The Debt Grows",
+   hitBackEffect:"Lose 2gp immediately. If you cannot pay, disadvantage on your next Social tagged encounter.",
+   hitBackWounded:"Lose 2gp. If you cannot pay, disadvantage on your next Social encounter. Toll increases to 2gp per throw.",
+   woundedMechanic:"TOLL — 2gp per throw or stroke penalty. The ledger is longer than it looks.",
+   woundedFlavor:"He started charging interest.",
+  },
+  {id:"hydra",nameVariants:["The Murk Hydra","The Drowned Many","Tideswell, The Recurring","The Bog Sovereign","Deepmaw, The Persistent"],icon:"🐉",color:"#48a0f8",
+   trigger:["Athletics"],
+   flavor:"Every time you think it's done, another head rises from the water.",
+   mechanic:"HYDRA PUTTS — all putts must be made consecutively as a party. One missed putt resets the entire party to putt again. Missed putts add a stroke. Made putts do not add strokes on reset.",
+   hitBackTitle:"Soaked",
+   hitBackEffect:"Disadvantage on all throws with your two fastest discs on your next hole.",
+   hitBackWounded:"Disadvantage on your two fastest discs next hole. Every party reset also costs the party 1gp.",
+   woundedMechanic:"HYDRA PUTTS — party consecutive putts. Wounded: each reset costs 1gp.",
+   woundedFlavor:"The water is rising.",
+  },
+  {id:"seraphim",nameVariants:["Cerulean Seraphim","The Gilt Arbiter","Auroch, The Simultaneous","The Blinding Accord","Solace, The Unbroken"],icon:"✨",color:"#c060e8",
+   trigger:[],
+   flavor:"No dominant threat called it here. It came because it was invited by everything equally.",
+   mechanic:"SIMULTANEOUS — all throws including drives must be made together on a countdown. Every player stands at their current lie and throws at the same moment.",
+   hitBackTitle:"Blinded by Light",
+   hitBackEffect:"Disadvantage on your next drive regardless of hole type.",
+   hitBackWounded:"Disadvantage on your next drive. Simultaneous rule now includes putts.",
+   woundedMechanic:"SIMULTANEOUS — all throws including putts made together on countdown.",
+   woundedFlavor:"The light has no preference. It blinds everyone equally.",
+  },
+];
+
+const PERIL_FLAVORS={
+  "Cornered":{Tactics:"They cut off the only exit you could see.",Nature:"The terrain boxed you in before you realized it.",Stealth:"They knew exactly where you were going.",Social:"Your words backed you into a corner you couldn't talk your way out of.",Spirit:"Something old and patient herded you here on purpose.",Athletics:"You pushed too hard and ran out of ground."},
+  "The Debt Collector":{Tactics:"Word got back to someone you owe. Bad timing.",Nature:"You took something from this place. It remembers.",Stealth:"Someone saw what you took. They've been waiting.",Social:"A face you recognize. Not a friendly one.",Spirit:"The debt is older than money. It still counts.",Athletics:"You pushed through without paying the toll. Now it's due."},
+  "Cursed Hands":{Tactics:"The engagement left something on your hands you can't shake off.",Nature:"You touched something you shouldn't have. The forest marked you.",Stealth:"Whatever you brushed past in the dark left a residue.",Social:"The wrong handshake. You felt it the moment it happened.",Spirit:"It reached through the veil and found your throwing hand.",Athletics:"The impact traveled up your arm and settled somewhere it shouldn't."},
+  "Spooked":{Tactics:"Something moved in the treeline right behind you.",Nature:"A sound you can't place. Close. Wrong.",Stealth:"You held still too long and your mind filled the silence.",Social:"The look on their face when they stopped talking.",Spirit:"The air changed. Something noticed you noticing it.",Athletics:"The fall rattled you more than you let on."},
+  "Lost on the Trail":{Tactics:"The plan fell apart and nobody knows the fallback.",Nature:"The landmarks all look wrong from here.",Stealth:"You stayed hidden so long you lost track of where you were going.",Social:"Mixed signals. Everyone went a different direction.",Spirit:"The path shifted. You're all somewhere you didn't choose.",Athletics:"You moved fast and stopped paying attention. Now nothing looks familiar."},
+  "The Weight of It":{Tactics:"That cost more than it was worth and everyone knows it.",Nature:"The terrain took something out of everyone.",Stealth:"The tension of holding still for too long is catching up.",Social:"Nobody's saying it but the mood has shifted.",Spirit:"Something is heavier than it was an hour ago.",Athletics:"The effort is compounding. Legs are lead. Arms feel wrong."},
+  "Hexed":{Tactics:"Whatever you disturbed out there followed you back.",Nature:"Something in the brush tagged you on the way through.",Stealth:"You passed through a threshold you didn't see. It noticed.",Social:"They smiled when you left. That smile meant something.",Spirit:"It hitched a ride in your bag. You can feel the weight of it.",Athletics:"You ran through something you shouldn't have. It's still on you."},
+  "Eyes Closed":{Tactics:"The chaos was total. You threw on instinct.",Nature:"Dust, branches, something in your face at the worst moment.",Stealth:"You kept your eyes down too long and lost the line.",Social:"You flinched at the wrong moment and missed the read entirely.",Spirit:"Something pushed at the edges of your vision. You shut it out.",Athletics:"The impact, the stumble, the recovery — and then you had to throw."},
+  "Deadweight":{Tactics:"Your options narrowed fast. You're working with what's left.",Nature:"The mud, the roots, the weight of it all. Nothing moves clean.",Stealth:"You're carrying too much. Every step announces you.",Social:"The momentum is gone. You're pushing uphill on everything.",Spirit:"Something is pulling at your bag, your arm, your follow-through.",Athletics:"Your body is asking for less. It's not really asking."},
+  "The Unraveling":{Tactics:"Everything you planned for that hole is out the window.",Nature:"The terrain had its way with you and you're still compensating.",Stealth:"You overcorrected. The smooth move became a scramble.",Social:"You tied yourself in knots trying to hold it together.",Spirit:"Something pulled at your form from the inside out.",Athletics:"Your dominant side took the hit. The other one has to carry it."},
+  "Unfinished Business":{Tactics:"You didn't finish the job. Now you have to go back and do it right.",Nature:"The ground here won't let it count until you mean it.",Stealth:"You thought you were done. You weren't.",Social:"They're not satisfied. You have to prove it twice.",Spirit:"The hole doesn't believe you yet.",Athletics:"Your body knows you didn't commit. Do it again."},
+  "Worst Drive":{Tactics:"The formation broke. Everyone scrambles from the same bad spot.",Nature:"One bad read and the whole party follows it off the edge.",Stealth:"The noise gave everyone away. Now you all deal with it.",Social:"One person's bad call became everyone's problem.",Spirit:"The unluckiest line pulled the whole party into it.",Athletics:"One stumble, one bad release — and now everyone's playing catch-up."},
+  "Rattled":{Tactics:"The exchange went sideways and you're still thinking about it.",Nature:"Something out there got in your head and won't leave.",Stealth:"You almost got caught. The almost is worse than getting caught.",Social:"What they said landed. You can't unhear it.",Spirit:"A flicker at the edge of your vision on your backswing.",Athletics:"Your body did something your brain didn't tell it to. Once is enough."},
+  "Setback":{Tactics:"Ground you fought for, lost. The cost was real.",Nature:"The trail gave something and then took it back.",Stealth:"They found what you left behind. It wasn't nothing.",Social:"The deal fell through. Everyone eats the loss.",Spirit:"The luck that was with you quietly left.",Athletics:"The effort didn't pay. You spent it anyway."},
+};
 
 const PERIL_CARDS=[
   {title:"Cornered",tags:"Tactics",effect:"No cover. No good options. The player who triggered this Peril throws their next drive from blue tee regardless of earned position.",redemption:"Make par anyway. Gain 2 XP.",xp:2,scope:"Personal"},
@@ -405,6 +501,7 @@ function CardOverlay({
 }){
   const ds={
     adventure:{border:C.gold,accent:C.gold,label:"ENCOUNTER"},
+    boss:{border:C.red,accent:C.red,label:"BOSS ENCOUNTER"},
     boon:{border:C.green,accent:C.green,label:"BOON"},
     peril:{border:C.red,accent:C.red,label:"PERIL"},
     between:{border:C.blue,accent:C.blue,label:"BETWEEN HOLES"},
@@ -565,7 +662,7 @@ function CardOverlay({
       !m.wrongPathPeril&&React.createElement(React.Fragment,null,
         React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.greyDim,marginBottom:"8px"}},"The group chooses who draws. That player reads it aloud — it only activates if the party fails."),
         (questPlayers||[]).map(p=>React.createElement('button',{key:p.id,onClick:()=>{
-          const pc=drawPeril();
+          const pc=drawPeril(card.tags);
           setM(prev=>({...prev,wrongPathPeril:pc,wrongPathPid:p.id,wrongPathPname:p.name}));
         },style:choiceBtn(false,C.purple)},
           React.createElement('div',{style:{display:"flex",alignItems:"center",gap:"8px"}},
@@ -590,7 +687,7 @@ function CardOverlay({
 
   // ── Score section (adventure cards) ──────────────────────────────────────
   const scoreSection=(()=>{
-    if((deck!=="adventure"&&deck!=="consequence")||phase!=="score"||(!(questPlayers&&questPlayers.length)))return null;
+    if((deck!=="adventure"&&deck!=="consequence"&&deck!=="boss")||phase!=="score"||(!(questPlayers&&questPlayers.length)))return null;
     const scores=holeScores||{};
     const avg=questPlayers.reduce((a,p)=>a+(scores[p.id]||0),0)/questPlayers.length;
     const partySuccess=cardMeta.successOverride||avg<=0;
@@ -687,6 +784,18 @@ function CardOverlay({
         React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:!partySuccess?C.white:C.greyDim}},card.fail)
       ),
       card.consequenceOnFail&&React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.orange,marginBottom:"6px",border:`1px solid ${C.orange}44`,padding:"4px 8px"}},"⚡ Fail triggers: ",card.consequenceOnFail.title),
+      deck==="boss"&&React.createElement('div',{style:{background:C.red+"12",border:"2px solid "+C.red+"44",padding:"10px 12px",marginBottom:"8px"}},
+        React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.red,letterSpacing:2,marginBottom:"6px"}},"BOSS DAMAGE"),
+        React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.whiteDim,marginBottom:"8px",lineHeight:1.5}},"Birdie → 2 dmg · Par → 1 dmg safe or 2 dmg + hit back · Bogey → 1 dmg + hit back"),
+        questPlayers&&questPlayers.map(function(p){
+          const n=holeScores&&holeScores[p.id]||0;
+          if(n!==0) return null; // only show escalate for par scores
+          const escalated=!!(cardMeta.bossDmg2&&cardMeta.bossDmg2[p.id]);
+          return React.createElement('button',{key:p.id,onClick:()=>setCardMeta(prev=>({...prev,bossDmg2:{...(prev.bossDmg2||{}),[p.id]:!escalated}})),style:{width:"100%",padding:"8px 10px",marginBottom:"4px",background:escalated?C.red+"33":"transparent",border:"2px solid "+(escalated?C.red:C.greyDim),borderRadius:0,color:escalated?C.red:C.greyDim,fontFamily:BF,fontSize:"11px",cursor:"pointer",textAlign:"left"}},
+            (p.cls&&p.cls.icon)||"❓"," ",p.name," — PAR → ",escalated?"2 DMG + HIT BACK ✓":"escalate to 2 dmg + hit back?"
+          );
+        })
+      ),
       React.createElement('button',{onClick:()=>{
         const override=!cardMeta.successOverride;
         setCardMeta(prev=>({...prev,successOverride:override}));
@@ -721,7 +830,7 @@ function CardOverlay({
     ),
 
     // Proficiency notice
-    proficientIds.length>0&&(deck==="adventure"||deck==="consequence")&&React.createElement('div',{style:{background:C.green+"18",border:"2px solid "+C.green+"44",padding:"6px 10px",marginBottom:"8px",fontFamily:BF,fontSize:"11px",color:C.green}},
+    proficientIds.length>0&&(deck==="adventure"||deck==="consequence"||deck==="boss")&&React.createElement('div',{style:{background:C.green+"18",border:"2px solid "+C.green+"44",padding:"6px 10px",marginBottom:"8px",fontFamily:BF,fontSize:"11px",color:C.green}},
       proficientIds.map(function(id){
         var p=(questPlayers||[]).find(function(x){return x.id===id;});
         if(!p) return null;
@@ -789,6 +898,11 @@ function CardOverlay({
 
     // Treasure assign
     deck==="treasure"&&phase==="read"&&(questPlayers&&questPlayers.length)>0&&React.createElement(React.Fragment,null,
+      card._victoryNote&&React.createElement('div',{style:{background:C.gold+"22",border:"3px solid "+C.gold,padding:"10px 14px",marginBottom:"12px",fontFamily:BF,fontSize:"13px",color:C.gold,lineHeight:1.6,textAlign:"center"}},
+        "🏆 BOSS DEFEATED",React.createElement('br',null),
+        "4 XP · 10gp granted to all players",React.createElement('br',null),
+        React.createElement('span',{style:{color:C.whiteDim,fontSize:"11px"}},"Assign the treasure below")
+      ),
       React.createElement('div',{style:{fontFamily:BF,fontSize:"14px",color:C.grey,marginBottom:"8px"}},"ASSIGN TO PLAYER"),
       questPlayers.map(p=>React.createElement('button',{key:p.id,onClick:()=>onAction("assignTreasure",p.id),style:pBtn(p)},
         React.createElement('span',{style:{fontSize:"22px"}},(p.cls&&p.cls.icon)||"❓"),
@@ -902,12 +1016,20 @@ function App(){
   const [sheetId,setSheetId]=useState(null);
   const [drawQueue,setDrawQueue]=useState([]);
   const [holeScores,setHoleScores]=useState({});
+  const [partyScoreAdj,setPartyScoreAdj]=useState(0);
   // Lingering quest-level boons (green banners, like perils but positive)
   // e.g. {id, title, effect} — free redraw token from Coded Message
   const [questBoons,setQuestBoons]=useState([]);
   const [showCamp,setShowCamp]=useState(false);
+  const [showBoss,setShowBoss]=useState(false);
+  const [showBossPopup,setShowBossPopup]=useState(false);
+  const _loadBestiary=()=>{try{return JSON.parse(localStorage.getItem("dgd_bestiary")||"[]");}catch(e){return[];}};
+  const [bestiary,setBestiary]=useState(_loadBestiary);
+  const _saveBestiary=(b)=>{try{localStorage.setItem("dgd_bestiary",JSON.stringify(b));}catch(e){}};
+
   const [endRoundConfirm,setEndRoundConfirm]=useState(false);
   const [deleteConfirm,setDeleteConfirm]=useState(false);
+  const [questDeleteConfirm,setQuestDeleteConfirm]=useState(null);
   const [endSessionConfirm,setEndSessionConfirm]=useState(false);
   const [showUse,setShowUse]=useState(false);
   const [errorLog,setErrorLog]=useState(function(){try{return JSON.parse(localStorage.getItem('dgd_errorlog')||'[]');}catch(e){return[];}});
@@ -929,6 +1051,8 @@ function App(){
   const _setAndSaveActiveQuestId=(id)=>{setActiveQuestId(id);try{localStorage.setItem("dgd_activeQuestId",JSON.stringify(id));}catch(e){}};
 
   const activeQuest=quests.find(q=>q.id===activeQuestId)||null;
+  const activeBoss=(activeQuest&&activeQuest.boss)||null;
+  const bossDefeatedThisSession=(activeQuest&&activeQuest.bossDefeatedThisSession)||false;
   const hole=(activeQuest&&activeQuest.hole)||1;
   const perils=(activeQuest&&activeQuest.perils)||[];
   const questPlayersFromQuest=allPlayers.filter(p=>((activeQuest&&activeQuest.playerIds)||[]).includes(p.id));
@@ -938,13 +1062,14 @@ function App(){
 
   // ── Props passed into CardOverlay (fixes crashes) ─────────────────────────
   const drawBoon=()=>{let d=bD.length?bD:shuffle(BOON_CARDS);if(!bD.length)setBD(d);const c=d[0];setBD(d.slice(1));return c;};
-  const drawPeril=()=>{let d=pD.length?pD:shuffle(PERIL_CARDS);if(!pD.length)setPD(d);const c=d[0];setPD(d.slice(1));return c;};
+  const drawPeril=(encounterTag)=>{let d=pD.length?pD:shuffle(PERIL_CARDS);if(!pD.length)setPD(d);const c=d[0];setPD(d.slice(1));return resolvePerilFlavor(c,encounterTag);};
   const applyGoldToAll=(amount)=>_setAndSavePlayers(ps=>ps.map(p=>questPlayersFromQuest.find(q=>q.id===p.id)?{...p,gold:Math.max(0,p.gold+amount)}:p));
   const applyGoldToPlayer=(pid,amount)=>_setAndSavePlayers(ps=>ps.map(p=>p.id===pid?{...p,gold:Math.max(0,p.gold+amount)}:p));
   const applyTokensToAll=(amount)=>_setAndSavePlayers(ps=>ps.map(p=>questPlayersFromQuest.find(q=>q.id===p.id)?{...p,tokens:p.tokens+amount}:p));
   const setPlayerField=(pid,field,val)=>_setAndSavePlayers(ps=>ps.map(p=>p.id===pid?{...p,[field]:val}:p));
   const updateQuestPerils=(p)=>_setAndSaveQuests(qs=>qs.map(q=>q.id===activeQuestId?{...q,perils:p}:q));
   const updateQuestHole=(h)=>_setAndSaveQuests(qs=>qs.map(q=>q.id===activeQuestId?{...q,hole:h}:q));
+  const appendHoleTag=(tag)=>_setAndSaveQuests(qs=>qs.map(q=>q.id===activeQuestId?{...q,holeTags:[...(q.holeTags||[]),tag]}:q));
 
   function addPlayer(){
     if(allPlayers.length>=8)return;
@@ -993,7 +1118,7 @@ function App(){
   }
   function deleteQuest(qid){_setAndSaveQuests(qs=>qs.filter(q=>q.id!==qid));if(activeQuestId===qid){_setAndSaveActiveQuestId(null);setQuestView("manager");}}
   function backToManager(){
-    _setAndSaveQuests(qs=>qs.map(q=>q.id===activeQuestId?{...q,hole,perils,aDeck:aD,bDeck:bD,pDeck:pD,bhDeck:bhD,tDeck:tD,questBoons}:q));
+    _setAndSaveQuests(qs=>qs.map(q=>q.id===activeQuestId?{...q,hole,perils,aDeck:aD,bDeck:bD,pDeck:pD,bhDeck:bhD,tDeck:tD,questBoons,boss:q.boss,bossStirs:q.bossStirs,bossDefeatedThisSession:q.bossDefeatedThisSession}:q));
     setEndRoundConfirm(false);
     setQuestView("manager");
   }
@@ -1021,28 +1146,170 @@ function App(){
       aDeck:shuffle(ADVENTURE_CARDS),bDeck:shuffle(BOON_CARDS),pDeck:shuffle(PERIL_CARDS),
       bhDeck:shuffle(BETWEEN_CARDS),tDeck:shuffle(TREASURE_CARDS)
     };
-    _setAndSaveQuests(qs=>qs.map(q=>q.id===activeQuestId?{...q,hole:1,currentRound:newRound,perils:[],
-      aDeck:newDecks.aDeck,bDeck:newDecks.bDeck,pDeck:newDecks.pDeck,
-      bhDeck:newDecks.bhDeck,tDeck:newDecks.tDeck,questBoons:[],nextAdventureCard:null}:q));
+    _setAndSaveQuests(qs=>qs.map(q=>{
+      if(q.id!==activeQuestId) return q;
+      const bossUpdate=q.boss?{boss:{...q.boss,currentHp:Math.min(q.boss.maxHp,q.boss.currentHp+1),wounded:Math.min(q.boss.maxHp,q.boss.currentHp+1)<=q.boss.woundedAt}}:{};
+      return{...q,hole:1,currentRound:newRound,perils:[],holeTags:[],
+        aDeck:newDecks.aDeck,bDeck:newDecks.bDeck,pDeck:newDecks.pDeck,
+        bhDeck:newDecks.bhDeck,tDeck:newDecks.tDeck,questBoons:[],nextAdventureCard:null,...bossUpdate};
+    }));
     setAD(newDecks.aDeck);setBD(newDecks.bDeck);setPD(newDecks.pDeck);
     setBhD(newDecks.bhDeck);setTD(newDecks.tDeck);
     setQuestBoons([]);
     setActiveAdventureCard(null);
-    updateQuestHole(1);
     // Reset tees
     _setAndSavePlayers(ps=>ps.map(p=>questPlayersFromQuest.find(q=>q.id===p.id)?{...p,tee:"white"}:p));
   }
 
-  function draw(dk,setDk,src){let d=dk.length?dk:shuffle(src);if(!dk.length)setDk(d);const c=d[0];setDk(d.slice(1));return c;}
+  function engageBoss(){
+    const b=activeBoss;
+    if(!b) return;
+    // Build a card from the boss data
+    const bossCard={
+      title:b.name,
+      tags:"Universal",
+      flavor:b.wounded?b.woundedFlavor:b.flavor,
+      effect:(b.wounded?b.woundedMechanic:b.mechanic)+"\n\n🛡 Spend a token to ignore the boss mechanic on any single throw.",
+      success:"Boss takes damage.",
+      fail:"Boss takes damage and hits back.",
+      isBossCard:true,
+      bossId:b.id,
+      bossIcon:b.icon,
+      bossColor:b.color,
+      hitBackTitle:b.hitBackTitle,
+      hitBackEffect:b.wounded?b.hitBackWounded:b.hitBackEffect,
+    };
+    const init={};
+    questPlayersFromQuest.forEach(p=>{init[p.id]=0;});
+    setHoleScores(init);
+    setPartyScoreAdj(0);
+    setActiveAdventureCard({card:bossCard,meta:{},scores:init,partyScoreAdj:0,isConsequence:false,isBoss:true});
+    setCard(bossCard);setCardDeck("boss");setCardMeta({});setCardPhase("score");
+    setShowBossPopup(false);
+  }
+  function resolveVariant(c){
+    if(!c.variants||!c.variants.length) return c;
+    const v=c.variants[Math.floor(Math.random()*c.variants.length)];
+    return Object.assign({},c,v,{variants:undefined});
+  }
+  function resolvePerilFlavor(c,encounterTag){
+    if(!encounterTag) return c;
+    const tags=encounterTag.split(/[—,\-]/).map(s=>s.trim()).filter(Boolean);
+    const ALL=['Tactics','Nature','Stealth','Social','Spirit','Athletics'];
+    const match=tags.find(t=>ALL.includes(t));
+    if(!match) return c;
+    const flavors=PERIL_FLAVORS[c.title];
+    if(!flavors||!flavors[match]) return c;
+    return Object.assign({},c,{flavor:flavors[match]});
+  }
+
+  function generateBoss(players,holeTags){
+    // Tally tags
+    const tally={};
+    (holeTags||[]).forEach(tagStr=>{
+      tagStr.split(/[—,\-]/).map(s=>s.trim()).filter(Boolean).forEach(t=>{
+        tally[t]=(tally[t]||0)+1;
+      });
+    });
+    const sorted=Object.entries(tally).sort((a,b)=>b[1]-a[1]);
+    const topTag=sorted.length?sorted[0][0]:null;
+    const topCount=sorted.length?sorted[0][1]:0;
+    const secondCount=sorted.length>1?sorted[1][1]:0;
+    const isEven=!topTag||(topCount-secondCount<=1&&sorted.length>=3);
+
+    let boss;
+    if(isEven){
+      boss=BOSS_TABLE.find(b=>b.id==="seraphim");
+    } else {
+      boss=BOSS_TABLE.find(b=>b.trigger.includes(topTag))||BOSS_TABLE.find(b=>b.id==="seraphim");
+    }
+
+    const levelMod={1:2,2:3,3:4};
+    const hpSum=players.reduce((a,p)=>a+(levelMod[p.level||1]||2),0);
+    const maxHp=hpSum+3;
+    const woundedAt=Math.floor(maxHp/2);
+
+    const name=boss.nameVariants[Math.floor(Math.random()*boss.nameVariants.length)];
+
+    return {
+      ...boss,
+      name,
+      maxHp,
+      currentHp:maxHp,
+      woundedAt,
+      wounded:false,
+      encounterCount:0,
+      topTag,
+      tally,
+      startDate:new Date().toLocaleDateString(),
+    };
+  }
+
+  function applyBossDamage(dmg){
+    _setAndSaveQuests(qs=>qs.map(q=>{
+      if(q.id!==activeQuestId||!q.boss) return q;
+      const newHp=Math.max(0,q.boss.currentHp-dmg);
+      const wounded=newHp<=q.boss.woundedAt;
+      const defeated=newHp<=0;
+      if(defeated){
+        const entry={
+          bossId:q.boss.id,bossName:q.boss.name,bossIcon:q.boss.icon,
+          date:q.boss.startDate,defeatedDate:new Date().toLocaleDateString(),
+          defeatedRound:q.currentRound||1,defeatedHole:q.hole||1,
+          encounters:q.boss.encounterCount+1,
+          party:questPlayersFromQuest.map(p=>({name:p.name,cls:p.cls?p.cls.name:null,level:p.level||1})),
+        };
+        const newBestiary=[...bestiary,entry];
+        setBestiary(newBestiary);
+        _saveBestiary(newBestiary);
+        const questDefeats=[...(q.bossDefeats||[]),entry];
+        // Schedule victory rewards after state settles
+        setTimeout(()=>{
+          questPlayersFromQuest.forEach(p=>{
+            _setAndSavePlayers(ps=>ps.map(pl=>pl.id!==p.id?pl:{...pl,xp:pl.xp+4,gold:pl.gold+10}));
+          });
+          const tc=draw(tD,setTD,TREASURE_CARDS);
+          setCard({...tc,_victoryNote:"⚔️ BOSS DEFEATED — 4 XP and 10gp granted to all players."});
+          setCardDeck("treasure");setCardPhase("read");
+        },0);
+        return{...q,boss:null,bossDefeatedThisSession:false,bossDefeats:questDefeats};
+      }
+      return{...q,boss:{...q.boss,currentHp:newHp,wounded,encounterCount:q.boss.encounterCount+1}};
+    }));
+  }
+
+  function regenBoss(){
+    _setAndSaveQuests(qs=>qs.map(q=>{
+      if(q.id!==activeQuestId||!q.boss) return q;
+      const newHp=Math.min(q.boss.maxHp,q.boss.currentHp+1);
+      return{...q,boss:{...q.boss,currentHp:newHp,wounded:newHp<=q.boss.woundedAt}};
+    }));
+  }
+  function resolveVariant(c){
+    if(!c.variants||!c.variants.length) return c;
+    const v=c.variants[Math.floor(Math.random()*c.variants.length)];
+    return Object.assign({},c,v,{variants:undefined});
+  }
+  function draw(dk,setDk,src){let d=dk.length?dk:shuffle(src);if(!dk.length)setDk(d);const c=d[0];setDk(d.slice(1));return resolveVariant(c);}
 
   function tapDeck(type){
     if(type==="adventure"){
       if(activeAdventureCard){
         setCard(activeAdventureCard.card);
-        setCardDeck(activeAdventureCard.isConsequence?"consequence":"adventure");
+        setCardDeck(activeAdventureCard.isBoss?"boss":activeAdventureCard.isConsequence?"consequence":"adventure");
         setCardMeta(activeAdventureCard.meta||{});
         setCardPhase("score");
         setHoleScores(activeAdventureCard.scores||{});
+        setPartyScoreAdj(activeAdventureCard.partyScoreAdj||0);
+        return;
+      }
+      // Boss intercept — hole 9 always, or any hole when bossStirs
+      if(activeBoss&&(hole===9||(activeQuest&&activeQuest.bossStirs))){
+        // Clear the stirs flag
+        if(activeQuest&&activeQuest.bossStirs){
+          _setAndSaveQuests(qs=>qs.map(q=>q.id===activeQuestId?{...q,bossStirs:false}:q));
+        }
+        setShowBossPopup(true);
         return;
       }
       // Check if there's a queued consequence card for this hole
@@ -1052,7 +1319,6 @@ function App(){
       if(nextCard){
         c=nextCard;
         isConsequence=true;
-        // Clear the queued consequence
         _setAndSaveQuests(qs=>qs.map(q=>q.id===activeQuestId?{...q,nextAdventureCard:null}:q));
       } else {
         c=draw(aD,setAD,ADVENTURE_CARDS);
@@ -1060,7 +1326,8 @@ function App(){
       const init={};
       questPlayersFromQuest.forEach(p=>{init[p.id]=0;});
       setHoleScores(init);
-      setActiveAdventureCard({card:c,meta:{},scores:init,isConsequence});
+      setPartyScoreAdj(0);
+      setActiveAdventureCard({card:c,meta:{},scores:init,partyScoreAdj:0,isConsequence,isBoss:false});
       setCard(c);setCardDeck(isConsequence?"consequence":"adventure");setCardMeta({});setCardPhase("score");
       return;
     }
@@ -1080,6 +1347,58 @@ function App(){
       const xm=text&&text.match(/[Gg]ain\s+(\d+)\s*XP/i);
       const t=card.title;
       const m=cardMeta;
+
+      // ── Boss resolution ────────────────────────────────────────────────────
+      if(card.isBossCard&&activeBoss){
+        const currentRound=(activeQuest&&activeQuest.currentRound)||1;
+        const perilCard={
+          title:card.hitBackTitle,tags:activeBoss.topTag||"Universal",
+          effect:card.hitBackEffect,flavor:"From "+card.title+".",
+          redemption:"",xp:0,scope:"Personal",isBossHitBack:true,
+        };
+        const queue=[];
+        let totalDmg=0;
+
+        questPlayersFromQuest.forEach(p=>{
+          const n=holeScores[p.id]||0;
+          const escalated=!!(m.bossDmg2&&m.bossDmg2[p.id]);
+          // Per player: birdie=2dmg no hitback, par=1dmg (or 2+hitback if escalated), bogey=1dmg+hitback
+          let dmg=0;
+          let hitBack=false;
+          if(n<0){dmg=2;hitBack=false;}
+          else if(n===0){dmg=escalated?2:1;hitBack=escalated;}
+          else{dmg=1;hitBack=true;}
+          totalDmg+=dmg;
+          if(hitBack) queue.push({pid:p.id,pname:p.name,type:"peril",card:perilCard,isBossHitBack:true,encounterTag:activeBoss.topTag||""});
+          if(n<0) queue.push({pid:p.id,pname:p.name,type:"boon",encounterTag:"Universal"});
+          // save score history
+          const newTee=n<0?"blue":n===0?"white":"red";
+          _setAndSavePlayers(ps=>ps.map(pl=>{
+            if(pl.id!==p.id)return pl;
+            const hist=[...(pl.scoreHistory||[])];
+            const qi=hist.findIndex(r=>r.questId===activeQuestId&&r.roundNumber===currentRound);
+            const holeEntry={hole,score:n,bottled:false,proficient:false,partyScore:null,isBoss:true};
+            if(qi>=0){
+              const holes=[...hist[qi].holes,holeEntry];
+              hist[qi]={...hist[qi],holes,total:holes.reduce((a,h)=>a+h.score,0),complete:holes.length>=9,encounters:{...(hist[qi].encounters||{}),[hole]:card.title}};
+            } else {
+              const snapshot={name:p.name,clsName:p.cls?p.cls.name:null,clsIcon:p.cls?p.cls.icon:null,clsColor:p.cls?p.cls.color:null,level:p.level||1,chosenSkills:p.chosenSkills||[]};
+              hist.push({questId:activeQuestId,roundNumber:currentRound,date:new Date().toLocaleDateString(),holes:[holeEntry],total:n,complete:false,encounters:{[hole]:card.title},snapshot});
+            }
+            return{...pl,tee:newTee,scoreHistory:hist};
+          }));
+        });
+
+        applyBossDamage(totalDmg);
+        const nh=hole+1;
+        if(card.tags) appendHoleTag(card.tags);
+        _setAndSaveQuests(qs=>qs.map(q=>q.id===activeQuestId?{...q,hole:nh,perils,aDeck:aD,bDeck:bD,pDeck:pD,bhDeck:bhD,tDeck:tD}:q));
+        updateQuestHole(nh);
+        setActiveAdventureCard(null);setCard(null);setCardDeck(null);setPartyScoreAdj(0);
+        setDrawQueue(queue);
+        if(hole===9) setShowCamp(true);
+        return;
+      }
 
       // ── Per-card reward logic ──────────────────────────────────────────────
       if(t==="The Wounded Traveler"){
@@ -1256,11 +1575,12 @@ function App(){
           }
           return{...pl,tee:newTee,scoreHistory:hist};
         }));
-        if(n<0)queue.push({pid:p.id,pname:p.name,type:"boon"});
-        if(n>0)queue.push({pid:p.id,pname:p.name,type:"peril"});
+        if(n<0)queue.push({pid:p.id,pname:p.name,type:"boon",encounterTag:card.tags});
+        if(n>0)queue.push({pid:p.id,pname:p.name,type:"peril",encounterTag:card.tags});
       });
 
       const nh=hole+1;
+      if(card.tags) appendHoleTag(card.tags);
       _setAndSaveQuests(qs=>qs.map(q=>q.id===activeQuestId?{...q,hole:nh,perils,aDeck:aD,bDeck:bD,pDeck:pD,bhDeck:bhD,tDeck:tD}:q));
       updateQuestHole(nh);
       setActiveAdventureCard(null);
@@ -1499,18 +1819,47 @@ function App(){
                       }),
                       React.createElement('td',{style:{fontFamily:BF,fontSize:"11px",color:roundTotal<0?C.green:roundTotal>0?C.red:C.whiteDim,textAlign:"center",padding:"5px 4px",background:C.bgCard,borderLeft:`1px solid ${C.border}`}},fmt(roundTotal))
                     );
-                  })
+                  }),
+                  React.createElement('tr',{key:"party-sep"},React.createElement('td',{colSpan:holeNums.length+2,style:{padding:"1px",background:C.border+"44"}})),
+                  React.createElement('tr',{key:"party-row"},
+                    React.createElement('td',{style:{fontFamily:BF,fontSize:"10px",color:C.gold,padding:"5px 8px",background:C.bgCard,position:"sticky",left:0,zIndex:1,whiteSpace:"nowrap"}},"⚔️ PARTY"),
+                    holeNums.map(function(h){
+                      var ps=null;
+                      var isCurrentHole=currentHole===h;
+                      for(var i=0;i<sqps.length;i++){
+                        const rh=(sqps[i].scoreHistory||[]).find(function(r){return r.questId===scorecardQuestId&&r.roundNumber===roundNum;});
+                        const hd=rh&&rh.holes&&rh.holes.find(function(hh){return hh.hole===h;});
+                        if(hd&&hd.partyScore!==undefined){ps=hd.partyScore;break;}
+                      }
+                      const fmtPS=(v)=>{if(v===null||v===undefined)return"·";if(v===0)return"E";const r=Math.round(v*10)/10;return r>0?"+"+r:String(r);};
+                      const cl=ps===null?C.greyDim:ps<=0?C.green:C.red;
+                      return React.createElement('td',{key:h,style:{fontFamily:BF,fontSize:"11px",color:cl,textAlign:"center",padding:"5px 4px",background:isCurrentHole?C.bgCardAlt:ps!==null?(ps<=0?C.green+"12":C.red+"12"):C.bgDark,borderLeft:`1px solid ${C.border}33`,fontWeight:"bold"}},fmtPS(ps));
+                    }),
+                    React.createElement('td',{style:{fontFamily:BF,fontSize:"11px",color:C.greyDim,textAlign:"center",padding:"5px 4px",background:C.bgCard,borderLeft:`1px solid ${C.border}`}},"—")
+                  )
                 )
               )
             ),
-            Object.keys(enc).length>0&&React.createElement('div',{style:{marginTop:"10px",paddingLeft:"4px",paddingBottom:"8px"}},
+            Object.keys(enc).length>0&&React.createElement('div',{style:{marginTop:"10px",paddingLeft:"4px",paddingBottom:"4px"}},
               [1,2,3,4,5,6,7,8,9].filter(function(h){return enc[h];}).map(function(h){
                 return React.createElement('div',{key:h,style:{fontFamily:BF,fontSize:"10px",color:C.greyDim,marginBottom:"3px"}},
                   React.createElement('span',{style:{color:C.border,marginRight:"6px"}},h+"."),
                   enc[h]
                 );
               })
-            )
+            ),
+            (()=>{
+              const sq=quests.find(q=>q.id===scorecardQuestId);
+              const defeats=(sq&&sq.bossDefeats||[]).filter(function(d){return d.defeatedRound===roundNum;});
+              return defeats.length>0?React.createElement('div',{style:{marginTop:"6px",paddingLeft:"4px",paddingBottom:"8px"}},
+                defeats.map(function(d,i){
+                  return React.createElement('div',{key:i,style:{display:"flex",alignItems:"center",gap:"6px",background:C.red+"12",border:"1px solid "+C.red+"33",padding:"4px 8px",marginBottom:"3px"}},
+                    React.createElement('span',null,d.bossIcon||"👹"),
+                    React.createElement('div',{style:{fontFamily:BF,fontSize:"10px",color:C.red}},d.bossName," defeated — hole ",d.defeatedHole,", ",d.encounters," encounter"+(d.encounters!==1?"s":""))
+                  );
+                })
+              ):null;
+            })()
           );
         })
       );
@@ -1537,8 +1886,14 @@ function App(){
       const next=drawQueue[0];
       const dismiss=()=>setDrawQueue(q=>q.slice(1));
       const drawAndAdvance=(type)=>{
-        const c=type==="boon"?draw(bD,setBD,BOON_CARDS):draw(pD,setPD,PERIL_CARDS);
+        const raw=type==="boon"?draw(bD,setBD,BOON_CARDS):draw(pD,setPD,PERIL_CARDS);
+        const c=type==="peril"?resolvePerilFlavor(raw,next.encounterTag):raw;
         if(c.xp>0&&type==="peril") adj(next.pid,"xp",c.xp);
+        // 50% chance boss stirs when a peril is drawn and a boss is active
+        // Only fires once — if already queued, skip
+        if(type==="peril"&&activeBoss&&!(activeQuest&&activeQuest.bossStirs)&&Math.random()<0.5){
+          _setAndSaveQuests(qs=>qs.map(q=>q.id===activeQuestId?{...q,bossStirs:true}:q));
+        }
         const perilPhase=type==="peril"?(c.scope==="Party"?"read":"assign"):"read";
         setCard(c);setCardDeck(type);setCardPhase(perilPhase);
         setDrawQueue(q=>q.slice(1));
@@ -1549,6 +1904,7 @@ function App(){
           React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:next.type==="boon"?C.green:C.red,letterSpacing:3,marginBottom:"8px"}},next.type==="boon"?"BOON":"PERIL"),
           React.createElement('div',{style:{fontFamily:BF,fontSize:"18px",color:C.white,marginBottom:"4px"}},next.pname.toUpperCase()),
           React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.whiteDim,marginBottom:"20px"}},next.type==="boon"?"birdied this hole":"bogeyed this hole"),
+          activeQuest&&activeQuest.bossStirs&&next.type==="peril"&&React.createElement('div',{style:{background:C.red+"22",border:"2px solid "+C.red,padding:"8px 12px",marginBottom:"12px",fontFamily:BF,fontSize:"12px",color:C.red,lineHeight:1.6}},"👹 THE BOSS STIRS\nNext hole will be a boss encounter."),
           React.createElement(Btn,{onClick:()=>drawAndAdvance(next.type),bg:next.type==="boon"?C.green:C.red,fg:C.bgDark,border:next.type==="boon"?C.green:C.red},"DRAW ",next.type==="boon"?"BOON":"PERIL")
         ),
         React.createElement('button',{onClick:dismiss,style:{background:"transparent",border:`2px solid ${C.grey}`,borderRadius:0,color:C.grey,fontFamily:BF,fontSize:"13px",padding:"10px 24px",cursor:"pointer"}},"SKIP")
@@ -1561,7 +1917,7 @@ function App(){
     tab==="codex"&&React.createElement('div',{className:"fi"},
       hdr("QUEST ROUND","📜 CODEX"),
       !docSec?React.createElement('div',{style:{padding:"0 16px"}},
-        [["rules","📖","Rulebook"],["classes","⚔️","Classes"],["prestige","🎲","Prestige"],["items","🎒","Items"],["treasure","🗝️","Treasure"],["about","❓","About"]].map(([id,ic,t])=>(
+        [["rules","📖","Rulebook"],["classes","⚔️","Classes"],["prestige","🎲","Prestige"],["items","🎒","Items"],["treasure","🗝️","Treasure"],["bestiary","💀","Bestiary"],["about","❓","About"]].map(([id,ic,t])=>(
           React.createElement('button',{key:id,onClick:()=>setDocSec(id),style:{width:"100%",background:C.bgCard,border:`4px solid ${C.borderBright}`,borderRadius:0,padding:"14px",marginBottom:"8px",textAlign:"left",cursor:"pointer",display:"flex",alignItems:"center",gap:"12px",boxShadow:bevel(C.borderBright)}},
             React.createElement('span',{style:{fontSize:"24px"}},ic),
             React.createElement('div',{style:{fontFamily:BF,fontSize:"15px",color:C.gold,textShadow:OL}},t)
@@ -1597,6 +1953,28 @@ function App(){
             React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.whiteDim}},t.effect)
           ))
         )),
+        docSec==="bestiary"&&React.createElement('div',null,
+          React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.grey,letterSpacing:2,marginBottom:"12px"}},"DEFEATED BOSSES"),
+          bestiary.length===0
+            ?React.createElement(Panel,null,React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.greyDim,textAlign:"center",padding:"20px 0"}},"No bosses defeated yet. The bestiary fills as you play."))
+            :bestiary.map(function(e,i){
+              return React.createElement(Panel,{key:i,style:{borderColor:C.red+"66"}},
+                React.createElement('div',{style:{display:"flex",alignItems:"center",gap:"10px",marginBottom:"6px"}},
+                  React.createElement('div',{style:{fontSize:"28px"}},e.bossIcon||"👹"),
+                  React.createElement('div',null,
+                    React.createElement('div',{style:{fontFamily:BF,fontSize:"14px",color:C.red}}),
+                    React.createElement('div',{style:{fontFamily:BF,fontSize:"14px",color:C.red}},e.bossName),
+                    React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.greyDim}},"Defeated "+e.defeatedDate+" · "+e.encounters+" encounter"+(e.encounters!==1?"s":""))
+                  )
+                ),
+                React.createElement('div',{style:{display:"flex",flexWrap:"wrap",gap:"4px"}},
+                  (e.party||[]).map(function(p,j){
+                    return React.createElement('div',{key:j,style:{fontFamily:BF,fontSize:"11px",color:C.parchment,background:C.bgDark,padding:"2px 6px",border:"1px solid "+C.border}},p.name," · ",p.cls," Lv",p.level);
+                  })
+                )
+              );
+            })
+        ),
         docSec==="about"&&React.createElement('div',null,
           React.createElement(Panel,null,
             React.createElement('div',{style:{fontFamily:BF,fontSize:"18px",color:C.gold,marginBottom:"6px"}},"QUEST ROUND"),
@@ -1828,6 +2206,17 @@ function App(){
                         return React.createElement('td',{key:h,style:{fontFamily:BF,fontSize:"11px",color:cl,textAlign:"center",padding:"2px 3px",background:C.bgDark,border:`1px solid ${C.border}33`,textDecoration:hd&&hd.proficient?"underline":"none"}},hd?fmt(hd.score):(!r.complete&&h>holes.length)?"✗":"·");
                       }),
                       React.createElement('td',{style:{fontFamily:BF,fontSize:"11px",color:tcl,textAlign:"center",padding:"2px 3px",background:C.bgDark,borderLeft:`1px solid ${C.border}`}},fmt(total))
+                    ),
+                    React.createElement('tr',null,
+                      React.createElement('td',{style:{fontFamily:BF,fontSize:"10px",color:C.gold,padding:"2px 4px"}},"PARTY"),
+                      holeNums.map(function(h){
+                        const hd=holes.find(hh=>hh.hole===h);
+                        const ps=hd&&hd.partyScore!==undefined?hd.partyScore:null;
+                        const fmtPS=(v)=>{if(v===null||v===undefined)return"·";if(v===0)return"E";const r=Math.round(v*10)/10;return r>0?"+"+r:String(r);};
+                        const cl=ps===null?C.greyDim:ps<=0?C.green:C.red;
+                        return React.createElement('td',{key:h,style:{fontFamily:BF,fontSize:"10px",color:cl,textAlign:"center",padding:"2px 3px",background:ps!==null?(ps<=0?C.green+"10":C.red+"10"):C.bgDark,border:`1px solid ${C.border}33`}},fmtPS(ps));
+                      }),
+                      React.createElement('td',{style:{fontFamily:BF,fontSize:"10px",color:C.greyDim,textAlign:"center",padding:"2px 3px",background:C.bgDark,borderLeft:`1px solid ${C.border}`}},"—")
                     ))
                   )
                 ),
@@ -2011,7 +2400,12 @@ function App(){
                     React.createElement('div',{style:{display:"flex",flexDirection:"column",gap:"6px",marginLeft:8,flexShrink:0}},
                       React.createElement('div',{style:{display:"flex",gap:"6px"}},
                         React.createElement('button',{onClick:()=>resumeQuest(q),style:{padding:"8px 12px",background:C.green+"18",border:`2px solid ${C.green}55`,borderRadius:0,color:C.green,fontFamily:BF,fontSize:"13px",cursor:"pointer"}},"RESUME"),
-                        React.createElement('button',{onClick:()=>deleteQuest(q.id),style:{padding:"8px 10px",background:C.red+"15",border:`2px solid ${C.red}44`,borderRadius:0,color:C.red,fontFamily:BF,fontSize:"13px",cursor:"pointer"}},"✗")
+                        questDeleteConfirm===q.id
+                          ?React.createElement('div',{style:{display:"flex",gap:"4px"}},
+                            React.createElement('button',{onClick:()=>{deleteQuest(q.id);setQuestDeleteConfirm(null);},style:{padding:"8px 10px",background:C.red+"33",border:`2px solid ${C.red}`,borderRadius:0,color:C.red,fontFamily:BF,fontSize:"11px",cursor:"pointer"}},"CONFIRM"),
+                            React.createElement('button',{onClick:()=>setQuestDeleteConfirm(null),style:{padding:"8px 10px",background:"transparent",border:`2px solid ${C.greyDim}`,borderRadius:0,color:C.greyDim,fontFamily:BF,fontSize:"11px",cursor:"pointer"}},"CANCEL")
+                          )
+                          :React.createElement('button',{onClick:()=>setQuestDeleteConfirm(q.id),style:{padding:"8px 10px",background:C.red+"15",border:`2px solid ${C.red}44`,borderRadius:0,color:C.red,fontFamily:BF,fontSize:"13px",cursor:"pointer"}},"✗")
                       ),
                       React.createElement('button',{onClick:()=>setScorecardQuestId(q.id),style:{padding:"6px 10px",background:C.bgDark,border:`2px solid ${C.borderBright}`,borderRadius:0,color:C.parchment,fontFamily:BF,fontSize:"12px",cursor:"pointer",letterSpacing:1}},"📊 SCORECARD")
                     )
@@ -2057,6 +2451,7 @@ function App(){
               React.createElement('div',{style:{fontFamily:BF,fontSize:"28px",color:C.gold,lineHeight:1,textShadow:OLH}},hole)
             ),
             React.createElement('div',{style:{display:"flex",gap:"6px"}},
+              (activeBoss||hole>=9)&&React.createElement('button',{onClick:()=>setShowBoss(true),style:{padding:"6px 10px",background:activeBoss?C.red+"22":C.bgCard,border:`2px solid ${C.red}`,borderRadius:0,color:C.red,fontFamily:BF,fontSize:"12px",cursor:"pointer"}},activeBoss?"👹 "+activeBoss.currentHp+"HP":"👹 BOSS"),
               React.createElement('button',{onClick:()=>setShowCamp(true),style:{padding:"6px 10px",background:C.bgCard,border:`2px solid ${C.cyan}`,borderRadius:0,color:C.cyan,fontFamily:BF,fontSize:"12px",cursor:"pointer"}},"⛺ CAMP"),
               React.createElement('button',{onClick:backToManager,style:{padding:"6px 10px",background:C.bgCard,border:`2px solid ${C.borderBright}`,borderRadius:0,color:C.grey,fontFamily:BF,fontSize:"12px",cursor:"pointer",letterSpacing:1}},"QUESTS")
             )
@@ -2069,6 +2464,9 @@ function App(){
         // Consequence card queued notice
         nextCardQueued&&React.createElement('div',{style:{background:C.orange+"18",border:`2px solid ${C.orange}55`,padding:"8px 16px",margin:"8px 16px 0",fontFamily:BF,fontSize:"12px",color:C.orange}},
           "⚡ CONSEQUENCE QUEUED: ",nextCardQueued.title," — draws automatically next Adventure tap"
+        ),
+        activeQuest&&activeQuest.bossStirs&&React.createElement('div',{style:{background:C.red+"18",border:"2px solid "+C.red+"55",padding:"8px 16px",margin:"8px 16px 0",fontFamily:BF,fontSize:"12px",color:C.red,animation:"pulse 2s infinite"}},
+          "👹 THE BOSS STIRS — next encounter will be a boss fight"
         ),
 
         // Active perils
@@ -2240,6 +2638,128 @@ function App(){
       )
     ),
 
+    // ── BOSS TEE POPUP ────────────────────────────────────────────────────────
+    showBossPopup&&activeBoss&&(()=>{
+      const b=activeBoss;
+      const wounded=b.wounded;
+      const hpPct=b.currentHp/b.maxHp;
+      const hpColor=hpPct>0.5?C.green:hpPct>0.25?C.gold:C.red;
+      return React.createElement('div',{style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.96)",zIndex:1050,overflowY:"auto",padding:"20px 16px 60px"}},
+        React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.red,letterSpacing:3,marginBottom:"16px"}},"⚔️ HOLE 9 — BOSS ENCOUNTER"),
+        React.createElement('div',{style:{background:"linear-gradient(180deg,#1a0808 0%,#0a0505 100%)",border:"4px solid "+b.color,padding:"18px",marginBottom:"16px",boxShadow:"0 0 20px "+b.color+"44"}},
+          React.createElement('div',{style:{display:"flex",alignItems:"center",gap:"12px",marginBottom:"10px"}},
+            React.createElement('div',{style:{fontSize:"36px"}},(wounded?"🩸 ":"")+b.icon),
+            React.createElement('div',null,
+              React.createElement('div',{style:{fontFamily:BF,fontSize:"15px",color:b.color,textShadow:OLH}},b.name),
+              wounded&&React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.red,letterSpacing:2}},"⚠ WOUNDED")
+            )
+          ),
+          React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.parchment,fontStyle:"italic",marginBottom:"10px",lineHeight:1.5}},wounded?b.woundedFlavor:b.flavor),
+          React.createElement('div',{style:{marginBottom:"10px"}},
+            React.createElement('div',{style:{display:"flex",justifyContent:"space-between",marginBottom:"3px"}},
+              React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.grey,letterSpacing:2}},"HP"),
+              React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:hpColor}},""+b.currentHp+" / "+b.maxHp)
+            ),
+            React.createElement('div',{style:{background:C.bgDark,height:8,border:"2px solid "+C.border}},
+              React.createElement('div',{style:{height:"100%",background:hpColor,width:(hpPct*100)+"%"}})
+            )
+          ),
+          React.createElement('div',{style:{background:C.bgDark,border:"2px solid "+b.color+"44",padding:"10px 12px",marginBottom:"8px"}},
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:b.color,letterSpacing:2,marginBottom:"4px"}},"MECHANIC"),
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.white,lineHeight:1.5}},wounded?b.woundedMechanic:b.mechanic)
+          ),
+          React.createElement('div',{style:{background:C.red+"12",border:"2px solid "+C.red+"33",padding:"8px 12px",marginBottom:"8px"}},
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.red,letterSpacing:2,marginBottom:"3px"}},"HIT BACK — "+b.hitBackTitle),
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.whiteDim}},wounded?b.hitBackWounded:b.hitBackEffect)
+          ),
+          React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.cyan,border:"1px solid "+C.cyan+"33",padding:"6px 10px"}},"🛡 Spend a token to ignore the boss mechanic on any single throw.")
+        ),
+        React.createElement('button',{onClick:engageBoss,style:{width:"100%",padding:"16px 0",background:C.red+"22",border:"4px solid "+C.red,borderRadius:0,color:C.red,fontFamily:BF,fontSize:"15px",cursor:"pointer",letterSpacing:2,marginBottom:"10px"}},"⚔️ ENGAGE — PLAY HOLE "+hole),
+        React.createElement('button',{onClick:()=>{regenBoss();setShowBossPopup(false);tapDeck("adventure");},style:{width:"100%",padding:"13px 0",background:"transparent",border:"2px solid "+C.greyDim,borderRadius:0,color:C.greyDim,fontFamily:BF,fontSize:"13px",cursor:"pointer"}},"🏃 FLEE — boss regens 1HP, play normal encounter")
+      );
+    })(),
+
+    // ── BOSS OVERLAY ──────────────────────────────────────────────────────────
+    showBoss&&React.createElement('div',{style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.96)",zIndex:1050,overflowY:"auto",padding:"20px 16px 60px"}},
+      activeBoss?(()=>{
+        const b=activeBoss;
+        const wounded=b.wounded;
+        const hpPct=b.currentHp/b.maxHp;
+        const hpColor=hpPct>0.5?C.green:hpPct>0.25?C.gold:C.red;
+        const mechanic=wounded?b.woundedMechanic:b.mechanic;
+        const hitBack=wounded?b.hitBackWounded:b.hitBackEffect;
+
+        // Damage buttons
+        return React.createElement(React.Fragment,null,
+          React.createElement('div',{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"16px"}},
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.red,letterSpacing:3}},"BOSS ENCOUNTER"),
+            React.createElement('button',{onClick:()=>setShowBoss(false),style:{background:"transparent",border:"none",color:C.grey,fontFamily:BF,fontSize:"13px",cursor:"pointer"}},"CLOSE")
+          ),
+          // Boss card
+          React.createElement('div',{style:{background:"linear-gradient(180deg,#1a0808 0%,#0a0505 100%)",border:"4px solid "+b.color,borderRadius:0,padding:"18px",marginBottom:"12px",boxShadow:"0 0 20px "+b.color+"44"}},
+            React.createElement('div',{style:{display:"flex",alignItems:"center",gap:"12px",marginBottom:"10px"}},
+              React.createElement('div',{style:{fontSize:"40px"}},(wounded?"🩸 ":"")+b.icon),
+              React.createElement('div',null,
+                React.createElement('div',{style:{fontFamily:BF,fontSize:"16px",color:b.color,textShadow:OLH,marginBottom:"2px"}},b.name),
+                wounded&&React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.red,letterSpacing:2}},"⚠ WOUNDED")
+              )
+            ),
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.parchment,fontStyle:"italic",marginBottom:"12px",lineHeight:1.5}},wounded?b.woundedFlavor:b.flavor),
+            // HP bar
+            React.createElement('div',{style:{marginBottom:"12px"}},
+              React.createElement('div',{style:{display:"flex",justifyContent:"space-between",marginBottom:"4px"}},
+                React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.grey,letterSpacing:2}},"HP"),
+                React.createElement('div',{style:{fontFamily:BF,fontSize:"14px",color:hpColor}},""+b.currentHp+" / "+b.maxHp)
+              ),
+              React.createElement('div',{style:{background:C.bgDark,height:10,border:"2px solid "+C.border}},
+                React.createElement('div',{style:{height:"100%",background:hpColor,width:(hpPct*100)+"%",transition:"width 0.3s"}})
+              ),
+              React.createElement('div',{style:{fontFamily:BF,fontSize:"10px",color:C.greyDim,marginTop:"3px"}},"Wounded at: "+b.woundedAt+" HP · Encounters: "+b.encounterCount)
+            ),
+            // Mechanic
+            React.createElement('div',{style:{background:C.bgDark,border:"2px solid "+b.color+"55",padding:"10px 12px",marginBottom:"10px"}},
+              React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:b.color,letterSpacing:2,marginBottom:"5px"}},"MECHANIC"),
+              React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.white,lineHeight:1.5}},mechanic)
+            ),
+            // Hit back
+            React.createElement('div',{style:{background:C.red+"12",border:"2px solid "+C.red+"44",padding:"8px 12px",marginBottom:"10px"}},
+              React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.red,letterSpacing:2,marginBottom:"4px"}},"HIT BACK — "+b.hitBackTitle),
+              React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.whiteDim,lineHeight:1.5}},hitBack)
+            ),
+            // Token escape
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"11px",color:C.cyan,border:"1px solid "+C.cyan+"33",padding:"6px 10px"}},"🛡 Spend a token to ignore the boss mechanic on any single throw.")
+          ),
+          React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.greyDim,textAlign:"center",marginBottom:"12px",lineHeight:1.6}},"The boss waits at hole 9. Tap the Encounter button on hole 9 to engage or flee."),
+          React.createElement('button',{onClick:()=>setShowBoss(false),style:{width:"100%",padding:"13px 0",background:"transparent",border:"2px solid "+C.greyDim,borderRadius:0,color:C.greyDim,fontFamily:BF,fontSize:"13px",cursor:"pointer"}},"← BACK"),
+        );
+      })():(()=>{
+        // No active boss — generate or show post-defeat
+        const canGenerate=!bossDefeatedThisSession;
+        const holeTags=(activeQuest&&activeQuest.holeTags)||[];
+        return React.createElement(React.Fragment,null,
+          React.createElement('div',{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"16px"}},
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"13px",color:C.red,letterSpacing:3}},"BOSS ENCOUNTER"),
+            React.createElement('button',{onClick:()=>setShowBoss(false),style:{background:"transparent",border:"none",color:C.grey,fontFamily:BF,fontSize:"13px",cursor:"pointer"}},"CLOSE")
+          ),
+          React.createElement('div',{style:{textAlign:"center",padding:"30px 0 20px"}},
+            React.createElement('div',{style:{fontSize:"60px",marginBottom:"12px"}},canGenerate?"👹":"💀"),
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"15px",color:canGenerate?C.red:C.greyDim,marginBottom:"8px",textShadow:OLH}},canGenerate?"SOMETHING STIRS":"BOSS DEFEATED"),
+            React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.greyDim,marginBottom:"24px",lineHeight:1.7,maxWidth:300,margin:"0 auto 24px"}},
+              canGenerate
+                ?"The round has accumulated. Something shaped itself from what you faced out there. Face it now — or return to camp."
+                :"You already defeated a boss this session. The next one emerges after your next nine holes."
+            )
+          ),
+          canGenerate&&React.createElement('button',{onClick:()=>{
+            const boss=generateBoss(questPlayersFromQuest,holeTags);
+            _setAndSaveQuests(qs=>qs.map(q=>q.id===activeQuestId?{...q,boss}:q));
+            setShowBoss(false);
+          },style:{width:"100%",padding:"16px 0",background:C.red+"22",border:"4px solid "+C.red,borderRadius:0,color:C.red,fontFamily:BF,fontSize:"14px",cursor:"pointer",marginBottom:"10px",letterSpacing:2}},"⚔️ ENGAGE THE BOSS"),
+          React.createElement('button',{onClick:()=>setShowBoss(false),style:{width:"100%",padding:"13px 0",background:"transparent",border:"2px solid "+C.greyDim,borderRadius:0,color:C.greyDim,fontFamily:BF,fontSize:"13px",cursor:"pointer"}},"← BACK TO QUEST")
+        );
+      })()
+    ),
+
     // ── CAMP OVERLAY ──────────────────────────────────────────────────────────
     showCamp&&React.createElement('div',{style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",zIndex:1050,overflowY:"auto",padding:"24px 16px 40px"}},
       React.createElement('div',{style:{textAlign:"center",marginBottom:"20px"}},
@@ -2311,7 +2831,7 @@ function App(){
       },style:{width:"100%",padding:"16px 0",background:C.cyan,border:"4px solid "+C.cyan,borderRadius:0,color:C.bgDark,fontFamily:BF,fontSize:"15px",cursor:"pointer",letterSpacing:1,marginBottom:"10px"}},
         "⛺ BEGIN ROUND "+(((activeQuest&&activeQuest.currentRound)||1)+1)
       ),
-      React.createElement('button',{onClick:()=>{setShowCamp(false);setEndSessionConfirm(false);},style:{width:"100%",padding:"12px 0",background:"transparent",border:"2px solid "+C.greyDim,borderRadius:0,color:C.greyDim,fontFamily:BF,fontSize:"13px",cursor:"pointer",marginBottom:"8px"}},"← BACK TO QUEST"),
+      React.createElement('button',{onClick:()=>{if(activeBoss)regenBoss();setShowCamp(false);setEndSessionConfirm(false);},style:{width:"100%",padding:"12px 0",background:"transparent",border:"2px solid "+C.greyDim,borderRadius:0,color:C.greyDim,fontFamily:BF,fontSize:"13px",cursor:"pointer",marginBottom:"8px"}},"← BACK TO QUEST"),
       !endSessionConfirm&&React.createElement('button',{onClick:()=>setEndSessionConfirm(true),style:{width:"100%",padding:"10px 0",background:"transparent",border:"1px solid "+C.red+"33",borderRadius:0,color:C.red+"88",fontFamily:BF,fontSize:"11px",cursor:"pointer",marginBottom:"6px"}},"END SESSION — SAVE & EXIT"),
       endSessionConfirm&&React.createElement('div',{style:{background:C.red+"12",border:"1px solid "+C.red+"44",borderRadius:0,padding:"12px",marginBottom:"6px"}},
         React.createElement('div',{style:{fontFamily:BF,fontSize:"12px",color:C.red,marginBottom:"4px"}},"End session and save?"),
